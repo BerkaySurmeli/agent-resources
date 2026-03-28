@@ -151,65 +151,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* For Developers */}
-      <section className="py-24 bg-slate-900 text-white">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <FadeIn>
-              <div>
-                <h2 className="text-3xl font-semibold mb-6">Built for Developers</h2>
-                <p className="text-slate-400 mb-8 text-lg">
-                  Create MCP Servers, Agent Skills, and Personas. Sell them to thousands of users.
-                </p>
-                <ul className="space-y-4">
-                  <li className="flex items-center gap-3">
-                    <Icon name="check" className="w-5 h-5 text-green-400 flex-shrink-0" />
-                    <span>First 500 listings: <strong className="text-white">Free forever, no commission ever</strong></span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <Icon name="check" className="w-5 h-5 text-green-400 flex-shrink-0" />
-                    <span>Only 15% commission (free items = 0%)</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <Icon name="check" className="w-5 h-5 text-green-400 flex-shrink-0" />
-                    <span>Automatic testing & verification</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <Icon name="check" className="w-5 h-5 text-green-400 flex-shrink-0" />
-                    <span>Stripe Connect for easy payouts</span>
-                  </li>
-                </ul>
-                <button 
-                  onClick={() => setShowWaitlist(true)}
-                  className="mt-8 bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
-                >
-                  Join the Waitlist
-                </button>
-              </div>
-            </FadeIn>
-
-            <FadeIn delay={200}>
-              <div className="bg-slate-800 rounded-2xl p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-slate-400">Commission</span>
-                  <span className="text-3xl font-bold text-blue-400">15%</span>
-                </div>
-                <div className="h-px bg-slate-700 mb-6" />
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-slate-400">Free Items</span>
-                  <span className="text-3xl font-bold text-green-400">0%</span>
-                </div>
-                <div className="h-px bg-slate-700 mb-6" />
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">First 500 Listings</span>
-                  <span className="text-lg font-semibold text-white">Free, No Commission</span>
-                </div>
-              </div>
-            </FadeIn>
-          </div>
-        </div>
-      </section>
-
       {/* Blog Preview */}
       <section className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
