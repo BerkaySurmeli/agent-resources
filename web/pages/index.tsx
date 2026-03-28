@@ -122,7 +122,7 @@ export default function Home() {
           <FadeIn>
             <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-sm font-medium mb-8">
               <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
-              First 500 listings: free forever, no commission ever
+              Zero commission for 500 listings
             </span>
           </FadeIn>
           
