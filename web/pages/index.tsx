@@ -2,24 +2,11 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+
 // Simple icon components
 const Icon = ({ name, className }: { name: string; className?: string }) => {
   const icons: Record<string, JSX.Element> = {
-    shield: (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-      </svg>
-    ),
-    bolt: (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-      </svg>
-    ),
-    beaker: (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
-      </svg>
-    ),
     code: (
       <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
@@ -77,19 +64,40 @@ export default function Home() {
   const [showWaitlist, setShowWaitlist] = useState(false);
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Store email for waitlist
-    setSubmitted(true);
-    setEmail('');
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_URL}/waitlist/?email=${encodeURIComponent(email)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setSubmitted(true);
+        setEmail('');
+      } else {
+        setError(data.message || 'Something went wrong. Please try again.');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-white">
       <Head>
         <title>Agent Resources | The Marketplace for AI Agents</title>
-        <meta name="description" content="Buy and sell MCP Servers, Agent Skills, and AI Personas. Verified, tested, and ready to deploy." />
+        <meta name="description" content="Buy and sell MCP Servers, Agent Skills, and AI Personas." />
       </Head>
 
       {/* Navigation */}
@@ -140,61 +148,6 @@ export default function Home() {
               Join the Waitlist
             </button>
           </FadeIn>
-        </div>
-      </section>
-
-      {/* Product Tiers */}
-      <section className="py-24 px-6">
-        <div className="max-w-6xl mx-auto">
-          <FadeIn>
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-semibold text-slate-900 mb-4">What You'll Find Here</h2>
-              <p className="text-slate-600 max-w-2xl mx-auto">
-                Three types of products for building and extending AI agents.
-              </p>
-            </div>
-          </FadeIn>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <FadeIn delay={100}>
-              <div className="border border-slate-200 rounded-2xl p-8 hover:border-blue-300 transition-colors">
-                <div className="w-10 h-10 bg-slate-900 rounded-lg flex items-center justify-center mb-6">
-                  <Icon name="code" className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-3">MCP Servers</h3>
-                <p className="text-slate-600 mb-4">
-                  Infrastructure that lets agents talk to external systems. QuickBooks, Slack, Google Sheets, databases.
-                </p>
-                <span className="text-sm text-slate-500">For developers & power users</span>
-              </div>
-            </FadeIn>
-
-            <FadeIn delay={200}>
-              <div className="border border-slate-200 rounded-2xl p-8 hover:border-blue-300 transition-colors">
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mb-6">
-                  <Icon name="robot" className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-3">Agent Skills</h3>
-                <p className="text-slate-600 mb-4">
-                  Training manuals and workflows. The prompts, logic, and knowledge an agent needs for specific tasks.
-                </p>
-                <span className="text-sm text-slate-500">For business users</span>
-              </div>
-            </FadeIn>
-
-            <FadeIn delay={300}>
-              <div className="border border-slate-200 rounded-2xl p-8 hover:border-blue-300 transition-colors">
-                <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center mb-6">
-                  <Icon name="users" className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-3">Personas</h3>
-                <p className="text-slate-600 mb-4">
-                  Complete digital workers. Pre-configured agents with skills, personality, and knowledge base included.
-                </p>
-                <span className="text-sm text-slate-500">For beginners</span>
-              </div>
-            </FadeIn>
-          </div>
         </div>
       </section>
 
@@ -313,6 +266,11 @@ export default function Home() {
                 <p className="text-slate-600 mb-6">
                   Be among the first 500 developers to list for free. We'll notify you when we launch.
                 </p>
+                {error && (
+                  <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+                    {error}
+                  </div>
+                )}
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
@@ -335,9 +293,10 @@ export default function Home() {
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 px-4 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                      disabled={loading}
+                      className="flex-1 px-4 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
                     >
-                      Join Waitlist
+                      {loading ? 'Joining...' : 'Join Waitlist'}
                     </button>
                   </div>
                 </form>
