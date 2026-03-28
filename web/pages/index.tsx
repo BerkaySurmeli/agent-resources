@@ -122,7 +122,7 @@ export default function Home() {
           <FadeIn>
             <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-sm font-medium mb-8">
               <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
-              First 500 developers list free forever
+              First 500 listings free, no commission
             </span>
           </FadeIn>
           
@@ -164,7 +164,7 @@ export default function Home() {
                 <ul className="space-y-4">
                   <li className="flex items-center gap-3">
                     <Icon name="check" className="w-5 h-5 text-green-400 flex-shrink-0" />
-                    <span>First 500 developers: <strong className="text-white">Free listing forever</strong></span>
+                    <span>First 500 listings: <strong className="text-white">Free, no commission</strong></span>
                   </li>
                   <li className="flex items-center gap-3">
                     <Icon name="check" className="w-5 h-5 text-green-400 flex-shrink-0" />
@@ -201,8 +201,8 @@ export default function Home() {
                 </div>
                 <div className="h-px bg-slate-700 mb-6" />
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">First 500 Devs</span>
-                  <span className="text-lg font-semibold text-white">Free Forever</span>
+                  <span className="text-slate-400">First 500 Listings</span>
+                  <span className="text-lg font-semibold text-white">Free, 0%</span>
                 </div>
               </div>
             </FadeIn>
@@ -264,7 +264,7 @@ export default function Home() {
               <>
                 <h3 className="text-2xl font-semibold text-slate-900 mb-2">Join the Waitlist</h3>
                 <p className="text-slate-600 mb-6">
-                  Be among the first 500 developers to list for free. We'll notify you when we launch.
+                  Be among the first 500 listings — free to list, no commission. We'll notify you when we launch.
                 </p>
                 {error && (
                   <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
