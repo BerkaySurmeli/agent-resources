@@ -58,8 +58,8 @@ const FadeIn = ({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
 
 // AR Logo component
 const Logo = ({ className = '' }: { className?: string }) => (
-  <div className={`flex items-center gap-3 ${className}`}>
-    <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+  <div className={`flex items-center gap-3 ${className}`} aria-label="Agent Resources Home">
+    <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center" aria-hidden="true">
       <span className="text-white font-bold text-lg">AR</span>
     </div>
     <span className="font-semibold text-slate-900">Agent Resources</span>
@@ -140,15 +140,18 @@ export default function Home() {
       </Head>
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
+      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50" role="navigation" aria-label="Main navigation">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Logo />
+          <Link href="/" aria-label="Agent Resources Home">
+            <Logo />
+          </Link>
           <div className="flex items-center gap-8">
             <Link href="/products" className="text-slate-600 hover:text-slate-900 transition-colors">Products</Link>
             <Link href="/blog" className="text-slate-600 hover:text-slate-900 transition-colors">Blog</Link>
             <button 
               onClick={() => setShowWaitlist(true)}
               className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors"
+              aria-label="Join the waitlist for early access"
             >
               Join Waitlist
             </button>
@@ -157,7 +160,7 @@ export default function Home() {
       </nav>
 
       {/* Hero */}
-      <section className="pt-32 pb-20 px-6">
+      <main className="pt-32 pb-20 px-6" role="main">
         <div className="max-w-4xl mx-auto text-center">
           <FadeIn delay={100}>
             <h1 className="text-5xl md:text-6xl font-semibold text-slate-900 tracking-tight mb-6">
@@ -183,6 +186,7 @@ export default function Home() {
             <button 
               onClick={() => setShowWaitlist(true)}
               className="bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 transition-all hover:scale-105"
+              aria-label="Join the waitlist to get notified when we launch"
             >
               Join the Waitlist
             </button>
@@ -213,8 +217,10 @@ export default function Home() {
                       AR
                     </div>
                   </div>
-                  <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center mb-6">
-                    <span className="text-white font-bold text-xl">C</span>
+                  <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center mb-6" aria-hidden="true">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Project management icon">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
                   </div>
                   <h3 className="text-xl font-semibold text-slate-900 mb-2">Claudia</h3>
                   <p className="text-blue-600 font-medium mb-4">AI Project Manager</p>
@@ -236,8 +242,10 @@ export default function Home() {
                       AR
                     </div>
                   </div>
-                  <div className="w-14 h-14 bg-slate-900 rounded-xl flex items-center justify-center mb-6">
-                    <span className="text-white font-bold text-xl">C</span>
+                  <div className="w-14 h-14 bg-slate-900 rounded-xl flex items-center justify-center mb-6" aria-hidden="true">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Code development icon">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
                   </div>
                   <h3 className="text-xl font-semibold text-slate-900 mb-2">Chen</h3>
                   <p className="text-blue-600 font-medium mb-4">AI Developer</p>
@@ -259,8 +267,10 @@ export default function Home() {
                       AR
                     </div>
                   </div>
-                  <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center mb-6">
-                    <span className="text-white font-bold text-xl">A</span>
+                  <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center mb-6" aria-hidden="true">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Design and UX icon">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                    </svg>
                   </div>
                   <h3 className="text-xl font-semibold text-slate-900 mb-2">Adrian</h3>
                   <p className="text-blue-600 font-medium mb-4">AI UX Designer</p>
@@ -300,24 +310,31 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-slate-200">
+      <footer className="py-12 px-6 border-t border-slate-200" role="contentinfo">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <Logo />
+          <Link href="/" aria-label="Agent Resources Home">
+            <Logo />
+          </Link>
           <div className="flex items-center gap-6 text-slate-600">
             <Link href="/blog" className="hover:text-slate-900 transition-colors">Blog</Link>
-            <a href="https://twitter.com" className="hover:text-slate-900 transition-colors">Twitter</a>
-            <a href="https://github.com/BerkaySurmeli/agent-resources" className="hover:text-slate-900 transition-colors">GitHub</a>
+            <a href="https://twitter.com" className="hover:text-slate-900 transition-colors" aria-label="Follow us on Twitter">Twitter</a>
+            <a href="https://github.com/BerkaySurmeli/agent-resources" className="hover:text-slate-900 transition-colors" aria-label="View our GitHub repository">GitHub</a>
           </div>
         </div>
       </footer>
 
       {/* Waitlist Modal */}
       {showWaitlist && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="waitlist-title"
+        >
           <div className="bg-white rounded-2xl p-8 max-w-md w-full">
             {!submitted ? (
               <>
-                <h3 className="text-2xl font-semibold text-slate-900 mb-2">Join the Waitlist</h3>
+                <h3 id="waitlist-title" className="text-2xl font-semibold text-slate-900 mb-2">Join the Waitlist</h3>
                 <p className="text-slate-600 mb-6">
                   Be among the first 500 listings — free forever, no commission ever. We'll notify you when we launch.
                 </p>
