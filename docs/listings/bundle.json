@@ -1,0 +1,24 @@
+{
+  "name": "The Dream Team Bundle",
+  "slug": "dream-team-bundle",
+  "category": "bundle",
+  "price_cents": 9900,
+  "description": "Get all three AI personas: Claudia (Project Manager), Chen (Developer), and Adrian (UX Designer). The complete team for $99 (save $58).",
+  "long_description": "Why hire one when you can have a complete team? The Dream Team Bundle gives you everything you need to ship products: planning, design, and development — all in one package.\n\n## What's Included\n\n### Claudia - AI Project Manager ($49 value)\nYour orchestrating intelligence. Delegates tasks, tracks progress, keeps projects on schedule.\n\n### Chen - AI Developer ($59 value)\nYour senior engineer. Writes production-ready code across any stack.\n\n### Adrian - AI UX Designer ($49 value)\nYour design partner. Creates interfaces and copy that convert.\n\n## Perfect For\n\n- Solo founders building MVPs\n- Small teams needing full coverage\n- Anyone running multi-agent workflows\n- Learning how AI personas work together\n\n## How They Work Together\n\n1. **Claudia** plans the project and delegates tasks\n2. **Adrian** designs the interface and writes copy\n3. **Chen** builds the functionality\n4. **Claudia** reviews and delivers the final product\n\n## Bundle Benefits\n
+- **37% discount** vs buying individually\n- **Seamless integration** — personas know how to work together\n- **Complete workflow** — from idea to shipped product\n- **One setup** — all three configured together\n\n## Includes\n
+- All three persona configurations\n- Team workflow templates\n- Handoff protocols\n- One-click OpenClaw setup for all three",
+  "one_click_json": {
+    "bundle": true,
+    "personas": ["claudia", "chen", "adrian"],
+    "workflow": {
+      "step_1": "Claudia plans and scopes the project",
+      "step_2": "Adrian designs UX and writes copy",
+      "step_3": "Chen develops the solution",
+      "step_4": "Claudia reviews and delivers"
+    }
+  },
+  "tags": ["bundle", "team", "complete", "workflow"],
+  "version": "1.0.0",
+  "compatibility": ["openclaw-1.0+"],
+  "savings_cents": 5800
+}
