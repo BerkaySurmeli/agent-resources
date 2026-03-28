@@ -132,3 +132,12 @@ class Review(SQLModel, table=True):
     # Relationships
     user: Optional[User] = Relationship(back_populates="reviews")
     product: Product = Relationship(back_populates="reviews")
+
+# 7. WAITLIST
+class WaitlistEntry(SQLModel, table=True):
+    __tablename__ = "waitlist"
+    
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    email: str = Field(unique=True, index=True)
+    source: str = Field(default="website")  # where they signed up
+    created_at: datetime = Field(default_factory=datetime.utcnow)

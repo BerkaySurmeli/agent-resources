@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import create_engine
 from core.config import settings
 from models import SQLModel
+from routes import waitlist
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,6 +21,18 @@ app = FastAPI(
     description="Backend for MCP Server & Persona Distribution",
     lifespan=lifespan
 )
+
+# CORS for frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://shopagentresources.com", "http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Routes
+app.include_router(waitlist.router)
 
 @app.get("/health")
 async def health():
