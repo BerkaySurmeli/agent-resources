@@ -1,0 +1,24 @@
+# Agent Resources
+
+node_modules/
+.next/
+.env
+.env.local
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.log
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
