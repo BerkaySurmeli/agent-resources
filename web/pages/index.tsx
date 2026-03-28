@@ -1,219 +1,408 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+
+// Simple icon components
+const Icon = ({ name, className }: { name: string; className?: string }) => {
+  const icons: Record<string, JSX.Element> = {
+    shield: (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+      </svg>
+    ),
+    bolt: (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+      </svg>
+    ),
+    beaker: (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+      </svg>
+    ),
+    code: (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+      </svg>
+    ),
+    users: (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+      </svg>
+    ),
+    robot: (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    arrowRight: (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+      </svg>
+    ),
+    check: (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 12.75l6 6 9-13.5" />
+      </svg>
+    ),
+  };
+  return icons[name] || null;
+};
+
+// Fade in animation component
+const FadeIn = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(true), delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
+  return (
+    <div className={`transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+      {children}
+    </div>
+  );
+};
+
+// AR Logo component
+const Logo = ({ className = '' }: { className?: string }) => (
+  <div className={`flex items-center gap-3 ${className}`}>
+    <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+      <span className="text-white font-bold text-lg">AR</span>
+    </div>
+    <span className="font-semibold text-slate-900">Agent Resources</span>
+  </div>
+);
 
 export default function Home() {
+  const [email, setEmail] = useState('');
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-white">
       <Head>
-        <title>Agent Resources | The Marketplace for AI Agents</title>
-        <meta name="description" content="Buy and sell MCP Servers, Agent Skills, and AI Personas. Verified, tested, and ready to deploy." />
+        <title>Agent Resources | The Trusted Marketplace for AI Agents</title>
+        <meta name="description" content="Buy and sell verified MCP Servers, Agent Skills, and AI Personas. Tested, trusted, ready to deploy." />
       </Head>
 
       {/* Navigation */}
-      <nav className="border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center">
-              <span className="text-xl font-bold">Agent Resources</span>
-            </div>
-            <div className="flex space-x-8">
-              <Link href="/blog" className="text-gray-300 hover:text-white">Blog</Link>
-              <a href="https://api.shopagentresources.com/health" className="text-gray-300 hover:text-white">API Status</a>
-            </div>
+      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Logo />
+          <div className="flex items-center gap-8">
+            <Link href="/blog" className="text-slate-600 hover:text-slate-900 transition-colors">Blog</Link>
+            <a href="https://api.shopagentresources.com/health" className="text-slate-600 hover:text-slate-900 transition-colors">Status</a>
+            <button className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+              Get Early Access
+            </button>
           </div>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="pt-20 pb-16 text-center px-4">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">
-            The Marketplace for
-            <span className="text-blue-400"> AI Agents</span>
-          </h1>
-          <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-            Buy and sell MCP Servers, Agent Skills, and AI Personas. 
-            Verified, tested, and ready to deploy with one-click installation.
-          </p>
-          <div className="flex justify-center gap-4">
-            <button className="bg-blue-500 hover:bg-blue-600 px-8 py-3 rounded-lg font-semibold">
-              Browse Agents
-            </button>
-            <button className="border border-gray-600 hover:border-gray-500 px-8 py-3 rounded-lg font-semibold">
-              Sell Your Agent
-            </button>
-          </div>
-        </div>
-      </section>
+      <section className="pt-32 pb-20 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <FadeIn>
+            <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-sm font-medium mb-8">
+              <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
+              Building in public — follow our journey
+            </span>
+          </FadeIn>
+          
+          <FadeIn delay={100}>
+            <h1 className="text-5xl md:text-6xl font-semibold text-slate-900 tracking-tight mb-6">
+              The trusted marketplace
+              <br />
+              <span className="text-blue-600">for AI agents</span>
+            </h1>
+          </FadeIn>
+          
+          <FadeIn delay={200}>
+            <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
+              Buy and sell MCP Servers, Agent Skills, and AI Personas. 
+              Every agent is verified and tested before listing.
+            </p>
+          </FadeIn>
+          
+          <FadeIn delay={300}>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button className="bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 transition-all hover:scale-105 flex items-center justify-center gap-2">
+                Browse Agents
+                <Icon name="arrowRight" className="w-4 h-4" />
+              </button>
+              <button className="bg-slate-100 text-slate-700 px-8 py-4 rounded-xl font-medium hover:bg-slate-200 transition-colors">
+                Sell Your Agent
+              </button>
+            </div>
+          </FadeIn>
 
-      {/* Coming Soon Banner */}
-      <section className="bg-blue-900/30 border-y border-blue-800">
-        <div className="max-w-7xl mx-auto px-4 py-12 text-center">
-          <span className="bg-blue-500 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
-            Coming Soon
-          </span>
-          <h2 className="text-3xl font-bold mt-4 mb-4">We're Building in Public</h2>
-          <p className="text-gray-400 max-w-2xl mx-auto">
-            Follow our journey as we build the most trusted marketplace for AI agents. 
-            First 100 developers get free listings forever.
-          </p>
+          <FadeIn delay={400}>
+            <div className="mt-16 flex items-center justify-center gap-8 text-slate-400">
+              <div className="flex items-center gap-2">
+                <Icon name="check" className="w-5 h-5 text-green-500" />
+                <span className="text-sm">Verified & Tested</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Icon name="check" className="w-5 h-5 text-green-500" />
+                <span className="text-sm">One-Click Install</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Icon name="check" className="w-5 h-5 text-green-500" />
+                <span className="text-sm">Try Before You Buy</span>
+              </div>
+            </div>
+          </FadeIn>
         </div>
       </section>
 
       {/* Features */}
-      <section className="py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">What We're Building</h2>
+      <section className="py-24 bg-slate-50">
+        <div className="max-w-6xl mx-auto px-6">
+          <FadeIn>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-semibold text-slate-900 mb-4">Why Agent Resources?</h2>
+              <p className="text-slate-600 max-w-2xl mx-auto">
+                We're solving the trust problem in AI agent marketplaces. No more prompt junk. No more broken tools.
+              </p>
+            </div>
+          </FadeIn>
+
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-gray-800 p-6 rounded-lg">
-              <div className="text-3xl mb-4">🔍</div>
-              <h3 className="text-xl font-semibold mb-2">Verified & Tested</h3>
-              <p className="text-gray-400">
-                Every agent is automatically tested in our sandbox before listing. 
-                No more prompt junk — only working, reliable agents.
+            <FadeIn delay={100}>
+              <div className="bg-white p-8 rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all group">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors">
+                  <Icon name="shield" className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 mb-3">Verified & Tested</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  Every agent runs through our automated sandbox before listing. We verify it works so you don't have to.
+                </p>
+              </div>
+            </FadeIn>
+
+            <FadeIn delay={200}>
+              <div className="bg-white p-8 rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all group">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors">
+                  <Icon name="bolt" className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 mb-3">One-Click Install</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  Zero technical knowledge required. Copy, paste, and your agent is live. Built for everyone.
+                </p>
+              </div>
+            </FadeIn>
+
+            <FadeIn delay={300}>
+              <div className="bg-white p-8 rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all group">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors">
+                  <Icon name="beaker" className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 mb-3">Try Before You Buy</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  Test any agent in our sandbox before purchasing. See exactly what you're getting.
+                </p>
+              </div>
+            </FadeIn>
+          </div>
+        </div>
+      </section>
+
+      {/* Product Tiers */}
+      <section className="py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <FadeIn>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-semibold text-slate-900 mb-4">What You Can Build & Sell</h2>
+              <p className="text-slate-600 max-w-2xl mx-auto">
+                Three tiers of products for different skill levels and use cases.
               </p>
             </div>
-            <div className="bg-gray-800 p-6 rounded-lg">
-              <div className="text-3xl mb-4">⚡</div>
-              <h3 className="text-xl font-semibold mb-2">One-Click Install</h3>
-              <p className="text-gray-400">
-                Zero technical knowledge required. Copy, paste, and your agent is live. 
-                Built for the "No-Tech" crowd.
-              </p>
-            </div>
-            <div className="bg-gray-800 p-6 rounded-lg">
-              <div className="text-3xl mb-4">🧪</div>
-              <h3 className="text-xl font-semibold mb-2">Try Before You Buy</h3>
-              <p className="text-gray-400">
-                Test any agent in our sandbox before purchasing. 
-                See exactly what you're getting.
-              </p>
-            </div>
+          </FadeIn>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <FadeIn delay={100}>
+              <div className="border border-slate-200 rounded-2xl p-8 hover:border-blue-300 transition-colors">
+                <div className="w-10 h-10 bg-slate-900 rounded-lg flex items-center justify-center mb-6">
+                  <Icon name="code" className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 mb-3">MCP Servers</h3>
+                <p className="text-slate-600 mb-4">
+                  Infrastructure that lets agents talk to external systems. QuickBooks, Slack, Google Sheets, databases.
+                </p>
+                <span className="text-sm text-slate-500">For developers & power users</span>
+              </div>
+            </FadeIn>
+
+            <FadeIn delay={200}>
+              <div className="border border-slate-200 rounded-2xl p-8 hover:border-blue-300 transition-colors">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mb-6">
+                  <Icon name="robot" className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 mb-3">Agent Skills</h3>
+                <p className="text-slate-600 mb-4">
+                  Training manuals and workflows. The prompts, logic, and knowledge an agent needs for specific tasks.
+                </p>
+                <span className="text-sm text-slate-500">For business users</span>
+              </div>
+            </FadeIn>
+
+            <FadeIn delay={300}>
+              <div className="border border-slate-200 rounded-2xl p-8 hover:border-blue-300 transition-colors">
+                <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center mb-6">
+                  <Icon name="users" className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 mb-3">Personas</h3>
+                <p className="text-slate-600 mb-4">
+                  Complete digital workers. Pre-configured agents with skills, personality, and knowledge base included.
+                </p>
+                <span className="text-sm text-slate-500">For beginners</span>
+              </div>
+            </FadeIn>
           </div>
         </div>
       </section>
 
       {/* For Developers */}
-      <section className="py-20 px-4 bg-gray-800/50">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold mb-4">For Developers</h2>
-              <p className="text-gray-400 mb-6">
-                Build MCP Servers, Agent Skills, and Personas. Sell them to thousands of users.
-              </p>
-              <ul className="space-y-3 text-gray-300">
-                <li className="flex items-center">
-                  <span className="text-green-400 mr-2">✓</span>
-                  First 100 developers: <strong>Free listing forever</strong>
-                </li>
-                <li className="flex items-center">
-                  <span className="text-green-400 mr-2">✓</span>
-                  Only 15% commission on sales (free items = 0%)
-                </li>
-                <li className="flex items-center">
-                  <span className="text-green-400 mr-2">✓</span>
-                  Automatic testing & verification
-                </li>
-                <li className="flex items-center">
-                  <span className="text-green-400 mr-2">✓</span>
-                  Stripe Connect for easy payouts
-                </li>
-              </ul>
-            </div>
-            <div className="bg-gray-800 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold mb-4">What You Can Sell</h3>
-              <div className="space-y-4">
-                <div className="border-l-4 border-blue-500 pl-4">
-                  <h4 className="font-semibold">MCP Servers</h4>
-                  <p className="text-sm text-gray-400">Infrastructure for agents to talk to Google Sheets, Slack, databases</p>
+      <section className="py-24 bg-slate-900 text-white">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-16 items-center">
+            <FadeIn>
+              <div>
+                <h2 className="text-3xl font-semibold mb-6">Built for Developers</h2>
+                <p className="text-slate-400 mb-8 text-lg">
+                  Create MCP Servers, Agent Skills, and Personas. Sell them to thousands of users.
+                </p>
+                <ul className="space-y-4">
+                  <li className="flex items-center gap-3">
+                    <Icon name="check" className="w-5 h-5 text-green-400 flex-shrink-0" />
+                    <span>First 100 developers: <strong className="text-white">Free listing forever</strong></span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <Icon name="check" className="w-5 h-5 text-green-400 flex-shrink-0" />
+                    <span>Only 15% commission (free items = 0%)</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <Icon name="check" className="w-5 h-5 text-green-400 flex-shrink-0" />
+                    <span>Automatic testing & verification</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <Icon name="check" className="w-5 h-5 text-green-400 flex-shrink-0" />
+                    <span>Stripe Connect for easy payouts</span>
+                  </li>
+                </ul>
+              </div>
+            </FadeIn>
+
+            <FadeIn delay={200}>
+              <div className="bg-slate-800 rounded-2xl p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-slate-400">Commission</span>
+                  <span className="text-3xl font-bold text-blue-400">15%</span>
                 </div>
-                <div className="border-l-4 border-green-500 pl-4">
-                  <h4 className="font-semibold">Agent Skills</h4>
-                  <p className="text-sm text-gray-400">Training manuals and workflows for specific tasks</p>
+                <div className="h-px bg-slate-700 mb-6" />
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-slate-400">Free Items</span>
+                  <span className="text-3xl font-bold text-green-400">0%</span>
                 </div>
-                <div className="border-l-4 border-purple-500 pl-4">
-                  <h4 className="font-semibold">Personas</h4>
-                  <p className="text-sm text-gray-400">Complete digital workers ready to deploy</p>
+                <div className="h-px bg-slate-700 mb-6" />
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">First 100 Devs</span>
+                  <span className="text-lg font-semibold text-white">Free Forever</span>
                 </div>
               </div>
-            </div>
+            </FadeIn>
           </div>
         </div>
       </section>
 
       {/* Blog Preview */}
-      <section className="py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold">Building in Public</h2>
-            <Link href="/blog" className="text-blue-400 hover:text-blue-300">
-              View all posts →
-            </Link>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            <article className="bg-gray-800 rounded-lg overflow-hidden">
-              <div className="p-6">
-                <span className="text-xs text-gray-500">March 27, 2026</span>
-                <h3 className="text-lg font-semibold mt-2 mb-2">Hello World: We're Live</h3>
-                <p className="text-gray-400 text-sm">
-                  Agent Resources is officially deployed. Here's what we built in 24 hours and what's next.
-                </p>
+      <section className="py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <FadeIn>
+            <div className="flex items-center justify-between mb-12">
+              <div>
+                <h2 className="text-3xl font-semibold text-slate-900 mb-2">Building in Public</h2>
+                <p className="text-slate-600">Follow our journey as we build the marketplace for AI agents.</p>
               </div>
-            </article>
-            <article className="bg-gray-800 rounded-lg overflow-hidden">
-              <div className="p-6">
-                <span className="text-xs text-gray-500">Coming Soon</span>
-                <h3 className="text-lg font-semibold mt-2 mb-2">The Verification Sandbox</h3>
-                <p className="text-gray-400 text-sm">
+              <Link href="/blog" className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2">
+                View all posts
+                <Icon name="arrowRight" className="w-4 h-4" />
+              </Link>
+            </div>
+          </FadeIn>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <FadeIn delay={100}>
+              <Link href="/blog/hello-world" className="group block">
+                <article className="border border-slate-200 rounded-2xl p-6 hover:border-blue-300 hover:shadow-lg transition-all h-full">
+                  <span className="text-sm text-slate-500">March 27, 2026</span>
+                  <h3 className="text-lg font-semibold text-slate-900 mt-2 mb-3 group-hover:text-blue-600 transition-colors">
+                    Hello World: We're Live
+                  </h3>
+                  <p className="text-slate-600 text-sm">
+                    Agent Resources is officially deployed. Here's what we built in 24 hours and what's next.
+                  </p>
+                </article>
+              </Link>
+            </FadeIn>
+
+            <FadeIn delay={200}>
+              <article className="border border-slate-200 rounded-2xl p-6 opacity-75">
+                <span className="text-sm text-slate-500">Coming Soon</span>
+                <h3 className="text-lg font-semibold text-slate-900 mt-2 mb-3">
+                  The Verification Sandbox
+                </h3>
+                <p className="text-slate-600 text-sm">
                   How we're building automatic testing for every agent before it hits the marketplace.
                 </p>
-              </div>
-            </article>
-            <article className="bg-gray-800 rounded-lg overflow-hidden">
-              <div className="p-6">
-                <span className="text-xs text-gray-500">Coming Soon</span>
-                <h3 className="text-lg font-semibold mt-2 mb-2">First 100 Developers</h3>
-                <p className="text-gray-400 text-sm">
+              </article>
+            </FadeIn>
+
+            <FadeIn delay={300}>
+              <article className="border border-slate-200 rounded-2xl p-6 opacity-75">
+                <span className="text-sm text-slate-500">Coming Soon</span>
+                <h3 className="text-lg font-semibold text-slate-900 mt-2 mb-3">
+                  First 100 Developers
+                </h3>
+                <p className="text-slate-600 text-sm">
                   Why free listings forever? Our strategy for bootstrapping the supply side.
                 </p>
-              </div>
-            </article>
+              </article>
+            </FadeIn>
           </div>
         </div>
       </section>
 
       {/* Newsletter */}
-      <section className="py-20 px-4 bg-blue-900/20">
+      <section className="py-24 bg-slate-50 px-6">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl font-bold mb-4">Follow Our Journey</h2>
-          <p className="text-gray-400 mb-6">
-            Get updates on new features, behind-the-scenes builds, and early access.
-          </p>
-          <form className="flex gap-2">
-            <input 
-              type="email" 
-              placeholder="Enter your email"
-              className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
-            />
-            <button className="bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-lg font-semibold">
-              Subscribe
-            </button>
-          </form>
+          <FadeIn>
+            <h2 className="text-3xl font-semibold text-slate-900 mb-4">Follow Our Journey</h2>
+            <p className="text-slate-600 mb-8">
+              Get updates on new features, behind-the-scenes builds, and early access.
+            </p>
+            <form className="flex flex-col sm:flex-row gap-3" onSubmit={(e) => e.preventDefault()}>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="flex-1 px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+              <button className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors">
+                Subscribe
+              </button>
+            </form>
+          </FadeIn>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-800 py-12 px-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div>
-            <span className="font-bold">Agent Resources</span>
-            <p className="text-gray-500 text-sm">The marketplace for AI agents</p>
-          </div>
-          <div className="flex space-x-6 text-gray-400">
-            <Link href="/blog" className="hover:text-white">Blog</Link>
-            <a href="https://twitter.com" className="hover:text-white">Twitter</a>
-            <a href="https://github.com/BerkaySurmeli/agent-resources" className="hover:text-white">GitHub</a>
+      <footer className="py-12 px-6 border-t border-slate-200">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+          <Logo />
+          <div className="flex items-center gap-6 text-slate-600">
+            <Link href="/blog" className="hover:text-slate-900 transition-colors">Blog</Link>
+            <a href="https://twitter.com" className="hover:text-slate-900 transition-colors">Twitter</a>
+            <a href="https://github.com/BerkaySurmeli/agent-resources" className="hover:text-slate-900 transition-colors">GitHub</a>
           </div>
         </div>
       </footer>
