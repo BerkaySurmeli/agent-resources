@@ -110,23 +110,39 @@ We do not warrant that:
 
 TO THE MAXIMUM EXTENT PERMITTED BY LAW, AGENT RESOURCES LLC, ITS OFFICERS, DIRECTORS, EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS, REVENUE, DATA, OR GOODWILL, ARISING OUT OF OR RELATED TO YOUR USE OF THE PLATFORM OR ANY LISTING.
 
+**OUR TOTAL AGGREGATE LIABILITY FOR ANY CLAIMS ARISING OUT OF OR RELATED TO THESE TERMS OR THE PLATFORM SHALL NOT EXCEED THE GREATER OF (A) THE AMOUNT YOU PAID US IN THE 12 MONTHS PRECEDING THE CLAIM, OR (B) $100 USD.**
+
 ## 11. Indemnification
 
-You agree to indemnify and hold harmless Agent Resources LLC from any claims, damages, or expenses arising from your use of the platform or violation of these terms.
+You agree to indemnify and hold harmless Agent Resources LLC and its officers, directors, employees, and agents from any claims, damages, losses, liabilities, and expenses (including reasonable attorney's fees) arising out of or related to: (a) your use of the platform; (b) your violation of these Terms; (c) any Listing you create or publish; or (d) your violation of any third-party rights.
 
-## 12. Modifications
+## 12. Prohibited Conduct
 
-We may modify these terms at any time. Continued use of the platform after changes constitutes acceptance of the modified terms.
+You may not:
+- Upload malicious code, harmful payloads, or content designed to damage systems or data
+- Impersonate real people, brands, or organizations without authorization
+- Publish stolen, plagiarized, or unlicensed content
+- Attempt to circumvent platform security, payment systems, or access controls
+- Use the platform for any illegal purpose
+- Manipulate reviews, ratings, or download counts
+- Create multiple accounts to circumvent restrictions
 
-## 13. Governing Law
+## 13. Termination
 
-These terms are governed by the laws of the State of California, without regard to conflict of law principles.
+We may suspend or terminate your account at any time, with or without cause, with or without notice. Upon termination, your right to use the platform ceases immediately. Sections 8 through 11 survive termination.
 
-## 14. Contact
+## 14. Modifications
+
+We may update these Terms at any time. Material changes will be communicated via the platform or email. Continued use after changes constitutes acceptance.
+
+## 15. Governing Law
+
+These Terms are governed by and construed in accordance with the laws of the State of California, without regard to conflict of law principles. Any disputes shall be resolved in the state or federal courts located in California.
+
+## 16. Contact
 
 For questions about these terms, contact us at:
 - Email: support@shopagentresources.com
-- Address: [Your Business Address]
 
 ---
 

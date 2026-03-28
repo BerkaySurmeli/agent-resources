@@ -208,34 +208,66 @@ export default function Terms() {
                 consequential, or punitive damages, or any loss of profits, revenue, data, or goodwill, 
                 arising out of or related to your use of the platform or any listing.
               </p>
+              <p className="text-slate-600 mt-4 font-semibold">
+                Our total aggregate liability for any claims arising out of or related to these terms 
+                or the platform shall not exceed the greater of (a) the amount you paid us in the 
+                12 months preceding the claim, or (b) $100 USD.
+              </p>
             </section>
 
             <section className="mb-8">
               <h2 className="text-2xl font-semibold text-slate-900 mb-4">11. Indemnification</h2>
               <p className="text-slate-600">
-                You agree to indemnify and hold harmless Agent Resources LLC from any claims, damages, 
-                or expenses arising from your use of the platform or violation of these terms.
+                You agree to indemnify and hold harmless Agent Resources LLC and its officers, directors, 
+                employees, and agents from any claims, damages, losses, liabilities, and expenses 
+                (including reasonable attorney's fees) arising out of or related to: (a) your use of 
+                the platform; (b) your violation of these Terms; (c) any Listing you create or publish; 
+                or (d) your violation of any third-party rights.
               </p>
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-slate-900 mb-4">12. Modifications</h2>
+              <h2 className="text-2xl font-semibold text-slate-900 mb-4">12. Prohibited Conduct</h2>
+              <p className="text-slate-600">You may not:</p>
+              <ul className="list-disc list-inside text-slate-600 space-y-2 mt-2">
+                <li>Upload malicious code, harmful payloads, or content designed to damage systems or data</li>
+                <li>Impersonate real people, brands, or organizations without authorization</li>
+                <li>Publish stolen, plagiarized, or unlicensed content</li>
+                <li>Attempt to circumvent platform security, payment systems, or access controls</li>
+                <li>Use the platform for any illegal purpose</li>
+                <li>Manipulate reviews, ratings, or download counts</li>
+                <li>Create multiple accounts to circumvent restrictions</li>
+              </ul>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-slate-900 mb-4">13. Termination</h2>
               <p className="text-slate-600">
-                We may modify these terms at any time. Continued use of the platform after changes 
-                constitutes acceptance of the modified terms.
+                We may suspend or terminate your account at any time, with or without cause, with or 
+                without notice. Upon termination, your right to use the platform ceases immediately. 
+                Sections 8 through 11 survive termination.
               </p>
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-slate-900 mb-4">13. Governing Law</h2>
+              <h2 className="text-2xl font-semibold text-slate-900 mb-4">14. Modifications</h2>
               <p className="text-slate-600">
-                These terms are governed by the laws of the State of California, without regard to 
-                conflict of law principles.
+                We may update these Terms at any time. Material changes will be communicated via the 
+                platform or email. Continued use after changes constitutes acceptance.
               </p>
             </section>
 
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-slate-900 mb-4">14. Contact</h2>
+              <h2 className="text-2xl font-semibold text-slate-900 mb-4">15. Governing Law</h2>
+              <p className="text-slate-600">
+                These Terms are governed by and construed in accordance with the laws of the State 
+                of California, without regard to conflict of law principles. Any disputes shall be 
+                resolved in the state or federal courts located in California.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-slate-900 mb-4">16. Contact</h2>
               <p className="text-slate-600">
                 For questions about these terms, contact us at:
               </p>
