@@ -212,12 +212,10 @@ export default function Browse() {
                     {categories.find(c => c.id === listing.category)?.name}
                   </span>
                   {listing.verified && (
-                    <div className="flex items-center gap-1.5 bg-slate-900 text-white text-xs font-bold px-2.5 py-1 rounded-lg">
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M12 2l2.5 6.5L21 9.5l-5 4.5 1.5 6.5-6-3.5-6 3.5 1.5-6.5-5-4.5 6.5-1L12 2z" strokeLinecap="round" strokeLinejoin="round"/>
+                    <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full border-2 border-white shadow-lg">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                        <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
-                      Verified
                     </div>
                   )}
                 </div>
