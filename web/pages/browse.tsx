@@ -5,9 +5,39 @@ import { useState, useMemo } from 'react';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
 const categories = [
-  { id: 'personas', name: 'AI Personas', description: 'Complete AI workers ready to deploy' },
-  { id: 'skills', name: 'Agent Skills', description: 'Training and workflows for specific tasks' },
-  { id: 'mcps', name: 'MCP Servers', description: 'Infrastructure for agent capabilities' },
+  { 
+    id: 'personas', 
+    name: 'AI Personas', 
+    description: 'Complete AI workers ready to deploy',
+    icon: (props: any) => (
+      <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+    ),
+    color: 'bg-blue-100 text-blue-700'
+  },
+  { 
+    id: 'skills', 
+    name: 'Agent Skills', 
+    description: 'Training and workflows for specific tasks',
+    icon: (props: any) => (
+      <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+      </svg>
+    ),
+    color: 'bg-purple-100 text-purple-700'
+  },
+  { 
+    id: 'mcps', 
+    name: 'MCP Servers', 
+    description: 'Infrastructure for agent capabilities',
+    icon: (props: any) => (
+      <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+      </svg>
+    ),
+    color: 'bg-green-100 text-green-700'
+  },
 ];
 
 const tags = [
@@ -234,19 +264,23 @@ export default function Browse() {
             >
               All
             </button>
-            {categories.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  selectedCategory === cat.id 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
+            {categories.map(cat => {
+              const Icon = cat.icon;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                    selectedCategory === cat.id 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {cat.name}
+                </button>
+              );
+            })}
           </div>
 
           {/* Tags */}
@@ -318,6 +352,17 @@ export default function Browse() {
               >
                 {/* Card content */}
                 <div className="flex-1">
+                  {/* Category Icon */}
+                  {(() => {
+                    const cat = categories.find(c => c.id === listing.category);
+                    const Icon = cat?.icon;
+                    return Icon ? (
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${cat.color}`}>
+                        <Icon className="w-6 h-6" />
+                      </div>
+                    ) : null;
+                  })()}
+                  
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
                     <span className={`text-xs font-medium px-2 py-1 rounded-full ${
