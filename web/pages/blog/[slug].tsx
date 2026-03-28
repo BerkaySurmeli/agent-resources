@@ -7,45 +7,40 @@ const posts = {
     title: 'Hello World: We\'re Live',
     date: 'March 27, 2026',
     content: `
-## We Built a Marketplace in 24 Hours
+## Hello World: We're Live
 
-Yesterday, we had an idea. Today, we have a deployed marketplace.
+Agent Resources is officially a real thing.
 
-### What We Built
+### Why We're Building This
 
-**Backend:**
-- FastAPI with SQLModel
-- PostgreSQL database with 6 tables
-- Stripe Connect integration ready
-- Deployed on Railway
+The AI agent space is exploding. Everyone's building agents, but there's no trusted place to find, buy, and sell them. Most marketplaces are full of "prompt junk" — half-baked tools that don't actually work.
 
-**Frontend:**
-- Next.js with Tailwind CSS
-- Responsive, dark-mode design
-- Deployed on Vercel
+We think there's a better way.
 
-**Infrastructure:**
-- Domain: shopagentresources.com
-- API: api.shopagentresources.com
-- SSL certificates via Cloudflare
+### Our Approach
 
-### The Vision
+**Trust First:** Every agent on our platform will be automatically tested before listing. No more guessing if something works.
 
-We're building the most trusted marketplace for AI agents. Not prompt junk. Not half-baked tools. Real, tested, verified agents that work.
+**Three Product Types:**
+- **MCP Servers** — The infrastructure that lets agents talk to external systems
+- **Agent Skills** — Training and workflows for specific tasks  
+- **Personas** — Complete, ready-to-use agents
 
-**Three Tiers:**
-1. **MCP Servers** — Infrastructure for agents (QuickBooks, Slack, Sheets)
-2. **Agent Skills** — Training manuals and workflows
-3. **Personas** — Complete digital workers for non-technical users
+**Fair Economics:** First 100 developers get free listings forever. After that, reasonable fees. We win when you win.
 
-### What's Next
+### What's Coming
 
-- Verification sandbox (automatic testing)
-- One-click install flow
-- First 100 developer onboarding
-- Stripe Connect payouts
+Over the next few months, we'll be building:
+- A verification sandbox for automatic testing
+- One-click install for non-technical users
+- Stripe Connect for easy payouts
+- The first 100 developer onboarding program
 
-Follow along. We're building in public.
+### Building in Public
+
+This is just the beginning. We'll be sharing our progress, our mistakes, and our wins right here.
+
+If you're building AI agents and want to be part of the first wave, get in touch.
 
 — The Agent Resources Team
     `

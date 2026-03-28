@@ -79,8 +79,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       <Head>
-        <title>Agent Resources | Hire Your First AI Employee</title>
-        <meta name="description" content="The AR department for the AI age. Hire digital employees, train them with skills, and give them the tools to work." />
+        <title>Agent Resources | The Marketplace for AI Agents</title>
+        <meta name="description" content="Buy and sell MCP Servers, Agent Skills, and AI Personas. Verified, tested, and ready to deploy." />
       </Head>
 
       {/* Navigation */}
@@ -103,34 +103,35 @@ export default function Home() {
           <FadeIn>
             <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-sm font-medium mb-8">
               <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
-              Your AR, not your HR
+              Coming Soon — Join the Waitlist
             </span>
           </FadeIn>
           
           <FadeIn delay={100}>
             <h1 className="text-5xl md:text-6xl font-semibold text-slate-900 tracking-tight mb-6">
-              Hire your first
+              The marketplace for
               <br />
-              <span className="text-blue-600">AI employee</span>
+              <span className="text-blue-600">AI agents</span>
             </h1>
           </FadeIn>
           
           <FadeIn delay={200}>
             <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-              The AR department for the AI age. Hire digital employees, 
-              train them with skills, and give them the tools to get work done.
+              Buy and sell MCP Servers, Agent Skills, and AI Personas. 
+              Every agent is verified and tested before listing.
             </p>
           </FadeIn>
           
           <FadeIn delay={300}>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 transition-all hover:scale-105 flex items-center justify-center gap-2">
-                Hire an AI Employee
-                <Icon name="arrowRight" className="w-4 h-4" />
-              </button>
-              <button className="bg-slate-100 text-slate-700 px-8 py-4 rounded-xl font-medium hover:bg-slate-200 transition-colors">
-                List Your AI Worker
-              </button>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <div className="bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl px-8 py-4 text-slate-500">
+                  Browse Agents (Coming Soon)
+                </div>
+                <div className="bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl px-8 py-4 text-slate-500">
+                  Sell Your Agent (Coming Soon)
+                </div>
+              </div>
             </div>
           </FadeIn>
 
@@ -210,9 +211,9 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <FadeIn>
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-semibold text-slate-900 mb-4">Your AI Workforce</h2>
+              <h2 className="text-3xl font-semibold text-slate-900 mb-4">What You'll Find Here</h2>
               <p className="text-slate-600 max-w-2xl mx-auto">
-                Everything you need to hire, train, and equip digital employees.
+                Three types of products for building and extending AI agents.
               </p>
             </div>
           </FadeIn>
@@ -223,11 +224,11 @@ export default function Home() {
                 <div className="w-10 h-10 bg-slate-900 rounded-lg flex items-center justify-center mb-6">
                   <Icon name="code" className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-3">Tools & Access</h3>
+                <h3 className="text-xl font-semibold text-slate-900 mb-3">MCP Servers</h3>
                 <p className="text-slate-600 mb-4">
-                  Give your AI employees access to the systems they need. QuickBooks, Slack, Google Sheets, databases.
+                  Infrastructure that lets agents talk to external systems. QuickBooks, Slack, Google Sheets, databases.
                 </p>
-                <span className="text-sm text-slate-500">The tools they use to work</span>
+                <span className="text-sm text-slate-500">For developers & power users</span>
               </div>
             </FadeIn>
 
@@ -236,11 +237,11 @@ export default function Home() {
                 <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mb-6">
                   <Icon name="robot" className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-3">Training & Skills</h3>
+                <h3 className="text-xl font-semibold text-slate-900 mb-3">Agent Skills</h3>
                 <p className="text-slate-600 mb-4">
-                  Train your AI employees for specific tasks. The knowledge, workflows, and expertise they need to succeed.
+                  Training manuals and workflows. The prompts, logic, and knowledge an agent needs for specific tasks.
                 </p>
-                <span className="text-sm text-slate-500">Onboarding for digital workers</span>
+                <span className="text-sm text-slate-500">For business users</span>
               </div>
             </FadeIn>
 
@@ -249,11 +250,11 @@ export default function Home() {
                 <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center mb-6">
                   <Icon name="users" className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-3">Digital Employees</h3>
+                <h3 className="text-xl font-semibold text-slate-900 mb-3">Personas</h3>
                 <p className="text-slate-600 mb-4">
-                  Ready-to-hire AI workers. Pre-trained, fully equipped, and ready to start on day one. Just add to your team.
+                  Complete digital workers. Pre-configured agents with skills, personality, and knowledge base included.
                 </p>
-                <span className="text-sm text-slate-500">Hire complete AI employees</span>
+                <span className="text-sm text-slate-500">For beginners</span>
               </div>
             </FadeIn>
           </div>
@@ -266,14 +267,14 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <FadeIn>
               <div>
-                <h2 className="text-3xl font-semibold mb-6">For Creators & Developers</h2>
+                <h2 className="text-3xl font-semibold mb-6">Built for Developers</h2>
                 <p className="text-slate-400 mb-8 text-lg">
-                  Build AI employees, training programs, and workplace tools. List them for thousands of companies to hire.
+                  Create MCP Servers, Agent Skills, and Personas. Sell them to thousands of users.
                 </p>
                 <ul className="space-y-4">
                   <li className="flex items-center gap-3">
                     <Icon name="check" className="w-5 h-5 text-green-400 flex-shrink-0" />
-                    <span>First 100 creators: <strong className="text-white">Free to list forever</strong></span>
+                    <span>First 100 developers: <strong className="text-white">Free listing forever</strong></span>
                   </li>
                   <li className="flex items-center gap-3">
                     <Icon name="check" className="w-5 h-5 text-green-400 flex-shrink-0" />
