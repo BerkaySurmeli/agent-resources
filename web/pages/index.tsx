@@ -166,7 +166,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-3 gap-8">
             <FadeIn delay={100}>
-              <Link href="/products" className="group block">
+              <Link href="/products/claudia-project-manager" className="group block">
                 <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full">
                   <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center mb-6">
                     <span className="text-white font-bold text-xl">C</span>
@@ -183,7 +183,7 @@ export default function Home() {
             </FadeIn>
 
             <FadeIn delay={200}>
-              <Link href="/products" className="group block">
+              <Link href="/products/chen-developer" className="group block">
                 <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full">
                   <div className="w-14 h-14 bg-slate-900 rounded-xl flex items-center justify-center mb-6">
                     <span className="text-white font-bold text-xl">C</span>
@@ -200,7 +200,7 @@ export default function Home() {
             </FadeIn>
 
             <FadeIn delay={300}>
-              <Link href="/products" className="group block">
+              <Link href="/products/adrian-ux-designer" className="group block">
                 <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full">
                   <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center mb-6">
                     <span className="text-white font-bold text-xl">A</span>
@@ -230,7 +230,7 @@ export default function Home() {
                     <span className="text-slate-500 line-through ml-2">$157</span>
                   </div>
                   <Link 
-                    href="/products" 
+                    href="/products/dream-team-bundle" 
                     className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
                   >
                     View Bundle
