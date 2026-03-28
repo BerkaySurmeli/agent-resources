@@ -74,7 +74,16 @@ const Logo = ({ className = '' }: { className?: string }) => (
 );
 
 export default function Home() {
+  const [showWaitlist, setShowWaitlist] = useState(false);
   const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: Store email for waitlist
+    setSubmitted(true);
+    setEmail('');
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -89,9 +98,11 @@ export default function Home() {
           <Logo />
           <div className="flex items-center gap-8">
             <Link href="/blog" className="text-slate-600 hover:text-slate-900 transition-colors">Blog</Link>
-            <a href="https://api.shopagentresources.com/health" className="text-slate-600 hover:text-slate-900 transition-colors">Status</a>
-            <button className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
-              Get Early Access
+            <button 
+              onClick={() => setShowWaitlist(true)}
+              className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors"
+            >
+              Join Waitlist
             </button>
           </div>
         </div>
@@ -103,7 +114,7 @@ export default function Home() {
           <FadeIn>
             <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-sm font-medium mb-8">
               <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
-              Coming Soon — Join the Waitlist
+              First 500 developers list free forever
             </span>
           </FadeIn>
           
@@ -123,16 +134,12 @@ export default function Home() {
           </FadeIn>
           
           <FadeIn delay={300}>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <div className="bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl px-8 py-4 text-slate-500">
-                  Browse Agents (Coming Soon)
-                </div>
-                <div className="bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl px-8 py-4 text-slate-500">
-                  Sell Your Agent (Coming Soon)
-                </div>
-              </div>
-            </div>
+            <button 
+              onClick={() => setShowWaitlist(true)}
+              className="bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 transition-all hover:scale-105"
+            >
+              Join the Waitlist
+            </button>
           </FadeIn>
 
           <FadeIn delay={400}>
@@ -274,7 +281,7 @@ export default function Home() {
                 <ul className="space-y-4">
                   <li className="flex items-center gap-3">
                     <Icon name="check" className="w-5 h-5 text-green-400 flex-shrink-0" />
-                    <span>First 100 developers: <strong className="text-white">Free listing forever</strong></span>
+                    <span>First 500 developers: <strong className="text-white">Free listing forever</strong></span>
                   </li>
                   <li className="flex items-center gap-3">
                     <Icon name="check" className="w-5 h-5 text-green-400 flex-shrink-0" />
@@ -289,6 +296,12 @@ export default function Home() {
                     <span>Stripe Connect for easy payouts</span>
                   </li>
                 </ul>
+                <button 
+                  onClick={() => setShowWaitlist(true)}
+                  className="mt-8 bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Join the Waitlist
+                </button>
               </div>
             </FadeIn>
 
@@ -305,7 +318,7 @@ export default function Home() {
                 </div>
                 <div className="h-px bg-slate-700 mb-6" />
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">First 100 Devs</span>
+                  <span className="text-slate-400">First 500 Devs</span>
                   <span className="text-lg font-semibold text-white">Free Forever</span>
                 </div>
               </div>
@@ -330,7 +343,7 @@ export default function Home() {
             </div>
           </FadeIn>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-1 gap-8 max-w-2xl">
             <FadeIn delay={100}>
               <Link href="/blog/hello-world" className="group block">
                 <article className="border border-slate-200 rounded-2xl p-6 hover:border-blue-300 hover:shadow-lg transition-all h-full">
@@ -339,60 +352,12 @@ export default function Home() {
                     Hello World: We're Live
                   </h3>
                   <p className="text-slate-600 text-sm">
-                    Agent Resources is officially deployed. Here's what we built in 24 hours and what's next.
+                    Agent Resources is officially a real thing. Here's why we're building this and what's coming.
                   </p>
                 </article>
               </Link>
             </FadeIn>
-
-            <FadeIn delay={200}>
-              <article className="border border-slate-200 rounded-2xl p-6 opacity-75">
-                <span className="text-sm text-slate-500">Coming Soon</span>
-                <h3 className="text-lg font-semibold text-slate-900 mt-2 mb-3">
-                  The Verification Sandbox
-                </h3>
-                <p className="text-slate-600 text-sm">
-                  How we're building automatic testing for every agent before it hits the marketplace.
-                </p>
-              </article>
-            </FadeIn>
-
-            <FadeIn delay={300}>
-              <article className="border border-slate-200 rounded-2xl p-6 opacity-75">
-                <span className="text-sm text-slate-500">Coming Soon</span>
-                <h3 className="text-lg font-semibold text-slate-900 mt-2 mb-3">
-                  First 100 Developers
-                </h3>
-                <p className="text-slate-600 text-sm">
-                  Why free listings forever? Our strategy for bootstrapping the supply side.
-                </p>
-              </article>
-            </FadeIn>
           </div>
-        </div>
-      </section>
-
-      {/* Newsletter */}
-      <section className="py-24 bg-slate-50 px-6">
-        <div className="max-w-2xl mx-auto text-center">
-          <FadeIn>
-            <h2 className="text-3xl font-semibold text-slate-900 mb-4">Follow Our Journey</h2>
-            <p className="text-slate-600 mb-8">
-              Get updates on new features, behind-the-scenes builds, and early access.
-            </p>
-            <form className="flex flex-col sm:flex-row gap-3" onSubmit={(e) => e.preventDefault()}>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              />
-              <button className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors">
-                Subscribe
-              </button>
-            </form>
-          </FadeIn>
         </div>
       </section>
 
@@ -407,6 +372,67 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Waitlist Modal */}
+      {showWaitlist && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full">
+            {!submitted ? (
+              <>
+                <h3 className="text-2xl font-semibold text-slate-900 mb-2">Join the Waitlist</h3>
+                <p className="text-slate-600 mb-6">
+                  Be among the first 500 developers to list for free. We'll notify you when we launch.
+                </p>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowWaitlist(false)}
+                      className="flex-1 px-4 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-4 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                    >
+                      Join Waitlist
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Icon name="check" className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 mb-2">You're on the list!</h3>
+                <p className="text-slate-600 mb-6">We'll email you when Agent Resources launches.</p>
+                <button
+                  onClick={() => {
+                    setShowWaitlist(false);
+                    setSubmitted(false);
+                  }}
+                  className="px-6 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Got it
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
