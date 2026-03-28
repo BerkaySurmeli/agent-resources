@@ -75,14 +75,30 @@ const listings = [
   }
 ];
 
+type SortOption = 'price-low' | 'price-high' | 'name' | 'verified';
+
 export default function Browse() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<SortOption>('price-low');
 
   const filteredListings = listings.filter(listing => {
     if (selectedCategory && listing.category !== selectedCategory) return false;
     if (selectedTags.length > 0 && !selectedTags.some(tag => listing.tags.includes(tag))) return false;
     return true;
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'price-low':
+        return a.price - b.price;
+      case 'price-high':
+        return b.price - a.price;
+      case 'name':
+        return a.name.localeCompare(b.name);
+      case 'verified':
+        return (b.verified ? 1 : 0) - (a.verified ? 1 : 0);
+      default:
+        return 0;
+    }
   });
 
   const toggleTag = (tag: string) => {
@@ -161,8 +177,23 @@ export default function Browse() {
             </div>
           </div>
 
-          {/* Results count */}
-          <p className="text-slate-500 mb-6">{filteredListings.length} listings</p>
+          {/* Results count and sort */}
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-slate-500">{filteredListings.length} listings</p>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-500">Sort by:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-blue-500"
+              >
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="name">Name: A-Z</option>
+                <option value="verified">Verified First</option>
+              </select>
+            </div>
+          </div>
 
           {/* Listings grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
