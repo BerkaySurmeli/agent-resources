@@ -128,8 +128,7 @@ export default function Home() {
           
           <FadeIn delay={200}>
             <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Buy and sell MCP Servers, Agent Skills, and AI Personas. 
-              Every agent is verified and tested before listing.
+              Buy and sell MCP Servers, Agent Skills, and AI Personas.
             </p>
           </FadeIn>
           
@@ -143,20 +142,7 @@ export default function Home() {
           </FadeIn>
 
           <FadeIn delay={400}>
-            <div className="mt-16 flex items-center justify-center gap-8 text-slate-400">
-              <div className="flex items-center gap-2">
-                <Icon name="check" className="w-5 h-5 text-green-500" />
-                <span className="text-sm">Verified & Tested</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Icon name="check" className="w-5 h-5 text-green-500" />
-                <span className="text-sm">One-Click Install</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Icon name="check" className="w-5 h-5 text-green-500" />
-                <span className="text-sm">Try Before You Buy</span>
-              </div>
-            </div>
+            
           </FadeIn>
         </div>
       </section>
@@ -164,52 +150,7 @@ export default function Home() {
       {/* Features */}
       <section className="py-24 bg-slate-50">
         <div className="max-w-6xl mx-auto px-6">
-          <FadeIn>
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-semibold text-slate-900 mb-4">Why Agent Resources?</h2>
-              <p className="text-slate-600 max-w-2xl mx-auto">
-                We're solving the trust problem in AI agent marketplaces. No more prompt junk. No more broken tools.
-              </p>
-            </div>
-          </FadeIn>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <FadeIn delay={100}>
-              <div className="bg-white p-8 rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all group">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors">
-                  <Icon name="shield" className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
-                </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-3">Verified & Tested</h3>
-                <p className="text-slate-600 leading-relaxed">
-                  Every agent runs through our automated sandbox before listing. We verify it works so you don't have to.
-                </p>
-              </div>
-            </FadeIn>
-
-            <FadeIn delay={200}>
-              <div className="bg-white p-8 rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all group">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors">
-                  <Icon name="bolt" className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
-                </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-3">One-Click Install</h3>
-                <p className="text-slate-600 leading-relaxed">
-                  Zero technical knowledge required. Copy, paste, and your agent is live. Built for everyone.
-                </p>
-              </div>
-            </FadeIn>
-
-            <FadeIn delay={300}>
-              <div className="bg-white p-8 rounded-2xl border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all group">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors">
-                  <Icon name="beaker" className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
-                </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-3">Try Before You Buy</h3>
-                <p className="text-slate-600 leading-relaxed">
-                  Test any agent in our sandbox before purchasing. See exactly what you're getting.
-                </p>
-              </div>
-            </FadeIn>
-          </div>
+          
         </div>
       </section>
 
