@@ -1,8 +1,8 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from sqlmodel import create_engine
-from api.core.config import settings
-from api.models import SQLModel
+from core.config import settings
+from models import SQLModel
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
