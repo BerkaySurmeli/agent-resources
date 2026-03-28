@@ -32,6 +32,12 @@ const Icon = ({ name, className }: { name: string; className?: string }) => {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 12.75l6 6 9-13.5" />
       </svg>
     ),
+    verified: (
+      <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 2L14.5 8.5L21 9.5L16 14L17.5 20.5L12 17.5L6.5 20.5L8 14L3 9.5L9.5 8.5L12 2Z" />
+        <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
   };
   return icons[name] || null;
 };
@@ -167,7 +173,13 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8">
             <FadeIn delay={100}>
               <Link href="/products/claudia-project-manager" className="group block">
-                <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full">
+                <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative">
+                  <div className="absolute top-4 right-4">
+                    <div className="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      <Icon name="verified" className="w-3 h-3" />
+                      AR
+                    </div>
+                  </div>
                   <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center mb-6">
                     <span className="text-white font-bold text-xl">C</span>
                   </div>
@@ -184,7 +196,13 @@ export default function Home() {
 
             <FadeIn delay={200}>
               <Link href="/products/chen-developer" className="group block">
-                <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full">
+                <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative">
+                  <div className="absolute top-4 right-4">
+                    <div className="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      <Icon name="verified" className="w-3 h-3" />
+                      AR
+                    </div>
+                  </div>
                   <div className="w-14 h-14 bg-slate-900 rounded-xl flex items-center justify-center mb-6">
                     <span className="text-white font-bold text-xl">C</span>
                   </div>
@@ -201,7 +219,13 @@ export default function Home() {
 
             <FadeIn delay={300}>
               <Link href="/products/adrian-ux-designer" className="group block">
-                <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full">
+                <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative">
+                  <div className="absolute top-4 right-4">
+                    <div className="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      <Icon name="verified" className="w-3 h-3" />
+                      AR
+                    </div>
+                  </div>
                   <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center mb-6">
                     <span className="text-white font-bold text-xl">A</span>
                   </div>
