@@ -140,17 +140,6 @@ export default function Home() {
               Join the Waitlist
             </button>
           </FadeIn>
-
-          <FadeIn delay={400}>
-            
-          </FadeIn>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-24 bg-slate-50">
-        <div className="max-w-6xl mx-auto px-6">
-          
         </div>
       </section>
 
