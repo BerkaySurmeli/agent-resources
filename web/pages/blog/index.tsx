@@ -37,7 +37,7 @@ We're building the most trusted marketplace for AI agents. Not prompt junk. Not 
 **Three Tiers:**
 1. **MCP Servers** — Infrastructure for agents (QuickBooks, Slack, Sheets)
 2. **Agent Skills** — Training manuals and workflows
-3. **Personas** — Complete digital workers for non-technical users
+3. **Personas** — Complete digital workers
 
 ### What's Next
 
@@ -50,20 +50,6 @@ Follow along. We're building in public.
 
 — The Agent Resources Team
     `
-  },
-  {
-    slug: 'verification-sandbox',
-    title: 'The Verification Sandbox',
-    date: 'Coming Soon',
-    excerpt: 'How we\'re building automatic testing for every agent before it hits the marketplace.',
-    content: 'Coming soon...'
-  },
-  {
-    slug: 'first-100',
-    title: 'First 100 Developers',
-    date: 'Coming Soon',
-    excerpt: 'Why free listings forever? Our strategy for bootstrapping the supply side.',
-    content: 'Coming soon...'
   }
 ];
 
