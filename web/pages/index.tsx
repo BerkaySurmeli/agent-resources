@@ -103,7 +103,40 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       <Head>
         <title>Agent Resources | The Marketplace for AI Agents</title>
-        <meta name="description" content="Buy and sell MCP Servers, Agent Skills, and AI Personas." />
+        <meta name="description" content="Buy and sell MCP Servers, Agent Skills, and AI Personas. First 500 developers list for free. No commission, ever." />
+        <meta name="keywords" content="AI agents, MCP servers, agent skills, AI personas, OpenClaw, marketplace, AI tools" />
+        <link rel="canonical" href="https://shopagentresources.com" />
+        
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Agent Resources | The Marketplace for AI Agents" />
+        <meta property="og:description" content="Buy and sell MCP Servers, Agent Skills, and AI Personas. First 500 developers list for free." />
+        <meta property="og:url" content="https://shopagentresources.com" />
+        <meta property="og:site_name" content="Agent Resources" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Agent Resources | The Marketplace for AI Agents" />
+        <meta name="twitter:description" content="Buy and sell MCP Servers, Agent Skills, and AI Personas." />
+        
+        {/* Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "Agent Resources",
+              "url": "https://shopagentresources.com",
+              "description": "The marketplace for AI agents. Buy and sell MCP Servers, Agent Skills, and AI Personas.",
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://shopagentresources.com/browse?q={search_term_string}",
+                "query-input": "required name=search_term_string"
+              }
+            })
+          }}
+        />
       </Head>
 
       {/* Navigation */}

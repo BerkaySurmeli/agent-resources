@@ -1,0 +1,11 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Agent Resources",
+  "url": "https://shopagentresources.com",
+  "logo": "https://shopagentresources.com/logo.png",
+  "sameAs": [
+    "https://twitter.com/agentresources",
+    "https://github.com/BerkaySurmeli/agent-resources"
+  ]
+}

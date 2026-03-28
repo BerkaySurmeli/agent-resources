@@ -1,0 +1,12 @@
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Agent Resources",
+  "url": "https://shopagentresources.com",
+  "description": "The marketplace for AI agents. Buy and sell MCP Servers, Agent Skills, and AI Personas.",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://shopagentresources.com/browse?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
