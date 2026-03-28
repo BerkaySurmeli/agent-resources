@@ -91,7 +91,10 @@ export default function Products() {
             </div>
             <span className="font-semibold text-slate-900">Agent Resources</span>
           </Link>
-          <Link href="/" className="text-slate-600 hover:text-slate-900">Home</Link>
+          <div className="flex items-center gap-8">
+            <Link href="/" className="text-slate-600 hover:text-slate-900">Home</Link>
+            <Link href="/blog" className="text-slate-600 hover:text-slate-900">Blog</Link>
+          </div>
         </div>
       </nav>
 

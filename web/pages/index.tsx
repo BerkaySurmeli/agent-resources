@@ -105,6 +105,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Logo />
           <div className="flex items-center gap-8">
+            <Link href="/products" className="text-slate-600 hover:text-slate-900 transition-colors">Products</Link>
             <Link href="/blog" className="text-slate-600 hover:text-slate-900 transition-colors">Blog</Link>
             <button 
               onClick={() => setShowWaitlist(true)}
