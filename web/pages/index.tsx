@@ -151,37 +151,94 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Blog Preview */}
-      <section className="py-24 px-6">
+      {/* Featured Products */}
+      <section className="py-24 px-6 bg-slate-50">
         <div className="max-w-6xl mx-auto">
           <FadeIn>
             <div className="flex items-center justify-between mb-12">
-              <div>
-                <h2 className="text-3xl font-semibold text-slate-900 mb-2">Building in Public</h2>
-                <p className="text-slate-600">Follow our journey as we build the marketplace for AI agents.</p>
-              </div>
-              <Link href="/blog" className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2">
-                View all posts
+              <h2 className="text-3xl font-semibold text-slate-900">Featured Personas</h2>
+              <Link href="/products" className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2">
+                View all
                 <Icon name="arrowRight" className="w-4 h-4" />
               </Link>
             </div>
           </FadeIn>
 
-          <div className="grid md:grid-cols-1 gap-8 max-w-2xl">
+          <div className="grid md:grid-cols-3 gap-8">
             <FadeIn delay={100}>
-              <Link href="/blog/hello-world" className="group block">
-                <article className="border border-slate-200 rounded-2xl p-6 hover:border-blue-300 hover:shadow-lg transition-all h-full">
-                  <span className="text-sm text-slate-500">March 27, 2026</span>
-                  <h3 className="text-lg font-semibold text-slate-900 mt-2 mb-3 group-hover:text-blue-600 transition-colors">
-                    Hello World: We're Live
-                  </h3>
-                  <p className="text-slate-600 text-sm">
-                    Agent Resources is officially a real thing. Here's why we're building this and what's coming.
-                  </p>
-                </article>
+              <Link href="/products" className="group block">
+                <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full">
+                  <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center mb-6">
+                    <span className="text-white font-bold text-xl">C</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Claudia</h3>
+                  <p className="text-blue-600 font-medium mb-4">AI Project Manager</p>
+                  <p className="text-slate-600 text-sm mb-6">Your AI project orchestrator. Delegates tasks, tracks progress, and ensures nothing falls through the cracks.</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold text-slate-900">$49</span>
+                    <span className="text-blue-600 group-hover:translate-x-1 transition-transform">Learn more →</span>
+                  </div>
+                </div>
+              </Link>
+            </FadeIn>
+
+            <FadeIn delay={200}>
+              <Link href="/products" className="group block">
+                <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full">
+                  <div className="w-14 h-14 bg-slate-900 rounded-xl flex items-center justify-center mb-6">
+                    <span className="text-white font-bold text-xl">C</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Chen</h3>
+                  <p className="text-blue-600 font-medium mb-4">AI Developer</p>
+                  <p className="text-slate-600 text-sm mb-6">Your AI software engineer. Writes clean, efficient code across any stack.</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold text-slate-900">$59</span>
+                    <span className="text-blue-600 group-hover:translate-x-1 transition-transform">Learn more →</span>
+                  </div>
+                </div>
+              </Link>
+            </FadeIn>
+
+            <FadeIn delay={300}>
+              <Link href="/products" className="group block">
+                <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full">
+                  <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center mb-6">
+                    <span className="text-white font-bold text-xl">A</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Adrian</h3>
+                  <p className="text-blue-600 font-medium mb-4">AI UX Designer</p>
+                  <p className="text-slate-600 text-sm mb-6">Your AI design partner. Creates interfaces, writes copy, and crafts user experiences.</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold text-slate-900">$49</span>
+                    <span className="text-blue-600 group-hover:translate-x-1 transition-transform">Learn more →</span>
+                  </div>
+                </div>
               </Link>
             </FadeIn>
           </div>
+
+          <FadeIn delay={400}>
+            <div className="mt-12 bg-slate-900 rounded-2xl p-8 text-white">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div>
+                  <h3 className="text-2xl font-semibold mb-2">Dream Team Bundle</h3>
+                  <p className="text-slate-400">Get all three personas. Complete AI team for your projects.</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <span className="text-3xl font-bold">$99</span>
+                    <span className="text-slate-500 line-through ml-2">$157</span>
+                  </div>
+                  <Link 
+                    href="/products" 
+                    className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    View Bundle
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </FadeIn>
         </div>
       </section>
 
