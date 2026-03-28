@@ -120,13 +120,6 @@ export default function Home() {
       {/* Hero */}
       <section className="pt-32 pb-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <FadeIn>
-            <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-sm font-medium mb-8">
-              <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
-              Zero commission for 500 listings
-            </span>
-          </FadeIn>
-          
           <FadeIn delay={100}>
             <h1 className="text-5xl md:text-6xl font-semibold text-slate-900 tracking-tight mb-6">
               The marketplace for
@@ -134,10 +127,16 @@ export default function Home() {
               <span className="text-blue-600">AI agents</span>
             </h1>
           </FadeIn>
-          
+
           <FadeIn delay={200}>
-            <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl text-slate-600 mb-4 max-w-2xl mx-auto leading-relaxed">
               Buy and sell MCP Servers, Agent Skills, and AI Personas.
+            </p>
+          </FadeIn>
+
+          <FadeIn delay={250}>
+            <p className="text-lg text-blue-600 font-medium mb-10 max-w-2xl mx-auto">
+              First 500 developers list for free. No commission, ever.
             </p>
           </FadeIn>
           
