@@ -64,21 +64,25 @@ def auth_options():
 # Routes
 @router.post("/signup", response_model=TokenResponse)
 def signup(user_data: UserSignup, session = Depends(get_session)):
-    # Check if user exists
-    existing = session.exec(select(User).where(User.email == user_data.email)).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
-    # Create new user
-    user = User(
-        email=user_data.email,
-        password_hash=get_password_hash(user_data.password),
-        name=user_data.name,
-        is_developer=False
-    )
-    session.add(user)
-    session.commit()
-    session.refresh(user)
+    try:
+        # Check if user exists
+        existing = session.exec(select(User).where(User.email == user_data.email)).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        # Create new user
+        user = User(
+            email=user_data.email,
+            password_hash=get_password_hash(user_data.password),
+            name=user_data.name,
+            is_developer=False
+        )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     
     # Create token
     access_token = create_access_token({"sub": str(user.id)})
