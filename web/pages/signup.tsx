@@ -31,8 +31,8 @@ export default function Signup() {
     try {
       await signup(email, password, name);
       window.location.href = '/';
-    } catch (err) {
-      setError('Failed to create account');
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account');
     } finally {
       setLoading(false);
     }
