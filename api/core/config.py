@@ -10,5 +10,10 @@ class Settings(BaseSettings):
     
     class Config:
         env_file = ".env"
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Strip whitespace from Stripe key to fix multiline issues
+        self.STRIPE_SECRET_KEY = self.STRIPE_SECRET_KEY.strip().replace('\n', '').replace('\r', '')
 
 settings = Settings()
