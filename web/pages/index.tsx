@@ -146,7 +146,8 @@ export default function Home() {
             <Logo />
           </Link>
           <div className="flex items-center gap-8">
-            <Link href="/products" className="text-slate-600 hover:text-slate-900 transition-colors">Products</Link>
+            <Link href="/listings" className="text-slate-600 hover:text-slate-900 transition-colors">Listings</Link>
+            <Link href="/wizard" className="text-blue-600 hover:text-blue-700 transition-colors font-medium">Build Your Team</Link>
             <Link href="/blog" className="text-slate-600 hover:text-slate-900 transition-colors">Blog</Link>
             <button 
               onClick={() => setShowWaitlist(true)}
@@ -183,13 +184,24 @@ export default function Home() {
           </FadeIn>
           
           <FadeIn delay={300}>
-            <button 
-              onClick={() => setShowWaitlist(true)}
-              className="bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 transition-all hover:scale-105"
-              aria-label="Join the waitlist to get notified when we launch"
-            >
-              Join the Waitlist
-            </button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link 
+                href="/wizard"
+                className="bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 transition-all hover:scale-105 inline-flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Build Your AI Team
+              </Link>
+              <button 
+                onClick={() => setShowWaitlist(true)}
+                className="bg-slate-100 text-slate-700 px-8 py-4 rounded-xl font-medium hover:bg-slate-200 transition-colors"
+                aria-label="Join the waitlist to get notified when we launch"
+              >
+                Join Waitlist
+              </button>
+            </div>
           </FadeIn>
         </div>
       </main>
@@ -200,8 +212,8 @@ export default function Home() {
           <FadeIn>
             <div className="flex items-center justify-between mb-12">
               <h2 className="text-3xl font-semibold text-slate-900">Featured Personas</h2>
-              <Link href="/products" className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2">
-                View all
+              <Link href="/listings" className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2">
+                Browse all listings
                 <Icon name="arrowRight" className="w-4 h-4" />
               </Link>
             </div>
@@ -209,7 +221,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-3 gap-8">
             <FadeIn delay={100}>
-              <Link href="/products/claudia-project-manager" className="group block">
+              <Link href="/listings/claudia-project-manager" className="group block">
                 <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative">
                   <div className="absolute top-4 right-4">
                     <div className="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">
@@ -234,7 +246,7 @@ export default function Home() {
             </FadeIn>
 
             <FadeIn delay={200}>
-              <Link href="/products/chen-developer" className="group block">
+              <Link href="/listings/chen-developer" className="group block">
                 <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative">
                   <div className="absolute top-4 right-4">
                     <div className="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">
@@ -259,7 +271,7 @@ export default function Home() {
             </FadeIn>
 
             <FadeIn delay={300}>
-              <Link href="/products/adrian-ux-designer" className="group block">
+              <Link href="/listings/adrian-ux-designer" className="group block">
                 <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative">
                   <div className="absolute top-4 right-4">
                     <div className="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">
@@ -285,11 +297,20 @@ export default function Home() {
           </div>
 
           <FadeIn delay={400}>
-            <div className="mt-12 bg-slate-900 rounded-2xl p-8 text-white">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                <div>
-                  <h3 className="text-2xl font-semibold mb-2">Dream Team Bundle</h3>
-                  <p className="text-slate-400">Get all three personas. Complete AI team for your projects.</p>
+            <div className="mt-12 bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 rounded-2xl p-8 text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
+              <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                    <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-blue-400 text-sm font-medium mb-1">Agent Resources</div>
+                    <h3 className="text-2xl font-semibold mb-2">Dream Team Bundle</h3>
+                    <p className="text-slate-400">Get all three personas. Complete AI team for your projects.</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right">
@@ -297,7 +318,7 @@ export default function Home() {
                     <span className="text-slate-500 line-through ml-2">$157</span>
                   </div>
                   <Link 
-                    href="/products/dream-team-bundle" 
+                    href="/listings/dream-team-bundle" 
                     className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
                   >
                     View Bundle
