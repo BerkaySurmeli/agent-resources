@@ -200,13 +200,13 @@ export default function Home() {
                 </svg>
                 Build Your AI Team
               </Link>
-              <button 
-                onClick={() => setShowWaitlist(true)}
-                className="bg-slate-100 text-slate-700 px-8 py-4 rounded-xl font-medium hover:bg-slate-200 transition-colors"
-                aria-label="Join the waitlist to get notified when we launch"
+              <Link 
+                href="/listings"
+                className="bg-slate-100 text-slate-700 px-8 py-4 rounded-xl font-medium hover:bg-slate-200 transition-colors inline-flex items-center justify-center gap-2"
               >
-                Join Waitlist
-              </button>
+                Browse all listings
+                <Icon name="arrowRight" className="w-4 h-4" />
+              </Link>
             </div>
           </FadeIn>
         </div>
@@ -216,13 +216,7 @@ export default function Home() {
       <section className="py-24 px-6 bg-slate-50">
         <div className="max-w-6xl mx-auto">
           <FadeIn>
-            <div className="flex items-center justify-between mb-12">
-              <h2 className="text-3xl font-semibold text-slate-900">Featured Personas</h2>
-              <Link href="/listings" className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2">
-                Browse all listings
-                <Icon name="arrowRight" className="w-4 h-4" />
-              </Link>
-            </div>
+            <h2 className="text-3xl font-semibold text-slate-900 mb-12 text-center">Featured Personas</h2>
           </FadeIn>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -235,8 +229,9 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-2">Claudia</h3>
-                <p className="text-blue-600 font-medium mb-4">AI Project Manager</p>
+                <h3 className="text-xl font-semibold text-slate-900 mb-1">AI Project Manager</h3>
+                <p className="text-blue-600 font-medium mb-1">Claudia</p>
+                <p className="text-xs text-slate-400 uppercase tracking-wide mb-4">Persona</p>
                 <p className="text-slate-600 text-sm mb-6">Your AI project orchestrator. Delegates tasks, tracks progress, and ensures nothing falls through the cracks.</p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-slate-900">$49</span>
@@ -262,8 +257,9 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-2">Chen</h3>
-                <p className="text-blue-600 font-medium mb-4">AI Developer</p>
+                <h3 className="text-xl font-semibold text-slate-900 mb-1">AI Developer</h3>
+                <p className="text-blue-600 font-medium mb-1">Chen</p>
+                <p className="text-xs text-slate-400 uppercase tracking-wide mb-4">Persona</p>
                 <p className="text-slate-600 text-sm mb-6">Your AI software engineer. Writes clean, efficient code across any stack.</p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-slate-900">$59</span>
@@ -289,8 +285,9 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-2">Adrian</h3>
-                <p className="text-blue-600 font-medium mb-4">AI UX Designer</p>
+                <h3 className="text-xl font-semibold text-slate-900 mb-1">AI UX Designer</h3>
+                <p className="text-blue-600 font-medium mb-1">Adrian</p>
+                <p className="text-xs text-slate-400 uppercase tracking-wide mb-4">Persona</p>
                 <p className="text-slate-600 text-sm mb-6">Your AI design partner. Creates interfaces, writes copy, and crafts user experiences.</p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-slate-900">$49</span>
