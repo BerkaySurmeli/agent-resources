@@ -229,15 +229,6 @@ export default function Home() {
             {/* Claudia Card */}
             <FadeIn delay={100}>
               <Link href="/listings/claudia-project-manager" className="block bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative group">
-                {/* Verified Badge */}
-                <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 rounded-full">
-                  <div className="w-4 h-4 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center">
-                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                      <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <span className="text-xs font-medium text-blue-700">Verified</span>
-                </div>
                 {/* Icon */}
                 <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center mb-6 shadow-lg" aria-hidden="true">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,14 +257,6 @@ export default function Home() {
             {/* Chen Card */}
             <FadeIn delay={200}>
               <Link href="/listings/chen-developer" className="block bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative group">
-                <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 rounded-full">
-                  <div className="w-4 h-4 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center">
-                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                      <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <span className="text-xs font-medium text-blue-700">Verified</span>
-                </div>
                 <div className="w-14 h-14 bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl flex items-center justify-center mb-6 shadow-lg" aria-hidden="true">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -301,14 +284,6 @@ export default function Home() {
             {/* Adrian Card */}
             <FadeIn delay={300}>
               <Link href="/listings/adrian-ux-designer" className="block bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative group">
-                <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 rounded-full">
-                  <div className="w-4 h-4 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center">
-                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                      <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <span className="text-xs font-medium text-blue-700">Verified</span>
-                </div>
                 <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center mb-6 shadow-lg" aria-hidden="true">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
