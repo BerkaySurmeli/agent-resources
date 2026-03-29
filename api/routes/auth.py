@@ -77,16 +77,28 @@ def signup(user_data: UserSignup, session = Depends(get_session)):
         # Hash password
         hashed = pwd_context.hash(user_data.password)
         
-        # Create new user
+        # Generate verification token
+        import secrets
+        verification_token = secrets.token_urlsafe(32)
+        
+        # Create new user (unverified)
         user = User(
             email=user_data.email,
             password_hash=hashed,
             name=user_data.name,
-            is_developer=False
+            is_developer=False,
+            is_verified=False,
+            verification_token=verification_token,
+            verification_sent_at=datetime.utcnow()
         )
         session.add(user)
         session.commit()
         session.refresh(user)
+        
+        # TODO: Send verification email
+        # For now, just print to logs (in production, use SendGrid/AWS SES)
+        print(f"[EMAIL] Verification link: https://shopagentresources.com/verify-email?token={verification_token}")
+        
     except Exception as e:
         session.rollback()
         import traceback
@@ -103,7 +115,8 @@ def signup(user_data: UserSignup, session = Depends(get_session)):
             "email": user.email,
             "name": user.name,
             "is_developer": user.is_developer,
-            "avatar_url": user.avatar_url
+            "avatar_url": user.avatar_url,
+            "is_verified": user.is_verified
         }
     }
 
@@ -142,3 +155,38 @@ def get_current_user(session = Depends(get_session)):
 def become_developer(session = Depends(get_session)):
     # Toggle is_developer flag
     raise HTTPException(status_code=501, detail="Not implemented")
+
+@router.get("/verify-email")
+def verify_email(token: str, session = Depends(get_session)):
+    """Verify user email with token"""
+    user = session.exec(select(User).where(User.verification_token == token)).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid verification token")
+    
+    # Mark as verified
+    user.is_verified = True
+    user.verification_token = None
+    session.commit()
+    
+    return {"message": "Email verified successfully", "email": user.email}
+
+@router.post("/resend-verification")
+def resend_verification(email: EmailStr, session = Depends(get_session)):
+    """Resend verification email"""
+    user = session.exec(select(User).where(User.email == email)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user.is_verified:
+        raise HTTPException(status_code=400, detail="Email already verified")
+    
+    # Generate new token
+    import secrets
+    user.verification_token = secrets.token_urlsafe(32)
+    user.verification_sent_at = datetime.utcnow()
+    session.commit()
+    
+    # TODO: Send email
+    print(f"[EMAIL] Verification link: https://shopagentresources.com/verify-email?token={user.verification_token}")
+    
+    return {"message": "Verification email sent"}

@@ -9,6 +9,7 @@ export interface User {
   avatar?: string;
   initials: string;
   isDeveloper: boolean;
+  isVerified?: boolean;
 }
 
 interface AuthContextType {
@@ -79,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name: data.user.name || email.split('@')[0],
       initials: getInitials(data.user.name || email.split('@')[0]),
       isDeveloper: data.user.is_developer,
+      isVerified: data.user.is_verified,
     });
   };
 
@@ -103,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name: data.user.name || name,
       initials: getInitials(data.user.name || name),
       isDeveloper: data.user.is_developer,
+      isVerified: data.user.is_verified,
     });
   };
 
