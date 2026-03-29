@@ -55,6 +55,12 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+# Handle CORS preflight
+@router.options("/signup")
+@router.options("/login")
+def auth_options():
+    return {"message": "OK"}
+
 # Routes
 @router.post("/signup", response_model=TokenResponse)
 def signup(user_data: UserSignup, session = Depends(get_session)):
