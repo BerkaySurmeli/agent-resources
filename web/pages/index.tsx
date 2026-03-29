@@ -228,14 +228,15 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8">
             {/* Claudia Card */}
             <FadeIn delay={100}>
-              <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative">
+              <Link href="/listings/claudia-project-manager" className="block bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative group">
                 {/* Verified Badge */}
-                <div className="absolute top-4 right-4">
-                  <div className="flex items-center justify-center w-7 h-7 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full border-2 border-white shadow-md">
-                    <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 rounded-full">
+                  <div className="w-4 h-4 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                       <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
+                  <span className="text-xs font-medium text-blue-700">Verified</span>
                 </div>
                 {/* Icon */}
                 <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center mb-6 shadow-lg" aria-hidden="true">
@@ -248,27 +249,30 @@ export default function Home() {
                 <p className="text-slate-600 text-sm mb-6">Your AI project orchestrator. Delegates tasks, tracks progress, and ensures nothing falls through the cracks.</p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-slate-900">$49</span>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => handleBuyNow('claudia-project-manager', 'Claudia - AI Project Manager', 49, 'personas')}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                    >
-                      Buy Now
-                    </button>
-                  </div>
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleBuyNow('claudia-project-manager', 'Claudia - AI Project Manager', 49, 'personas');
+                    }}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Buy Now
+                  </button>
                 </div>
-              </div>
+              </Link>
             </FadeIn>
 
             {/* Chen Card */}
             <FadeIn delay={200}>
-              <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative">
-                <div className="absolute top-4 right-4">
-                  <div className="flex items-center justify-center w-7 h-7 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full border-2 border-white shadow-md">
-                    <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+              <Link href="/listings/chen-developer" className="block bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative group">
+                <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 rounded-full">
+                  <div className="w-4 h-4 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                       <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
+                  <span className="text-xs font-medium text-blue-700">Verified</span>
                 </div>
                 <div className="w-14 h-14 bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl flex items-center justify-center mb-6 shadow-lg" aria-hidden="true">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -280,27 +284,30 @@ export default function Home() {
                 <p className="text-slate-600 text-sm mb-6">Your AI software engineer. Writes clean, efficient code across any stack.</p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-slate-900">$59</span>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => handleBuyNow('chen-developer', 'Chen - AI Developer', 59, 'personas')}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                    >
-                      Buy Now
-                    </button>
-                  </div>
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleBuyNow('chen-developer', 'Chen - AI Developer', 59, 'personas');
+                    }}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Buy Now
+                  </button>
                 </div>
-              </div>
+              </Link>
             </FadeIn>
 
             {/* Adrian Card */}
             <FadeIn delay={300}>
-              <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative">
-                <div className="absolute top-4 right-4">
-                  <div className="flex items-center justify-center w-7 h-7 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full border-2 border-white shadow-md">
-                    <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+              <Link href="/listings/adrian-ux-designer" className="block bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative group">
+                <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 rounded-full">
+                  <div className="w-4 h-4 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                       <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
+                  <span className="text-xs font-medium text-blue-700">Verified</span>
                 </div>
                 <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center mb-6 shadow-lg" aria-hidden="true">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -312,16 +319,18 @@ export default function Home() {
                 <p className="text-slate-600 text-sm mb-6">Your AI design partner. Creates interfaces, writes copy, and crafts user experiences.</p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-slate-900">$49</span>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => handleBuyNow('adrian-ux-designer', 'Adrian - AI UX Designer', 49, 'personas')}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                    >
-                      Buy Now
-                    </button>
-                  </div>
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleBuyNow('adrian-ux-designer', 'Adrian - AI UX Designer', 49, 'personas');
+                    }}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Buy Now
+                  </button>
                 </div>
-              </div>
+              </Link>
             </FadeIn>
           </div>
 

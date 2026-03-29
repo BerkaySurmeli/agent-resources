@@ -99,14 +99,24 @@ export default function Cart() {
               <div className="md:col-span-2 space-y-4">
                 {items.map(item => (
                   <div key={item.slug} className="flex items-center gap-4 bg-slate-50 rounded-xl p-4">
-                    <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <span className="text-blue-600 font-bold text-xl">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-md">
+                      <span className="text-white font-bold text-xl">
                         {item.name.charAt(0)}
                       </span>
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-slate-900">{item.name}</h3>
-                      <p className="text-sm text-slate-500 capitalize">{item.category}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full capitalize">
+                          {item.category}
+                        </span>
+                        <span className="flex items-center gap-1 text-xs text-green-600">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Verified by AR
+                        </span>
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-slate-900">${item.price}</p>

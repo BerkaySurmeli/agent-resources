@@ -9,59 +9,57 @@ const listings: Record<string, any> = {
     subtitle: 'AI Project Manager',
     price: 49,
     description: 'Your AI project orchestrator. Delegates tasks, tracks progress, and ensures nothing falls through the cracks.',
-    fullDescription: `Claudia is the orchestrating intelligence that keeps your AI projects on track. She doesn't do the work herself — she makes sure the right agents do the right work at the right time.
-
-## What Claudia Does
-
-**Project Planning**: Breaks down complex projects into actionable tasks
-**Agent Delegation**: Assigns work to specialized agents
-**Progress Tracking**: Monitors status and identifies blockers
-**Quality Assurance**: Reviews deliverables before completion
-
-## Perfect For
-- Managing multi-agent workflows
-- Coordinating complex projects
-- Keeping distributed work organized`,
-    developer: { name: 'Claudia', initials: 'C' },
+    features: [
+      { title: 'Project Planning', desc: 'Breaks down complex projects into actionable tasks' },
+      { title: 'Agent Delegation', desc: 'Assigns work to specialized agents based on skills' },
+      { title: 'Progress Tracking', desc: 'Monitors status and identifies blockers early' },
+      { title: 'Quality Assurance', desc: 'Reviews deliverables before completion' },
+    ],
+    useCases: ['Managing multi-agent workflows', 'Coordinating complex projects', 'Keeping distributed work organized'],
+    developer: { name: 'Claudia', initials: 'C', photo: true },
     category: 'personas',
-    rating: 4.9,
-    reviews: 234,
+    rating: 0,
+    reviews: 0,
+    downloads: 0,
+    verified: true,
   },
   'chen-developer': {
     name: 'Chen',
     subtitle: 'AI Developer',
     price: 59,
     description: 'Your AI software engineer. Writes clean, efficient code across any stack.',
-    fullDescription: `Chen is a senior-level AI developer who writes production-ready code.
-
-## What Chen Does
-
-**Full-Stack Development**: Frontend, backend, APIs, databases
-**Code Review**: Analyzes code for bugs and improvements
-**Architecture**: Designs scalable system structures
-**Debugging**: Finds and fixes issues`,
-    developer: { name: 'Chen', initials: 'C' },
+    features: [
+      { title: 'Full-Stack Development', desc: 'Frontend, backend, APIs, databases' },
+      { title: 'Code Review', desc: 'Analyzes code for bugs and improvements' },
+      { title: 'Architecture', desc: 'Designs scalable system structures' },
+      { title: 'Debugging', desc: 'Finds and fixes issues quickly' },
+    ],
+    useCases: ['Building new features', 'Refactoring legacy code', 'Setting up infrastructure'],
+    developer: { name: 'Claudia', initials: 'C', photo: true },
     category: 'personas',
-    rating: 4.8,
-    reviews: 189,
+    rating: 0,
+    reviews: 0,
+    downloads: 0,
+    verified: true,
   },
   'adrian-ux-designer': {
     name: 'Adrian',
     subtitle: 'AI UX Designer',
     price: 49,
     description: 'Your AI design partner. Creates interfaces, writes copy, and crafts user experiences.',
-    fullDescription: `Adrian is a UX-focused designer who understands that good design solves problems.
-
-## What Adrian Does
-
-**Interface Design**: Clean, usable UI components
-**Copywriting**: Headlines, CTAs, user-facing text
-**User Flows**: Optimal paths through your product
-**Landing Pages**: High-converting marketing pages`,
-    developer: { name: 'Adrian', initials: 'A' },
+    features: [
+      { title: 'Interface Design', desc: 'Clean, usable UI components' },
+      { title: 'Copywriting', desc: 'Headlines, CTAs, user-facing text' },
+      { title: 'User Flows', desc: 'Optimal paths through your product' },
+      { title: 'Landing Pages', desc: 'High-converting marketing pages' },
+    ],
+    useCases: ['Designing new products', 'Improving existing UX', 'Creating marketing materials'],
+    developer: { name: 'Claudia', initials: 'C', photo: true },
     category: 'personas',
-    rating: 4.7,
-    reviews: 156,
+    rating: 0,
+    reviews: 0,
+    downloads: 0,
+    verified: true,
   },
   'dream-team-bundle': {
     name: 'Dream Team Bundle',
@@ -69,22 +67,18 @@ const listings: Record<string, any> = {
     price: 99,
     originalPrice: 157,
     description: 'Get Claudia, Chen, and Adrian. The complete AI team for your projects.',
-    fullDescription: `Why hire one when you can have a complete team? The Dream Team Bundle gives you everything you need.
-
-## What's Included
-
-- Claudia - AI Project Manager ($49)
-- Chen - AI Developer ($59)
-- Adrian - AI UX Designer ($49)
-
-## Bundle Benefits
-- 37% discount vs buying individually
-- Seamless integration
-- Complete workflow from idea to shipped product`,
-    developer: { name: 'Agent Resources', initials: 'AR' },
+    features: [
+      { title: 'Claudia - AI Project Manager', desc: 'Keeps your projects on track ($49 value)' },
+      { title: 'Chen - AI Developer', desc: 'Writes production-ready code ($59 value)' },
+      { title: 'Adrian - AI UX Designer', desc: 'Creates beautiful interfaces ($49 value)' },
+    ],
+    useCases: ['Complete AI team setup', 'End-to-end project delivery', 'Maximum cost savings'],
+    developer: { name: 'Claudia', initials: 'C', photo: true },
     category: 'bundle',
-    rating: 4.9,
-    reviews: 89,
+    rating: 0,
+    reviews: 0,
+    downloads: 0,
+    verified: true,
   },
 };
 
@@ -142,7 +136,8 @@ export default function ListingDetail() {
           <div className="grid md:grid-cols-2 gap-12">
             {/* Left Column */}
             <div>
-              <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center mb-6">
+              {/* Icon */}
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
                 <span className="text-white font-bold text-3xl">{listing.developer.initials}</span>
               </div>
               
@@ -150,32 +145,75 @@ export default function ListingDetail() {
               <p className="text-xl text-blue-600 mb-4">{listing.subtitle}</p>
               <p className="text-slate-600 mb-6">{listing.description}</p>
               
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-sm font-bold">
+              {/* Developer with photo */}
+              <div className="flex items-center gap-3 mb-8 p-4 bg-slate-50 rounded-xl">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
                   {listing.developer.initials}
                 </div>
-                <span className="text-slate-700">by {listing.developer.name}</span>
+                <div>
+                  <p className="font-medium text-slate-900">{listing.developer.name}</p>
+                  <p className="text-sm text-slate-500">First developer on Agent Resources</p>
+                </div>
+                {listing.verified && (
+                  <div className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 rounded-full">
+                    <div className="w-5 h-5 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                        <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <span className="text-xs font-medium text-blue-700">Verified by AR</span>
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center gap-4 text-slate-500 mb-8">
-                <span className="flex items-center gap-1">
+              {/* Stats */}
+              <div className="flex items-center gap-6 text-slate-500 mb-8">
+                <span className="flex items-center gap-1.5">
                   <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
-                  {listing.rating} ({listing.reviews} reviews)
+                  <span className="font-medium">{listing.rating > 0 ? listing.rating : 'New'}</span>
+                  {listing.reviews > 0 && <span>({listing.reviews} reviews)</span>}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span>{listing.downloads} downloads</span>
                 </span>
               </div>
 
-              <div className="prose prose-slate">
-                {listing.fullDescription.split('\n\n').map((paragraph: string, i: number) => {
-                  if (paragraph.startsWith('## ')) {
-                    return <h2 key={i} className="text-xl font-semibold mt-6 mb-3">{paragraph.replace('## ', '')}</h2>;
-                  }
-                  if (paragraph.startsWith('- ')) {
-                    return <li key={i} className="ml-4">{paragraph.replace('- ', '')}</li>;
-                  }
-                  return <p key={i} className="mb-4">{paragraph}</p>;
-                })}
+              {/* Features */}
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold text-slate-900 mb-4">What {listing.name} Does</h2>
+                <div className="space-y-4">
+                  {listing.features.map((feature: any, i: number) => (
+                    <div key={i} className="flex gap-4 p-4 bg-slate-50 rounded-xl">
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-slate-900">{feature.title}</h3>
+                        <p className="text-sm text-slate-600">{feature.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Use Cases */}
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900 mb-4">Perfect For</h2>
+                <ul className="space-y-2">
+                  {listing.useCases.map((useCase: string, i: number) => (
+                    <li key={i} className="flex items-center gap-2 text-slate-600">
+                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                      {useCase}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
 
