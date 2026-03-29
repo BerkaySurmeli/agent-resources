@@ -1,6 +1,8 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import UserMenu from '../components/UserMenu';
+import CartIcon from '../components/CartIcon';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
@@ -145,11 +147,272 @@ export default function Home() {
           <Link href="/" aria-label="Agent Resources Home">
             <Logo />
           </Link>
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-6">
             <Link href="/listings" className="text-slate-600 hover:text-slate-900 transition-colors">Listings</Link>
             <Link href="/wizard" className="text-blue-600 hover:text-blue-700 transition-colors font-medium">Build Your Team</Link>
             <Link href="/blog" className="text-slate-600 hover:text-slate-900 transition-colors">Blog</Link>
-            <button 
+            <CartIcon />
+            <UserMenu />
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <main className="pt-32 pb-20 px-6" role="main">
+        <div className="max-w-4xl mx-auto text-center">
+          <FadeIn delay={100}>
+            <h1 className="text-5xl md:text-6xl font-semibold text-slate-900 tracking-tight mb-6">
+              The marketplace for
+              <br />
+              <span className="text-blue-600">AI agents</span>
+            </h1>
+          </FadeIn>
+
+          <FadeIn delay={200}>
+            <p className="text-xl text-slate-600 mb-4 max-w-2xl mx-auto leading-relaxed">
+              Buy and sell MCP Servers, Agent Skills, and AI Personas.
+            </p>
+          </FadeIn>
+
+          <FadeIn delay={250}>
+            <p className="text-lg text-blue-600 font-medium mb-10 max-w-2xl mx-auto">
+              First 500 developers list for free. No commission, ever.
+            </p>
+          </FadeIn>
+          
+          <FadeIn delay={300}>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link 
+                href="/wizard"
+                className="bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 transition-all hover:scale-105 inline-flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Build Your AI Team
+              </Link>
+              <button 
+                onClick={() => setShowWaitlist(true)}
+                className="bg-slate-100 text-slate-700 px-8 py-4 rounded-xl font-medium hover:bg-slate-200 transition-colors"
+                aria-label="Join the waitlist to get notified when we launch"
+              >
+                Join Waitlist
+              </button>
+            </div>
+          </FadeIn>
+        </div>
+      </main>
+
+      {/* Featured Products */}
+      <section className="py-24 px-6 bg-slate-50">
+        <div className="max-w-6xl mx-auto">
+          <FadeIn>
+            <div className="flex items-center justify-between mb-12">
+              <h2 className="text-3xl font-semibold text-slate-900">Featured Personas</h2>
+              <Link href="/listings" className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2">
+                Browse all listings
+                <Icon name="arrowRight" className="w-4 h-4" />
+              </Link>
+            </div>
+          </FadeIn>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <FadeIn delay={100}>
+              <Link href="/listings/claudia-project-manager" className="group block">
+                <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative">
+                  <div className="absolute top-4 right-4">
+                    <div className="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      <Icon name="verified" className="w-3 h-3" />
+                      AR
+                    </div>
+                  </div>
+                  <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center mb-6" aria-hidden="true">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Project management icon">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Claudia</h3>
+                  <p className="text-blue-600 font-medium mb-4">AI Project Manager</p>
+                  <p className="text-slate-600 text-sm mb-6">Your AI project orchestrator. Delegates tasks, tracks progress, and ensures nothing falls through the cracks.</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold text-slate-900">$49</span>
+                    <span className="text-blue-600 group-hover:translate-x-1 transition-transform">Learn more →</span>
+                  </div>
+                </div>
+              </Link>
+            </FadeIn>
+
+            <FadeIn delay={200}>
+              <Link href="/listings/chen-developer" className="group block">
+                <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative">
+                  <div className="absolute top-4 right-4">
+                    <div className="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      <Icon name="verified" className="w-3 h-3" />
+                      AR
+                    </div>
+                  </div>
+                  <div className="w-14 h-14 bg-slate-900 rounded-xl flex items-center justify-center mb-6" aria-hidden="true">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Code development icon">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Chen</h3>
+                  <p className="text-blue-600 font-medium mb-4">AI Developer</p>
+                  <p className="text-slate-600 text-sm mb-6">Your AI software engineer. Writes clean, efficient code across any stack.</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold text-slate-900">$59</span>
+                    <span className="text-blue-600 group-hover:translate-x-1 transition-transform">Learn more →</span>
+                  </div>
+                </div>
+              </Link>
+            </FadeIn>
+
+            <FadeIn delay={300}>
+              <Link href="/listings/adrian-ux-designer" className="group block">
+                <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative">
+                  <div className="absolute top-4 right-4">
+                    <div className="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      <Icon name="verified" className="w-3 h-3" />
+                      AR
+                    </div>
+                  </div>
+                  <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center mb-6" aria-hidden="true">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Design and UX icon">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Adrian</h3>
+                  <p className="text-blue-600 font-medium mb-4">AI UX Designer</p>
+                  <p className="text-slate-600 text-sm mb-6">Your AI design partner. Creates interfaces, writes copy, and crafts user experiences.</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold text-slate-900">$49</span>
+                    <span className="text-blue-600 group-hover:translate-x-1 transition-transform">Learn more →</span>
+                  </div>
+                </div>
+              </Link>
+            </FadeIn>
+          </div>
+
+          <FadeIn delay={400}>
+            <div className="mt-12 bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 rounded-2xl p-8 text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
+              <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                    <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-blue-400 text-sm font-medium mb-1">Agent Resources</div>
+                    <h3 className="text-2xl font-semibold mb-2">Dream Team Bundle</h3>
+                    <p className="text-slate-400">Get all three personas. Complete AI team for your projects.</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <span className="text-3xl font-bold">$99</span>
+                    <span className="text-slate-500 line-through ml-2">$157</span>
+                  </div>
+                  <Link 
+                    href="/listings/dream-team-bundle" 
+                    className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    View Bundle
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 px-6 border-t border-slate-200" role="contentinfo">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+          <Link href="/" aria-label="Agent Resources Home">
+            <Logo />
+          </Link>
+          <div className="flex items-center gap-6 text-slate-600">
+            <Link href="/blog" className="hover:text-slate-900 transition-colors">Blog</Link>
+            <a href="https://twitter.com" className="hover:text-slate-900 transition-colors" aria-label="Follow us on Twitter">Twitter</a>
+            <a href="https://github.com/BerkaySurmeli/agent-resources" className="hover:text-slate-900 transition-colors" aria-label="View our GitHub repository">GitHub</a>
+          </div>
+        </div>
+      </footer>
+
+      {/* Waitlist Modal */}
+      {showWaitlist && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="waitlist-title"
+        >
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full">
+            {!submitted ? (
+              <>
+                <h3 id="waitlist-title" className="text-2xl font-semibold text-slate-900 mb-2">Join the Waitlist</h3>
+                <p className="text-slate-600 mb-6">Be among the first 500 developers to list for free. We'll notify you when we launch.</p>
+                {error && (
+                  <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+                    {error}
+                  </div>
+                )}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowWaitlist(false)}
+                      className="flex-1 px-4 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 px-4 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                      {loading ? 'Joining...' : 'Join Waitlist'}
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Icon name="check" className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 mb-2">You're on the list!</h3>
+                <p className="text-slate-600 mb-6">We'll email you when Agent Resources launches.</p>
+                <button
+                  onClick={() => {
+                    setShowWaitlist(false);
+                    setSubmitted(false);
+                  }}
+                  className="px-6 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Got it
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+} 
               onClick={() => setShowWaitlist(true)}
               className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors"
               aria-label="Join the waitlist for early access"

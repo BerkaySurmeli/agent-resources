@@ -31,6 +31,16 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
+// Default Claudia user - the orchestrator persona
+const CLAUDIA_USER: User = {
+  id: 'claudia-1',
+  email: 'claudia@agentresources.com',
+  name: 'Claudia',
+  initials: 'C',
+  isDeveloper: true,
+  verified: true,
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
