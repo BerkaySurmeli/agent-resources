@@ -61,7 +61,7 @@ const listings = [
     category: 'skills',
     price: 29,
     description: 'Analyze financial data, create reports, and provide investment insights.',
-    developer: { name: 'Finn', initials: 'F', verified: true },
+    developer: { name: 'Andrew', initials: 'A', verified: true },
     rating: 4.6,
     reviews: 98,
     downloads: 432,
