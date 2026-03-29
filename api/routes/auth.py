@@ -10,8 +10,8 @@ import os
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-# Security
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Security - use argon2 which doesn't have the 72-byte limit
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
@@ -74,10 +74,8 @@ def signup(user_data: UserSignup, session = Depends(get_session)):
         if existing:
             raise HTTPException(status_code=400, detail="Email already registered")
         
-        # Hash password with truncation for bcrypt (encode to bytes first)
-        password_bytes = user_data.password.encode('utf-8')[:72]
-        password_to_hash = password_bytes.decode('utf-8', errors='ignore')
-        hashed = pwd_context.hash(password_to_hash)
+        # Hash password
+        hashed = pwd_context.hash(user_data.password)
         
         # Create new user
         user = User(
