@@ -11,18 +11,24 @@ export default function Cart() {
   const [loading, setLoading] = useState(false);
 
   const handleCheckout = async () => {
-    if (!email) return;
+    if (!email || items.length === 0) return;
     
     setLoading(true);
     try {
-      // For multiple items, we'd need a different checkout approach
-      // For now, checkout the first item or create a bundle checkout
-      const response = await fetch(`${API_URL}/payments/create-checkout-session?product_slug=${items[0].slug}&email=${encodeURIComponent(email)}`, {
+      const response = await fetch(`${API_URL}/payments/create-cart-checkout`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: items.map(item => item.slug),
+          email,
+          discount: 0
+        }),
       });
       const data = await response.json();
       if (data.url) {
         window.location.href = data.url;
+      } else {
+        alert('Checkout failed. Please try again.');
       }
     } catch (err) {
       alert('Checkout failed. Please try again.');
