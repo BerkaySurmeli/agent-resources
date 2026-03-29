@@ -82,7 +82,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       <Head>
         <title>Agent Resources | The Marketplace for AI Agents</title>
         <meta name="description" content="Buy and sell MCP Servers, Agent Skills, and AI Personas. First 500 developers list for free. No commission, ever." />
@@ -363,7 +363,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-slate-200" role="contentinfo">
+      <footer className="py-12 px-6 border-t border-slate-200 mt-auto" role="contentinfo">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <Link href="/" aria-label="Agent Resources Home">
             <Logo />
