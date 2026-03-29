@@ -160,7 +160,7 @@ export default function ListingDetail() {
                 </div>
                 <div>
                   <p className="font-medium text-slate-900">{listing.developer.name}</p>
-                  <p className="text-sm text-slate-500">First developer on Agent Resources</p>
+                  <p className="text-sm text-slate-500">Developer</p>
                 </div>
               </div>
 
