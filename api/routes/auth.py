@@ -99,10 +99,12 @@ def signup(user_data: UserSignup, session = Depends(get_session)):
         # For now, just print to logs (in production, use SendGrid/AWS SES)
         print(f"[EMAIL] Verification link: https://shopagentresources.com/verify-email?token={verification_token}")
         
+    except HTTPException:
+        session.rollback()
+        raise
     except Exception as e:
         session.rollback()
-        import traceback
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)} | {traceback.format_exc()[:200]}")
+        raise HTTPException(status_code=500, detail="Server error. Please try again.")
     
     # Create token
     access_token = create_access_token({"sub": str(user.id)})

@@ -32,7 +32,15 @@ export default function Signup() {
       await signup(email, password, name);
       window.location.href = '/';
     } catch (err: any) {
-      setError(err.message || 'Failed to create account');
+      const msg = err.message || 'Failed to create account';
+      // Clean up common error messages
+      if (msg.includes('Email already registered')) {
+        setError('This email is already registered. Try logging in instead.');
+      } else if (msg.includes('Server error')) {
+        setError('Something went wrong. Please try again.');
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
