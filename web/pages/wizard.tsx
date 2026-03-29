@@ -1,0 +1,296 @@
+import Head from 'next/head';
+import Link from 'next/link';
+import { useState } from 'react';
+import { useCart } from '../context/CartContext';
+
+const steps = [
+  { id: 'orchestrator', title: 'Choose Your Orchestrator', description: 'Select a project manager to coordinate your AI team' },
+  { id: 'team', title: 'Build Your Team', description: 'Add specialists to handle specific tasks' },
+  { id: 'review', title: 'Review & Download', description: 'One-click setup for your complete AI team' },
+];
+
+const orchestrators = [
+  { slug: 'claudia-project-manager', name: 'Claudia', role: 'Project Manager', price: 49, description: 'Coordinates projects, delegates tasks, tracks progress', icon: 'clipboard' },
+];
+
+const teamMembers = [
+  { slug: 'chen-developer', name: 'Chen', role: 'Developer', category: 'development', price: 59, description: 'Writes code, builds features, fixes bugs', icon: 'code' },
+  { slug: 'adrian-ux-designer', name: 'Adrian', role: 'UX Designer', category: 'design', price: 49, description: 'Designs interfaces, writes copy, creates experiences', icon: 'palette' },
+  { slug: 'content-marketer', name: 'Maya', role: 'Content Marketer', category: 'marketing', price: 39, description: 'Creates content, manages social media, writes copy', icon: 'megaphone' },
+  { slug: 'financial-analyst', name: 'Finn', role: 'Financial Analyst', category: 'finance', price: 45, description: 'Analyzes data, creates reports, provides insights', icon: 'chart' },
+  { slug: 'hr-specialist', name: 'Hannah', role: 'HR Specialist', category: 'hr', price: 35, description: 'Manages people ops, onboarding, documentation', icon: 'users' },
+  { slug: 'operations-manager', name: 'Oliver', role: 'Operations Manager', category: 'operations', price: 42, description: 'Streamlines processes, manages tools, optimizes workflows', icon: 'cog' },
+];
+
+const sortOptions = [
+  { id: 'popular', label: 'Most Popular' },
+  { id: 'price-low', label: 'Price: Low to High' },
+  { id: 'price-high', label: 'Price: High to Low' },
+  { id: 'name', label: 'Name: A-Z' },
+];
+
+export default function Wizard() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [selectedOrchestrator, setSelectedOrchestrator] = useState<string | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState('popular');
+  const [email, setEmail] = useState('');
+  const { addToCart } = useCart();
+
+  const toggleTeamMember = (slug: string) => {
+    setSelectedTeam(prev => 
+      prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug]
+    );
+  };
+
+  const sortedTeam = [...teamMembers].sort((a, b) => {
+    switch (sortBy) {
+      case 'price-low': return a.price - b.price;
+      case 'price-high': return b.price - a.price;
+      case 'name': return a.name.localeCompare(b.name);
+      default: return 0;
+    }
+  });
+
+  const selectedItems = [
+    ...(selectedOrchestrator ? orchestrators.filter(o => o.slug === selectedOrchestrator) : []),
+    ...teamMembers.filter(t => selectedTeam.includes(t.slug))
+  ];
+
+  const total = selectedItems.reduce((sum, item) => sum + item.price, 0);
+  const bundleDiscount = selectedItems.length >= 3 ? Math.round(total * 0.15) : 0;
+  const finalTotal = total - bundleDiscount;
+
+  const handleCheckout = () => {
+    // Add all items to cart
+    selectedItems.forEach(item => {
+      addToCart({
+        slug: item.slug,
+        name: item.name,
+        price: item.price,
+        category: 'persona'
+      });
+    });
+    window.location.href = '/cart';
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      <Head>
+        <title>Build Your AI Team | Agent Resources</title>
+      </Head>
+
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">AR</span>
+            </div>
+            <span className="font-semibold text-slate-900">Agent Resources</span>
+          </Link>
+          <Link href="/" className="text-slate-600 hover:text-slate-900">Exit Wizard</Link>
+        </div>
+      </nav>
+
+      <main className="pt-24 pb-12 px-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <h1 className="text-3xl font-semibold text-slate-900 mb-2">Build Your AI Team</h1>
+            <p className="text-slate-600">New to OpenClaw? Let's set up your complete AI workforce.</p>
+          </div>
+
+          {/* Progress */}
+          <div className="flex items-center justify-center mb-12">
+            {steps.map((step, index) => (
+              <div key={step.id} className="flex items-center">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+                  index <= currentStep ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500'
+                }`}>
+                  {index < currentStep ? '✓' : index + 1}
+                </div>
+                {index < steps.length - 1 && (
+                  <div className={`w-16 h-1 mx-2 ${
+                    index < currentStep ? 'bg-blue-600' : 'bg-slate-200'
+                  }`} />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Step Content */}
+          <div className="bg-slate-50 rounded-2xl p-8">
+            <h2 className="text-2xl font-semibold text-slate-900 mb-2">{steps[currentStep].title}</h2>
+            <p className="text-slate-600 mb-8">{steps[currentStep].description}</p>
+
+            {currentStep === 0 && (
+              <div className="grid md:grid-cols-2 gap-6">
+                {orchestrators.map(orch => (
+                  <button
+                    key={orch.slug}
+                    onClick={() => setSelectedOrchestrator(orch.slug)}
+                    className={`p-6 rounded-xl border-2 text-left transition-all ${
+                      selectedOrchestrator === orch.slug
+                        ? 'border-blue-600 bg-blue-50'
+                        : 'border-slate-200 bg-white hover:border-blue-300'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                      </div>
+                      <span className="text-2xl font-bold text-slate-900">${orch.price}</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-900 mb-1">{orch.name}</h3>
+                    <p className="text-blue-600 text-sm mb-2">{orch.role}</p>
+                    <p className="text-slate-600 text-sm">{orch.description}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {currentStep === 1 && (
+              <>
+                {/* Sort */}
+                <div className="flex items-center gap-4 mb-6">
+                  <span className="text-sm text-slate-500">Sort by:</span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-3 py-2 rounded-lg border border-slate-200 text-sm"
+                  >
+                    {sortOptions.map(opt => (
+                      <option key={opt.id} value={opt.id}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Team Grid */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  {sortedTeam.map(member => (
+                    <button
+                      key={member.slug}
+                      onClick={() => toggleTeamMember(member.slug)}
+                      className={`p-4 rounded-xl border-2 text-left transition-all ${
+                        selectedTeam.includes(member.slug)
+                          ? 'border-blue-600 bg-blue-50'
+                          : 'border-slate-200 bg-white hover:border-blue-300'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-slate-900">{member.name}</h3>
+                          <p className="text-blue-600 text-sm">{member.role}</p>
+                          <p className="text-slate-600 text-sm mt-1">{member.description}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-semibold text-slate-900">${member.price}</span>
+                          {selectedTeam.includes(member.slug) && (
+                            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mt-2 ml-auto">
+                              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {currentStep === 2 && (
+              <div className="space-y-6">
+                {/* Selected Items */}
+                <div className="bg-white rounded-xl p-6">
+                  <h3 className="font-semibold text-slate-900 mb-4">Your AI Team</h3>
+                  <div className="space-y-3">
+                    {selectedItems.map(item => (
+                      <div key={item.slug} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                        <div>
+                          <span className="font-medium text-slate-900">{item.name}</span>
+                          <span className="text-slate-500 text-sm ml-2">({item.role})</span>
+                        </div>
+                        <span className="font-semibold">${item.price}</span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Pricing */}
+                  <div className="mt-6 pt-4 border-t border-slate-200">
+                    <div className="flex justify-between text-slate-600 mb-2">
+                      <span>Subtotal</span>
+                      <span>${total}</span>
+                    </div>
+                    {bundleDiscount > 0 && (
+                      <div className="flex justify-between text-green-600 mb-2">
+                        <span>Bundle Discount (15%)</span>
+                        <span>-${bundleDiscount}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-semibold text-slate-900 text-lg pt-2 border-t border-slate-200">
+                      <span>Total</span>
+                      <span>${finalTotal}</span>
+                    </div>
+                    {selectedItems.length >= 3 && (
+                      <p className="text-sm text-green-600 mt-2">🎉 Bundle discount applied!</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Email & Checkout */}
+                <div className="bg-white rounded-xl p-6">
+                  <h3 className="font-semibold text-slate-900 mb-4">Ready to deploy?</h3>
+                  <p className="text-slate-600 text-sm mb-4">
+                    Enter your email and we'll send you everything you need for one-click OpenClaw setup.
+                  </p>
+                  <div className="flex gap-3">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="flex-1 px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
+                    />
+                    <button
+                      onClick={handleCheckout}
+                      disabled={!email}
+                      className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                      Checkout
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between mt-8">
+              <button
+                onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                disabled={currentStep === 0}
+                className="px-6 py-3 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50 transition-colors disabled:opacity-50"
+              >
+                Back
+              </button>
+              
+              {currentStep < steps.length - 1 ? (
+                <button
+                  onClick={() => setCurrentStep(currentStep + 1)}
+                  disabled={currentStep === 0 && !selectedOrchestrator}
+                  className="px-6 py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  Continue
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
