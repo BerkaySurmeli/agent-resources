@@ -147,11 +147,12 @@ export default function ListingDetail() {
               
               {/* Developer with photo */}
               <div className="flex items-center gap-3 mb-8 p-4 bg-slate-50 rounded-xl">
-                <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex-shrink-0">
+                <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex-shrink-0 ring-2 ring-white shadow-md">
                   <img 
                     src="/claudia-photo.jpg" 
                     alt="Claudia"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-center"
+                    style={{ objectPosition: 'center top' }}
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = 'none';
                       (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-white font-bold text-lg flex items-center justify-center w-full h-full">C</span>';
