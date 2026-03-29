@@ -15,27 +15,46 @@ export default function Cart() {
     
     setLoading(true);
     try {
-      // Always use single item checkout for now (more reliable)
       const item = items[0];
-      const response = await fetch(`${API_URL}/payments/create-checkout-session?product_slug=${item.slug}&email=${encodeURIComponent(email)}`, {
+      const url = `${API_URL}/payments/create-checkout-session?product_slug=${encodeURIComponent(item.slug)}&email=${encodeURIComponent(email)}`;
+      
+      console.log('Calling API:', url);
+      
+      const response = await fetch(url, {
         method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+        },
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        alert('Error: ' + JSON.stringify(errorData));
+      console.log('Response status:', response.status);
+      
+      const text = await response.text();
+      console.log('Response text:', text);
+      
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        alert('Invalid JSON response: ' + text.substring(0, 200));
         setLoading(false);
         return;
       }
       
-      const data = await response.json();
+      if (!response.ok) {
+        alert('Error: ' + (data.detail || data.message || JSON.stringify(data)));
+        setLoading(false);
+        return;
+      }
+      
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert('No checkout URL received');
+        alert('No checkout URL received: ' + JSON.stringify(data));
       }
     } catch (err) {
-      alert('Network error: ' + err);
+      console.error('Checkout error:', err);
+      alert('Network error: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
