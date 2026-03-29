@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import UserMenu from '../components/UserMenu';
 import CartIcon from '../components/CartIcon';
+import { useCart } from '../context/CartContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
@@ -53,6 +54,12 @@ export default function Home() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { addToCart } = useCart();
+
+  const handleBuyNow = (slug: string, name: string, price: number, category: string) => {
+    addToCart({ slug, name, price, category });
+    window.location.href = '/cart';
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -242,13 +249,10 @@ export default function Home() {
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-slate-900">$49</span>
                   <div className="flex gap-2">
-                    <Link 
-                      href="/listings/claudia-project-manager"
-                      className="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+                    <button 
+                      onClick={() => handleBuyNow('claudia-project-manager', 'Claudia - AI Project Manager', 49, 'personas')}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                     >
-                      Details
-                    </Link>
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
                       Buy Now
                     </button>
                   </div>
@@ -277,13 +281,10 @@ export default function Home() {
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-slate-900">$59</span>
                   <div className="flex gap-2">
-                    <Link 
-                      href="/listings/chen-developer"
-                      className="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+                    <button 
+                      onClick={() => handleBuyNow('chen-developer', 'Chen - AI Developer', 59, 'personas')}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                     >
-                      Details
-                    </Link>
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
                       Buy Now
                     </button>
                   </div>
@@ -312,13 +313,10 @@ export default function Home() {
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-slate-900">$49</span>
                   <div className="flex gap-2">
-                    <Link 
-                      href="/listings/adrian-ux-designer"
-                      className="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+                    <button 
+                      onClick={() => handleBuyNow('adrian-ux-designer', 'Adrian - AI UX Designer', 49, 'personas')}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                     >
-                      Details
-                    </Link>
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
                       Buy Now
                     </button>
                   </div>
