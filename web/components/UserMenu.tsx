@@ -23,6 +23,12 @@ export default function UserMenu() {
   return (
     <div className="flex items-center gap-4">
       <Link 
+        href="/dashboard" 
+        className="text-slate-600 hover:text-slate-900 text-sm font-medium"
+      >
+        Dashboard
+      </Link>
+      <Link 
         href="/sell" 
         className="text-slate-600 hover:text-slate-900 text-sm font-medium"
       >
