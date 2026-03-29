@@ -192,7 +192,7 @@ export default function Home() {
             </button>
           </FadeIn>
         </div>
-      </section>
+      </main>
 
       {/* Featured Products */}
       <section className="py-24 px-6 bg-slate-50">
