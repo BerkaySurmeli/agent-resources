@@ -44,7 +44,10 @@ def verify_password(plain_password, hashed_password):
 
 def get_password_hash(password):
     # Truncate to 72 bytes for bcrypt compatibility
-    return pwd_context.hash(password[:72])
+    try:
+        return pwd_context.hash(password[:72])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Hash error: {str(e)}")
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
@@ -71,10 +74,14 @@ def signup(user_data: UserSignup, session = Depends(get_session)):
         if existing:
             raise HTTPException(status_code=400, detail="Email already registered")
         
+        # Hash password with truncation for bcrypt
+        password_to_hash = user_data.password[:72] if len(user_data.password) > 72 else user_data.password
+        hashed = pwd_context.hash(password_to_hash)
+        
         # Create new user
         user = User(
             email=user_data.email,
-            password_hash=get_password_hash(user_data.password),
+            password_hash=hashed,
             name=user_data.name,
             is_developer=False
         )
@@ -83,7 +90,8 @@ def signup(user_data: UserSignup, session = Depends(get_session)):
         session.refresh(user)
     except Exception as e:
         session.rollback()
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        import traceback
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)} | {traceback.format_exc()[:200]}")
     
     # Create token
     access_token = create_access_token({"sub": str(user.id)})
