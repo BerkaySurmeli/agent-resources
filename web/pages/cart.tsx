@@ -15,36 +15,27 @@ export default function Cart() {
     
     setLoading(true);
     try {
-      // For single item, use simple checkout
-      if (items.length === 1) {
-        const response = await fetch(`${API_URL}/payments/create-checkout-session?product_slug=${items[0].slug}&email=${encodeURIComponent(email)}`, {
-          method: 'POST',
-        });
-        const data = await response.json();
-        if (data.url) {
-          window.location.href = data.url;
-          return;
-        }
+      // Always use single item checkout for now (more reliable)
+      const item = items[0];
+      const response = await fetch(`${API_URL}/payments/create-checkout-session?product_slug=${item.slug}&email=${encodeURIComponent(email)}`, {
+        method: 'POST',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert('Error: ' + JSON.stringify(errorData));
+        setLoading(false);
+        return;
       }
       
-      // For multiple items, use cart checkout
-      const response = await fetch(`${API_URL}/payments/create-cart-checkout`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: items.map(item => item.slug),
-          email,
-          discount: 0
-        }),
-      });
       const data = await response.json();
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert('Checkout failed: ' + (data.detail || data.message || JSON.stringify(data) || 'Please try again.'));
+        alert('No checkout URL received');
       }
     } catch (err) {
-      alert('Checkout failed. Please try again.');
+      alert('Network error: ' + err);
     } finally {
       setLoading(false);
     }
