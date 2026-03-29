@@ -39,3 +39,7 @@ app.include_router(auth.router)
 @app.get("/health")
 async def health():
     return {"status": "online", "db_ready": True, "version": "1.0.0"}
+
+@app.get("/test-auth")
+async def test_auth():
+    return {"message": "Auth routes should be at /auth/signup and /auth/login"}
