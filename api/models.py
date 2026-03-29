@@ -23,6 +23,10 @@ class User(SQLModel, table=True):
     
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     email: str = Field(unique=True, index=True)
+    password_hash: Optional[str] = Field(default=None)
+    name: Optional[str] = Field(default=None)
+    avatar_url: Optional[str] = Field(default=None)
+    is_developer: bool = Field(default=False)
     stripe_connect_id: Optional[str] = Field(default=None, unique=True)
     stripe_status: str = Field(default="pending")
     stripe_charges_enabled: bool = Field(default=False)

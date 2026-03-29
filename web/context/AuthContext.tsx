@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+
 export interface User {
   id: string;
   email: string;
@@ -7,7 +9,6 @@ export interface User {
   avatar?: string;
   initials: string;
   isDeveloper: boolean;
-  verified: boolean;
 }
 
 interface AuthContextType {
@@ -31,16 +32,6 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-// Default Claudia user - the orchestrator persona
-const CLAUDIA_USER: User = {
-  id: 'claudia-1',
-  email: 'claudia@agentresources.com',
-  name: 'Claudia',
-  initials: 'C',
-  isDeveloper: true,
-  verified: true,
-};
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,7 +39,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Load from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem('ar-user');
-    if (saved) {
+    const token = localStorage.getItem('ar-token');
+    if (saved && token) {
       try {
         setUser(JSON.parse(saved));
       } catch {}
@@ -62,34 +54,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('ar-user', JSON.stringify(user));
     } else {
       localStorage.removeItem('ar-user');
+      localStorage.removeItem('ar-token');
     }
   }, [user]);
 
   const login = async (email: string, password: string) => {
-    // TODO: Replace with actual API call
-    // For now, simulate login
-    const mockUser: User = {
-      id: '1',
-      email,
-      name: email.split('@')[0],
-      initials: getInitials(email.split('@')[0]),
-      isDeveloper: true,
-      verified: false,
-    };
-    setUser(mockUser);
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Login failed');
+    }
+
+    const data = await response.json();
+    localStorage.setItem('ar-token', data.access_token);
+    
+    setUser({
+      id: data.user.id,
+      email: data.user.email,
+      name: data.user.name || email.split('@')[0],
+      initials: getInitials(data.user.name || email.split('@')[0]),
+      isDeveloper: data.user.is_developer,
+    });
   };
 
   const signup = async (email: string, password: string, name: string) => {
-    // TODO: Replace with actual API call
-    const mockUser: User = {
-      id: Date.now().toString(),
-      email,
-      name,
-      initials: getInitials(name),
-      isDeveloper: true,
-      verified: false,
-    };
-    setUser(mockUser);
+    const response = await fetch(`${API_URL}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, name }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Signup failed');
+    }
+
+    const data = await response.json();
+    localStorage.setItem('ar-token', data.access_token);
+    
+    setUser({
+      id: data.user.id,
+      email: data.user.email,
+      name: data.user.name || name,
+      initials: getInitials(data.user.name || name),
+      isDeveloper: data.user.is_developer,
+    });
   };
 
   const logout = () => {
