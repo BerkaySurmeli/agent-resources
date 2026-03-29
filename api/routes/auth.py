@@ -74,8 +74,9 @@ def signup(user_data: UserSignup, session = Depends(get_session)):
         if existing:
             raise HTTPException(status_code=400, detail="Email already registered")
         
-        # Hash password with truncation for bcrypt
-        password_to_hash = user_data.password[:72] if len(user_data.password) > 72 else user_data.password
+        # Hash password with truncation for bcrypt (encode to bytes first)
+        password_bytes = user_data.password.encode('utf-8')[:72]
+        password_to_hash = password_bytes.decode('utf-8', errors='ignore')
         hashed = pwd_context.hash(password_to_hash)
         
         # Create new user
