@@ -1,6 +1,8 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
+import { useCart } from '../context/CartContext';
+import CartIcon from '../components/CartIcon';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
@@ -153,12 +155,15 @@ export default function Browse() {
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const { addToCart, items: cartItems } = useCart();
 
   const toggleFavorite = (slug: string) => {
     setFavorites(prev => 
       prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug]
     );
   };
+
+  const isInCart = (slug: string) => cartItems.some(item => item.slug === slug);
 
   const filteredListings = useMemo(() => {
     let result = listings.filter(listing => {
@@ -215,6 +220,7 @@ export default function Browse() {
             <span className="font-semibold text-slate-900">Agent Resources</span>
           </Link>
           <div className="flex items-center gap-6">
+            <CartIcon />
             {favorites.length > 0 && (
               <Link href="/favorites" className="text-slate-600 hover:text-slate-900 relative">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -446,11 +452,34 @@ export default function Browse() {
                             ? 'bg-red-50 text-red-500'
                             : 'bg-slate-100 text-slate-400 hover:text-red-500'
                         }`}
+                        aria-label={favorites.includes(listing.slug) ? 'Remove from favorites' : 'Add to favorites'}
                       >
                         <svg className="w-5 h-5" fill={favorites.includes(listing.slug) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                         </svg>
                       </button>
+                      <button
+                        onClick={() => addToCart({
+                          slug: listing.slug,
+                          name: listing.name,
+                          price: listing.price,
+                          category: listing.category
+                        })}
+                        disabled={isInCart(listing.slug)}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          isInCart(listing.slug)
+                            ? 'bg-green-100 text-green-700 cursor-default'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        {isInCart(listing.slug) ? 'In Cart' : 'Add to Cart'}
+                      </button>
+                      <Link 
+                        href={`/listings/${listing.slug}?buy=now`}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        Buy Now
+                      </Link>
                       <Link 
                         href={`/listings/${listing.slug}`}
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
