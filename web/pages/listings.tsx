@@ -24,36 +24,36 @@ const sortOptions = [
 const listings = [
   {
     slug: 'claudia-project-manager',
-    name: 'Project Manager',
+    name: 'AI Project Manager',
     category: 'personas',
     price: 49,
     description: 'AI project orchestrator that delegates tasks, tracks progress, and ensures deliverables.',
-    developer: { name: 'Claudia', initials: 'C', verified: true },
-    rating: 4.9,
-    reviews: 234,
-    downloads: 1234,
+    developer: { name: 'Claudia', initials: 'C', verified: false },
+    rating: 5,
+    reviews: 1,
+    downloads: 1,
   },
   {
     slug: 'chen-developer',
-    name: 'Software Engineer',
+    name: 'AI Developer',
     category: 'personas', 
     price: 59,
     description: 'Full-stack developer that writes production-ready code across any stack.',
-    developer: { name: 'Chen', initials: 'C', verified: true },
-    rating: 4.8,
-    reviews: 189,
-    downloads: 987,
+    developer: { name: 'Chen', initials: 'C', verified: false },
+    rating: 5,
+    reviews: 1,
+    downloads: 1,
   },
   {
     slug: 'adrian-ux-designer',
-    name: 'UX Designer',
+    name: 'AI UX Designer',
     category: 'personas',
     price: 49,
     description: 'Design partner that creates interfaces, writes copy, and crafts user experiences.',
-    developer: { name: 'Adrian', initials: 'A', verified: true },
-    rating: 4.7,
-    reviews: 156,
-    downloads: 756,
+    developer: { name: 'Adrian', initials: 'A', verified: false },
+    rating: 5,
+    reviews: 1,
+    downloads: 1,
   },
   {
     slug: 'financial-analyst-skill',
@@ -61,10 +61,10 @@ const listings = [
     category: 'skills',
     price: 29,
     description: 'Analyze financial data, create reports, and provide investment insights.',
-    developer: { name: 'Andrew', initials: 'A', verified: true },
-    rating: 4.6,
-    reviews: 98,
-    downloads: 432,
+    developer: { name: 'Andrew', initials: 'A', verified: false },
+    rating: 5,
+    reviews: 1,
+    downloads: 1,
   },
   {
     slug: 'content-marketing-skill',
@@ -72,10 +72,10 @@ const listings = [
     category: 'skills',
     price: 25,
     description: 'Create blog posts, social media content, and marketing copy.',
-    developer: { name: 'Maya', initials: 'M', verified: true },
-    rating: 4.8,
-    reviews: 145,
-    downloads: 678,
+    developer: { name: 'Maya', initials: 'M', verified: false },
+    rating: 5,
+    reviews: 1,
+    downloads: 1,
   },
   {
     slug: 'slack-mcp',
@@ -83,10 +83,10 @@ const listings = [
     category: 'mcps',
     price: 19,
     description: 'Send messages, manage channels, and automate Slack workflows.',
-    developer: { name: 'Agent Resources', initials: 'AR', verified: true },
-    rating: 4.9,
-    reviews: 312,
-    downloads: 2341,
+    developer: { name: 'Agent Resources', initials: 'AR', verified: false },
+    rating: 5,
+    reviews: 1,
+    downloads: 1,
   },
   {
     slug: 'sheets-mcp',
@@ -94,10 +94,10 @@ const listings = [
     category: 'mcps',
     price: 15,
     description: 'Read, write, and manipulate Google Sheets data programmatically.',
-    developer: { name: 'Agent Resources', initials: 'AR', verified: true },
-    rating: 4.7,
-    reviews: 267,
-    downloads: 1876,
+    developer: { name: 'Agent Resources', initials: 'AR', verified: false },
+    rating: 5,
+    reviews: 1,
+    downloads: 1,
   },
 ];
 
@@ -278,15 +278,10 @@ export default function Listings() {
 
                 {/* Developer */}
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
                     {listing.developer.initials}
                   </div>
                   <span className="text-sm text-slate-700 font-medium">{listing.developer.name}</span>
-                  {listing.developer.verified && (
-                    <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  )}
                 </div>
 
                 {/* Rating */}
