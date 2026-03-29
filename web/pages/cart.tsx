@@ -41,7 +41,7 @@ export default function Cart() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert('Checkout failed: ' + (data.detail || 'Please try again.'));
+        alert('Checkout failed: ' + (data.detail || data.message || JSON.stringify(data) || 'Please try again.'));
       }
     } catch (err) {
       alert('Checkout failed. Please try again.');
