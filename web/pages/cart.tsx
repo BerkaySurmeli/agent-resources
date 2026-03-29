@@ -15,6 +15,19 @@ export default function Cart() {
     
     setLoading(true);
     try {
+      // For single item, use simple checkout
+      if (items.length === 1) {
+        const response = await fetch(`${API_URL}/payments/create-checkout-session?product_slug=${items[0].slug}&email=${encodeURIComponent(email)}`, {
+          method: 'POST',
+        });
+        const data = await response.json();
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
+      }
+      
+      // For multiple items, use cart checkout
       const response = await fetch(`${API_URL}/payments/create-cart-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -28,7 +41,7 @@ export default function Cart() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert('Checkout failed. Please try again.');
+        alert('Checkout failed: ' + (data.detail || 'Please try again.'));
       }
     } catch (err) {
       alert('Checkout failed. Please try again.');
