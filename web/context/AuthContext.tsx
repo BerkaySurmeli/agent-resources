@@ -72,16 +72,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const data = await response.json();
+    console.log('Login response:', data);
     localStorage.setItem('ar-token', data.access_token);
     
-    setUser({
+    const userData = {
       id: data.user.id,
       email: data.user.email,
       name: data.user.name || email.split('@')[0],
       initials: getInitials(data.user.name || email.split('@')[0]),
       isDeveloper: data.user.is_developer,
       isVerified: data.user.is_verified,
-    });
+    };
+    console.log('Setting user:', userData);
+    setUser(userData);
   };
 
   const signup = async (email: string, password: string, name: string) => {
