@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from pydantic import BaseModel
 from sqlmodel import select
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 import os
 import shutil
@@ -619,5 +619,101 @@ async def pay_listing_fee(
     
     return {
         "message": "Payment successful. Listing queued for security scan.",
-        "status": listing.status.value
+        "status": listing.status
+    }
+
+
+@router.post("/cron/process-pending-scans")
+async def process_pending_scans(
+    session = Depends(get_session)
+):
+    """
+    Cron job endpoint to process listings stuck in 'scanning' status.
+    Call this every 2-5 minutes via Railway cron or external scheduler.
+    """
+    # Find listings that have been scanning for more than 2 minutes
+    cutoff_time = datetime.utcnow() - timedelta(minutes=2)
+    
+    pending_listings = session.exec(
+        select(Listing).where(
+            Listing.status == 'scanning',
+            Listing.scan_started_at < cutoff_time
+        )
+    ).all()
+    
+    results = []
+    
+    for listing in pending_listings:
+        try:
+            if not listing.file_path or not os.path.exists(listing.file_path):
+                listing.status = 'rejected'
+                listing.rejection_reason = "File not found for scan"
+                session.commit()
+                results.append({"id": str(listing.id), "status": "rejected", "reason": "file_not_found"})
+                continue
+            
+            # Re-run VirusTotal scan
+            vt_result = await scan_with_virustotal(listing.file_path)
+            analysis = analyze_virustotal_results(vt_result)
+            
+            if analysis["is_safe"]:
+                # Approve listing
+                listing.status = 'approved'
+                listing.scan_completed_at = datetime.utcnow()
+                listing.scan_results = {
+                    "virustotal": {
+                        "status": "clean",
+                        "source": vt_result.get("source", "unknown"),
+                        "stats": analysis.get("details", {})
+                    },
+                    "openclaw_analysis": {"status": "passed"}
+                }
+                listing.virustotal_report = vt_result.get("data")
+                
+                # Create product from listing
+                product = Product(
+                    owner_id=listing.owner_id,
+                    name=listing.name,
+                    slug=listing.slug,
+                    description=listing.description,
+                    category=listing.category,
+                    category_tags=listing.category_tags,
+                    price_cents=listing.price_cents,
+                    is_active=True,
+                    is_verified=True
+                )
+                session.add(product)
+                session.commit()
+                session.refresh(product)
+                
+                listing.product_id = product.id
+                session.commit()
+                
+                results.append({"id": str(listing.id), "status": "approved", "product_id": str(product.id)})
+            else:
+                # Reject listing
+                listing.status = 'rejected'
+                listing.scan_completed_at = datetime.utcnow()
+                listing.scan_results = {
+                    "virustotal": {
+                        "status": "suspicious",
+                        "reason": analysis.get("reason"),
+                        "malicious": analysis.get("malicious_count"),
+                        "suspicious": analysis.get("suspicious_count"),
+                        "total": analysis.get("total_engines")
+                    }
+                }
+                listing.rejection_reason = f"Security scan failed: {analysis.get('reason')}"
+                session.commit()
+                
+                results.append({"id": str(listing.id), "status": "rejected", "reason": analysis.get("reason")})
+                
+        except Exception as e:
+            import traceback
+            print(f"[CRON ERROR] Listing {listing.id}: {str(e)}\n{traceback.format_exc()}")
+            results.append({"id": str(listing.id), "status": "error", "error": str(e)})
+    
+    return {
+        "processed": len(results),
+        "results": results
     }
