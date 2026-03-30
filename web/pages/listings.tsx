@@ -39,7 +39,7 @@ const getCategoryIcon = (category: string) => {
   }
 };
 
-const getCategoryName = (category: string) => {
+const getCategoryName = (category: string, categories: {id: string, name: string}[]) => {
   const cat = categories.find(c => c.id === category);
   return cat?.name || category;
 };
@@ -225,7 +225,7 @@ export default function Listings() {
                           {/* Category */}
                           <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full mt-1 ${getCategoryColor(listing.category)}`}>
                             {getCategoryIcon(listing.category)}
-                            {getCategoryName(listing.category)}
+                            {getCategoryName(listing.category, categories)}
                           </span>
                         </div>
                       </div>
