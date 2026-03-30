@@ -61,6 +61,9 @@ export default function ManageProduct() {
     price_cents: 0
   });
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [togglingStatus, setTogglingStatus] = useState(false);
 
   useEffect(() => {
     if (slug && user) {
@@ -139,6 +142,48 @@ export default function ManageProduct() {
       setError(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem('ar-token');
+      const res = await fetch(`${API_URL}/products/${slug}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        router.push('/dashboard');
+      } else {
+        throw new Error('Failed to delete product');
+      }
+    } catch (err: any) {
+      setError(err.message);
+      setDeleting(false);
+    }
+  };
+
+  const handleToggleStatus = async () => {
+    setTogglingStatus(true);
+    try {
+      const token = localStorage.getItem('ar-token');
+      const res = await fetch(`${API_URL}/products/${slug}/toggle-status`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setProduct(updated);
+      } else {
+        throw new Error('Failed to toggle status');
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setTogglingStatus(false);
     }
   };
 
@@ -407,10 +452,58 @@ export default function ManageProduct() {
               >
                 View Public Page
               </Link>
+
+              {/* Pause/Resume Button */}
+              <button
+                onClick={handleToggleStatus}
+                disabled={togglingStatus}
+                className={`block w-full text-center py-3 rounded-xl font-medium transition-colors ${
+                  product.is_active
+                    ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                    : 'bg-green-100 text-green-700 hover:bg-green-200'
+                }`}
+              >
+                {togglingStatus ? 'Updating...' : product.is_active ? 'Pause Listing' : 'Resume Listing'}
+              </button>
+
+              {/* Delete Button */}
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="block w-full bg-red-100 text-red-700 text-center py-3 rounded-xl font-medium hover:bg-red-200 transition-colors"
+              >
+                Delete Listing
+              </button>
             </div>
           </div>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 max-w-md mx-4">
+            <h2 className="text-xl font-semibold text-slate-900 mb-4">Delete Listing?</h2>
+            <p className="text-slate-600 mb-6">
+              This will permanently delete <strong>{product.name}</strong>. This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 bg-red-600 text-white py-3 rounded-xl font-medium hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleting ? 'Deleting...' : 'Yes, Delete'}
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 px-4 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

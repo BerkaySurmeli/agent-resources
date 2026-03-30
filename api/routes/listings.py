@@ -695,7 +695,7 @@ async def create_listing_review(
     if existing:
         raise HTTPException(status_code=400, detail="You have already reviewed this product")
 
-    # Check if user purchased this product
+    # Check if user purchased this product (required to leave a review)
     purchase = session.exec(
         select(Transaction)
         .where(
@@ -705,12 +705,15 @@ async def create_listing_review(
         )
     ).first()
 
+    if not purchase:
+        raise HTTPException(status_code=403, detail="You must purchase this product before leaving a review")
+
     review = Review(
         user_id=current_user.id,
         product_id=listing.product_id,
         rating=rating,
         comment=comment,
-        is_verified_purchase=purchase is not None
+        is_verified_purchase=True
     )
 
     session.add(review)

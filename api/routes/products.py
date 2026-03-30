@@ -238,3 +238,67 @@ async def create_review(
     session.commit()
     
     return {"message": "Review created successfully", "review_id": str(review.id)}
+
+
+@router.delete("/{slug}")
+async def delete_product(
+    slug: str,
+    session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Delete a product (owner only)"""
+    product = session.exec(select(Product).where(Product.slug == slug)).first()
+
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # Check if user is the owner
+    if str(product.owner_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorized to delete this product")
+
+    # Delete associated reviews first
+    session.exec(
+        select(Review).where(Review.product_id == product.id)
+    )
+
+    # Delete the product
+    session.delete(product)
+    session.commit()
+
+    return {"message": "Product deleted successfully"}
+
+
+@router.post("/{slug}/toggle-status", response_model=ProductDetailResponse)
+async def toggle_product_status(
+    slug: str,
+    session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Toggle product active status (owner only)"""
+    product = session.exec(select(Product).where(Product.slug == slug)).first()
+
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # Check if user is the owner
+    if str(product.owner_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorized to modify this product")
+
+    # Toggle status
+    product.is_active = not product.is_active
+    session.commit()
+    session.refresh(product)
+
+    return ProductDetailResponse(
+        id=str(product.id),
+        slug=product.slug,
+        name=product.name,
+        description=product.description or "",
+        category=product.category,
+        price_cents=product.price_cents,
+        category_tags=product.category_tags or [],
+        is_active=product.is_active,
+        is_verified=product.is_verified,
+        download_count=product.download_count,
+        created_at=product.created_at
+    )
