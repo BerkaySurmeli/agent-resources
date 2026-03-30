@@ -49,7 +49,7 @@ export default function Sell() {
     );
   }
 
-  if (!user.is_verified) {
+  if (!user.isVerified) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center px-6">
         <div className="text-center max-w-md">

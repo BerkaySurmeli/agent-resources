@@ -148,7 +148,7 @@ export default function Dashboard() {
       <main className="pt-24 pb-12 px-6">
         <div className="max-w-6xl mx-auto">
           {/* Email Verification Banner */}
-          {user && !user.is_verified && (
+          {user && !user.isVerified && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-8 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
