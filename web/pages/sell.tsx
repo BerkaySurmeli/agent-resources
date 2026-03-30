@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const categories = [
@@ -16,6 +16,7 @@ const tags = [
 
 export default function Sell() {
   const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
@@ -23,9 +24,12 @@ export default function Sell() {
     description: '',
     price: '',
     tags: [] as string[],
-    oneClickConfig: '',
+    files: [] as File[],
+    licenseAccepted: false,
   });
+  const [isDragging, setIsDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   if (!user) {
     return (
@@ -40,12 +44,66 @@ export default function Sell() {
     );
   }
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const items = e.dataTransfer.items;
+    const files: File[] = [];
+    
+    // Process dropped items
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i].webkitGetAsEntry();
+      if (item) {
+        // For now, just collect files from the drop
+        // In production, you'd traverse directories
+      }
+    }
+    
+    // Also get files directly
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    setFormData(prev => ({ ...prev, files: [...prev.files, ...droppedFiles] }));
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const selectedFiles = Array.from(e.target.files);
+      setFormData(prev => ({ ...prev, files: [...prev.files, ...selectedFiles] }));
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      files: prev.files.filter((_, i) => i !== index)
+    }));
+  };
+
+  const hasSkillMd = formData.files.some(f => f.name === 'SKILL.md');
+  const totalSize = formData.files.reduce((acc, f) => acc + f.size, 0);
+
   const handleSubmit = async () => {
     setSubmitting(true);
-    // TODO: Submit to API
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    alert('Listing submitted for review!');
-    window.location.href = '/listings';
+    
+    // Simulate upload progress
+    for (let i = 0; i <= 100; i += 10) {
+      setUploadProgress(i);
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    // TODO: Actually upload files to API
+    alert('Listing submitted for security review! You\'ll be notified when it\'s approved.');
+    window.location.href = '/dashboard';
   };
 
   const toggleTag = (tag: string) => {
@@ -60,7 +118,7 @@ export default function Sell() {
   return (
     <div className="min-h-screen bg-white">
       <Head>
-        <title>Sell a Listing | Agent Resources</title>
+        <title>List an Item | Agent Resources</title>
       </Head>
 
       {/* Navigation */}
@@ -77,8 +135,8 @@ export default function Sell() {
       </nav>
 
       <main className="pt-24 pb-12 px-6">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-semibold text-slate-900 mb-2">Sell a Listing</h1>
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-semibold text-slate-900 mb-2">List an Item</h1>
           <p className="text-slate-600 mb-8">Create and publish your AI persona, skill, or MCP server</p>
 
           {/* Progress */}
@@ -216,47 +274,170 @@ export default function Sell() {
 
             {step === 3 && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-slate-900">One-Click Config</h2>
+                <h2 className="text-xl font-semibold text-slate-900">Upload Your Files</h2>
                 <p className="text-slate-600">
-                  Provide the configuration that users will paste into their OpenClaw settings. 
-                  This enables instant setup.
+                  Drop a folder containing your SKILL.md and any supporting files. 
+                  Buyers will download this as a ZIP file and extract it to their OpenClaw skills folder.
                 </p>
                 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    OpenClaw Configuration (JSON)
-                  </label>
-                  <textarea
-                    value={formData.oneClickConfig}
-                    onChange={(e) => setFormData(prev => ({ ...prev, oneClickConfig: e.target.value }))}
-                    rows={8}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500 font-mono text-sm"
-                    placeholder={`{\n  "persona": {\n    "name": "My Agent",\n    "role": "Assistant",\n    "system_prompt": "You are a helpful assistant..."\n  }\n}`}
+                {/* File Drop Zone */}
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+                    isDragging 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-slate-300 hover:border-blue-400'
+                  }`}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    webkitdirectory=""
+                    directory=""
+                    onChange={handleFileSelect}
+                    className="hidden"
                   />
-                </div>
-
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Security Notice:</strong> Your listing will be automatically scanned for 
-                    malicious code before being published. This process typically takes a few minutes.
+                  <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-6 h-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+                  <p className="font-medium text-slate-900 mb-1">Drop a folder here</p>
+                  <p className="text-sm text-slate-500 mb-4">
+                    We keep folder paths and flatten the outer wrapper automatically
                   </p>
+                  <button
+                    type="button"
+                    className="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50"
+                  >
+                    Choose folder
+                  </button>
                 </div>
 
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setStep(2)}
-                    className="px-6 py-3 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
-                  >
-                    Back
-                  </button>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={submitting || !formData.oneClickConfig}
-                    className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
-                  >
-                    {submitting ? 'Submitting...' : 'Submit for Review'}
-                  </button>
+                {/* File List */}
+                {formData.files.length > 0 && (
+                  <div className="bg-white rounded-lg border border-slate-200 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-medium text-slate-700">
+                        {formData.files.length} files • {(totalSize / 1024).toFixed(1)} KB
+                      </span>
+                      {hasSkillMd && (
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                          ✓ SKILL.md found
+                        </span>
+                      )}
+                    </div>
+                    <ul className="space-y-2 max-h-48 overflow-y-auto">
+                      {formData.files.map((file, index) => (
+                        <li key={index} className="flex items-center justify-between text-sm">
+                          <span className="text-slate-600 truncate">{file.name}</span>
+                          <button
+                            onClick={() => removeFile(index)}
+                            className="text-red-500 hover:text-red-700 ml-2"
+                          >
+                            ×
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Validation Messages */}
+                <div className="bg-slate-100 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-slate-700 mb-2">Validation</h3>
+                  <ul className="space-y-1 text-sm">
+                    <li className={formData.name ? 'text-green-600' : 'text-slate-500'}>
+                      {formData.name ? '✓' : '○'} Name is required
+                    </li>
+                    <li className={formData.files.length > 0 ? 'text-green-600' : 'text-slate-500'}>
+                      {formData.files.length > 0 ? '✓' : '○'} Add at least one file
+                    </li>
+                    <li className={hasSkillMd ? 'text-green-600' : 'text-slate-500'}>
+                      {hasSkillMd ? '✓' : '○'} SKILL.md is required
+                    </li>
+                    <li className={formData.licenseAccepted ? 'text-green-600' : 'text-slate-500'}>
+                      {formData.licenseAccepted ? '✓' : '○'} Accept the MIT-0 license terms
+                    </li>
+                  </ul>
                 </div>
+
+                {/* License */}
+                <div className="bg-slate-100 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-slate-700 mb-2">License</h3>
+                  <div className="bg-amber-900/20 border border-amber-800/30 rounded-lg p-3 mb-3">
+                    <span className="text-xs font-medium text-amber-200 px-2 py-1 bg-amber-900/40 rounded">
+                      MIT-0 · MIT NO ATTRIBUTION
+                    </span>
+                    <p className="text-sm text-slate-600 mt-2">
+                      All items published on Agent Resources are licensed under MIT-0. 
+                      Free to use, modify, and redistribute. No attribution required.
+                    </p>
+                  </div>
+                  <label className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={formData.licenseAccepted}
+                      onChange={(e) => setFormData(prev => ({ ...prev, licenseAccepted: e.target.checked }))}
+                      className="mt-1 w-4 h-4 text-blue-600 rounded border-slate-300"
+                    />
+                    <span className="text-sm text-slate-700">
+                      I have the rights to this item and agree to publish it under MIT-0
+                    </span>
+                  </label>
+                </div>
+
+                {/* Security Notice */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-medium text-yellow-800">Security Scan Required</p>
+                      <p className="text-sm text-yellow-700 mt-1">
+                        Your files will be automatically scanned by VirusTotal and OpenClaw's security analyzer. 
+                        This process typically takes a few minutes. You'll be notified when your listing is approved.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Submit */}
+                {submitting ? (
+                  <div className="bg-slate-100 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-slate-700">Uploading...</span>
+                      <span className="text-sm text-slate-500">{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setStep(2)}
+                      className="px-6 py-3 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={!hasSkillMd || formData.files.length === 0 || !formData.licenseAccepted}
+                      className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                      Submit for Security Review
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
