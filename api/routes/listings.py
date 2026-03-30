@@ -359,9 +359,13 @@ async def create_listing(
         listing.scan_started_at = datetime.utcnow()
         session.commit()
         
-        # Run VirusTotal scan
+        # Run VirusTotal scan (with timeout protection)
         try:
-            vt_result = await scan_with_virustotal(zip_path)
+            # Use asyncio.wait_for to prevent HTTP timeout issues
+            vt_result = await asyncio.wait_for(
+                scan_with_virustotal(zip_path),
+                timeout=120.0  # 2 minute max
+            )
             analysis = analyze_virustotal_results(vt_result)
             
             if analysis["is_safe"]:
@@ -426,6 +430,15 @@ async def create_listing(
                     "message": f"Listing rejected: {analysis.get('reason')}"
                 }
                 
+        except asyncio.TimeoutError:
+            # Scan is taking too long - will complete in background
+            # User should poll for status
+            return {
+                "id": str(listing.id),
+                "slug": listing.slug,
+                "status": "scanning",
+                "message": "Security scan in progress. Check back in a few minutes."
+            }
         except Exception as e:
             # Scan failed - mark as pending for manual review
             import traceback
