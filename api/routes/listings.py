@@ -134,13 +134,17 @@ async def create_listing(
             file_count += 1
             total_size += len(content)
             
-            if file.filename.lower() == 'skill.md':
+            # Check for SKILL.md (handle both 'SKILL.md' and 'folder/SKILL.md')
+            if file.filename and file.filename.lower().endswith('skill.md'):
                 has_skill_md = True
     
     if not has_skill_md:
+        # Log what files were received for debugging
+        received_files = [f.filename for f in files if f.filename]
+        print(f"[DEBUG] SKILL.md not found. Received files: {received_files}")
         # Clean up and error
         shutil.rmtree(listing_dir, ignore_errors=True)
-        raise HTTPException(status_code=400, detail="SKILL.md is required")
+        raise HTTPException(status_code=400, detail=f"SKILL.md is required. Received {len(files)} files: {received_files}")
     
     # Create ZIP file
     zip_path = f"{listing_dir}.zip"
