@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query
 from pydantic import BaseModel
 from sqlmodel import select
 from typing import List, Optional
@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import uuid
 import os
 import shutil
-from models import Listing, ListingStatus, ProductCategory, User, Product
+from models import Listing, ListingStatus, ProductCategory, User, Product, ListingTranslation
 from core.database import get_session
 from routes.auth import get_current_user_from_token
 import aiofiles
@@ -15,6 +15,7 @@ import hashlib
 import httpx
 import asyncio
 from typing import Dict, Any
+from services.translation import translate_listing, detect_language, SUPPORTED_LANGUAGES
 
 router = APIRouter(prefix="/listings", tags=["Listings"])
 
@@ -337,6 +338,10 @@ async def create_listing(
     # Clean up directory, keep only ZIP
     shutil.rmtree(listing_dir, ignore_errors=True)
     
+    # Detect original language
+    original_language = detect_language(name + " " + description)
+    print(f"[TRANSLATION] Detected language: {original_language}")
+    
     # Create listing record
     listing = Listing(
         owner_id=current_user.id,
@@ -349,6 +354,7 @@ async def create_listing(
         file_path=zip_path,
         file_count=file_count,
         file_size_bytes=total_size,
+        original_language=original_language,
         listing_fee_cents=LISTING_FEE_CENTS,
         status='pending_payment' if LISTING_FEE_CENTS > 0 else 'pending_scan'
     )
@@ -401,6 +407,9 @@ async def create_listing(
                 )
                 session.add(product)
                 session.commit()
+                
+                # Trigger translations in background
+                asyncio.create_task(generate_translations(listing.id, name, description, original_language, session))
                 session.refresh(product)
                 
                 listing.product_id = product.id
@@ -427,14 +436,36 @@ async def create_listing(
                 }
                 listing.rejection_reason = f"Security scan failed: {analysis.get('reason')}"
                 session.commit()
-                
+
                 return {
                     "id": str(listing.id),
                     "slug": listing.slug,
                     "status": listing.status,
                     "message": f"Listing rejected: {analysis.get('reason')}"
                 }
-                
+
+async def generate_translations(listing_id: uuid.UUID, name: str, description: str, source_lang: str, session):
+    """Generate translations for a listing in the background"""
+    try:
+        print(f"[TRANSLATION] Starting translation for listing {listing_id}")
+        translations = translate_listing(name, description, source_lang)
+        
+        for lang, content in translations.items():
+            translation = ListingTranslation(
+                listing_id=listing_id,
+                language=lang,
+                name=content['name'],
+                description=content['description']
+            )
+            session.add(translation)
+        
+        session.commit()
+        print(f"[TRANSLATION] Completed translations for listing {listing_id}: {list(translations.keys())}")
+    except Exception as e:
+        print(f"[TRANSLATION] Error generating translations: {e}")
+        import traceback
+        traceback.print_exc()
+
         except asyncio.TimeoutError:
             # Scan is taking too long - will complete in background
             # User should poll for status
@@ -449,13 +480,13 @@ async def create_listing(
             import traceback
             error_details = traceback.format_exc()
             print(f"[VIRUSTOTAL ERROR] {str(e)}\n{error_details}")
-            
+
             listing.status = 'pending_scan'
             listing.scan_results = {
                 "virustotal": {"status": "error", "error": str(e), "trace": error_details[:500]}
             }
             session.commit()
-            
+
             return {
                 "id": str(listing.id),
                 "slug": listing.slug,
@@ -536,6 +567,7 @@ async def get_public_listings(
     category: Optional[str] = None,
     search: Optional[str] = None,
     slug: Optional[str] = None,
+    lang: Optional[str] = Query(default='en', description='Language code for translations'),
     session = Depends(get_session)
 ):
     """Get published/approved listings for public browsing"""
@@ -543,17 +575,38 @@ async def get_public_listings(
     
     query = select(Listing, User, Product).join(User, Listing.owner_id == User.id).outerjoin(Product, Listing.product_id == Product.id).where(Listing.status == 'approved')
     
+    # Helper function to get translated content
+    def get_listing_content(listing: Listing, language: str):
+        """Get listing content in requested language"""
+        if language == listing.original_language or language not in SUPPORTED_LANGUAGES:
+            return listing.name, listing.description
+        
+        # Try to get translation
+        translation = session.exec(
+            select(ListingTranslation).where(
+                ListingTranslation.listing_id == listing.id,
+                ListingTranslation.language == language
+            )
+        ).first()
+        
+        if translation:
+            return translation.name, translation.description
+        return listing.name, listing.description
+
     if slug:
         # Return single listing by slug
         result = session.exec(query.where(Listing.slug == slug)).first()
         if not result:
             raise HTTPException(status_code=404, detail="Listing not found")
         listing, user, product = result
+        
+        name, description = get_listing_content(listing, lang)
+        
         return [{
             "id": str(listing.id),
             "slug": listing.slug,
-            "name": listing.name,
-            "description": listing.description,
+            "name": name,
+            "description": description,
             "category": listing.category,
             "price_cents": listing.price_cents,
             "tags": listing.category_tags,
@@ -579,13 +632,13 @@ async def get_public_listings(
         )
     
     results = session.exec(query.order_by(Listing.created_at.desc())).all()
-    
+
     return [
         {
             "id": str(l.id),
             "slug": l.slug,
-            "name": l.name,
-            "description": l.description[:200] + "..." if len(l.description) > 200 else l.description,
+            "name": get_listing_content(l, lang)[0],
+            "description": get_listing_content(l, lang)[1][:200] + "..." if len(get_listing_content(l, lang)[1]) > 200 else get_listing_content(l, lang)[1],
             "category": l.category,
             "price_cents": l.price_cents,
             "tags": l.category_tags,

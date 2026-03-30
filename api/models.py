@@ -174,6 +174,9 @@ class Listing(SQLModel, table=True):
     category_tags: List[str] = Field(sa_column=Column(ARRAY(TEXT), default=[]))
     price_cents: int
     
+    # Translation support
+    original_language: str = Field(default='en')  # Language the listing was created in
+    
     # File storage
     file_path: str  # Path to stored ZIP file
     file_size_bytes: int
@@ -202,3 +205,18 @@ class Listing(SQLModel, table=True):
     # Relationships
     owner: User = Relationship()
     product: Optional[Product] = Relationship()
+    translations: List["ListingTranslation"] = Relationship(back_populates="listing")
+
+# 9. LISTING TRANSLATION (for multilingual support)
+class ListingTranslation(SQLModel, table=True):
+    __tablename__ = "listing_translations"
+    
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    listing_id: UUID = Field(foreign_key="listings.id")
+    language: str  # 'en', 'es', 'zh', etc.
+    name: str
+    description: str
+    translated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Relationships
+    listing: Listing = Relationship(back_populates="translations")

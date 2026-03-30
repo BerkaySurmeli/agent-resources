@@ -64,7 +64,7 @@ interface Listing {
 }
 
 export default function Listings() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
@@ -91,7 +91,7 @@ export default function Listings() {
 
   const fetchListings = async () => {
     try {
-      const res = await fetch(`${API_URL}/listings/public`);
+      const res = await fetch(`${API_URL}/listings/public?lang=${language}`);
       if (res.ok) {
         const data = await res.json();
         setListings(data);
