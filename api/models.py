@@ -180,7 +180,7 @@ class Listing(SQLModel, table=True):
     file_count: int
     
     # Security scan
-    status: ListingStatus = Field(default=ListingStatus.PENDING_PAYMENT)
+    status: str = Field(default='pending_payment')
     scan_started_at: Optional[datetime] = Field(default=None)
     scan_completed_at: Optional[datetime] = Field(default=None)
     scan_results: Dict = Field(default={}, sa_column=Column(JSON))
