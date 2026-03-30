@@ -264,8 +264,8 @@ async def get_dashboard_stats(
     return DashboardStats(
         total_listings=len(listings),
         approved_listings=sum(1 for l in listings if l.status == 'approved'),
-        pending_listings=sum(1 for l in listings if l.status in [ListingStatus.PENDING_PAYMENT, ListingStatus.PENDING_SCAN, ListingStatus.SCANNING]),
-        rejected_listings=sum(1 for l in listings if l.status == ListingStatus.REJECTED),
+        pending_listings=sum(1 for l in listings if l.status in ['pending_payment', 'pending_scan', 'scanning']),
+        rejected_listings=sum(1 for l in listings if l.status == 'rejected'),
         total_revenue_cents=total_revenue,
         total_downloads=total_downloads
     )
