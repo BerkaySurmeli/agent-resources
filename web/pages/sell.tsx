@@ -94,7 +94,7 @@ export default function Sell() {
     }));
   };
 
-  const hasSkillMd = formData.files.some(f => f.name === 'SKILL.md');
+  const hasSkillMd = formData.files.some(f => f.name.toLowerCase().endsWith('skill.md'));
   const totalSize = formData.files.reduce((acc, f) => acc + f.size, 0);
 
   const handleSubmit = async () => {
