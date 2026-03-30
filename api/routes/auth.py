@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, EmailStr
 from sqlmodel import select
 from datetime import datetime, timedelta
@@ -193,3 +193,34 @@ def resend_verification(email: EmailStr, session = Depends(get_session)):
     print(f"[EMAIL] Verification link: https://shopagentresources.com/verify-email?token={user.verification_token}")
     
     return {"message": "Verification email sent"}
+
+
+# Dependency to get current user from JWT token
+def get_current_user_from_token(
+    request: Request,
+    session = Depends(get_session)
+) -> User:
+    """Extract and validate JWT token from Authorization header"""
+    auth_header = request.headers.get("Authorization")
+    
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
+    
+    token = auth_header.split(" ")[1]
+    
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        user = session.exec(select(User).where(User.id == user_id)).first()
+        
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        return user
+        
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")

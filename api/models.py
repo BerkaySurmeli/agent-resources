@@ -149,3 +149,56 @@ class WaitlistEntry(SQLModel, table=True):
     email: str = Field(unique=True, index=True)
     source: str = Field(default="website")  # where they signed up
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# 8. LISTING (for seller submissions with security scanning)
+class ListingStatus(str, Enum):
+    PENDING_PAYMENT = "pending_payment"  # Waiting for listing fee
+    PENDING_SCAN = "pending_scan"        # Payment received, waiting for security scan
+    SCANNING = "scanning"                # Security scan in progress
+    APPROVED = "approved"                # Approved and published
+    REJECTED = "rejected"                # Failed security scan
+    PAYMENT_FAILED = "payment_failed"    # Payment failed
+
+class Listing(SQLModel, table=True):
+    __tablename__ = "listings"
+    
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    owner_id: UUID = Field(foreign_key="users.id")
+    
+    # Listing details
+    name: str
+    slug: str = Field(unique=True, index=True)
+    description: str
+    category: ProductCategory
+    category_tags: List[str] = Field(sa_column=Column(ARRAY(TEXT), default=[]))
+    price_cents: int
+    
+    # File storage
+    file_path: str  # Path to stored ZIP file
+    file_size_bytes: int
+    file_count: int
+    
+    # Security scan
+    status: ListingStatus = Field(default=ListingStatus.PENDING_PAYMENT)
+    scan_started_at: Optional[datetime] = Field(default=None)
+    scan_completed_at: Optional[datetime] = Field(default=None)
+    scan_results: Dict = Field(default={}, sa_column=Column(JSON))
+    virustotal_report: Optional[str] = Field(default=None)
+    rejection_reason: Optional[str] = Field(default=None)
+    
+    # Payment
+    listing_fee_cents: int = Field(default=0)  # 0 for first 500
+    payment_intent_id: Optional[str] = Field(default=None)
+    payment_status: str = Field(default="pending")  # pending, succeeded, failed
+    
+    # Published product (once approved)
+    product_id: Optional[UUID] = Field(default=None, foreign_key="products.id")
+    
+    # Timestamps
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Relationships
+    owner: User = Relationship()
+    product: Optional[Product] = Relationship()

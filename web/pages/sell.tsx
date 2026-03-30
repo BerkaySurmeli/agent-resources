@@ -1,7 +1,10 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
 const categories = [
   { id: 'personas', name: 'AI Persona', description: 'A complete AI worker with specific skills and personality' },
@@ -15,6 +18,7 @@ const tags = [
 ];
 
 export default function Sell() {
+  const router = useRouter();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1);
@@ -30,6 +34,7 @@ export default function Sell() {
   const [isDragging, setIsDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [error, setError] = useState('');
 
   if (!user) {
     return (
@@ -94,16 +99,55 @@ export default function Sell() {
 
   const handleSubmit = async () => {
     setSubmitting(true);
+    setError('');
     
-    // Simulate upload progress
-    for (let i = 0; i <= 100; i += 10) {
-      setUploadProgress(i);
-      await new Promise(resolve => setTimeout(resolve, 200));
+    try {
+      const token = localStorage.getItem('ar-token');
+      if (!token) {
+        throw new Error('Please sign in first');
+      }
+      
+      // Create FormData
+      const data = new FormData();
+      data.append('name', formData.name);
+      data.append('description', formData.description);
+      data.append('category', formData.category);
+      data.append('price_cents', String(parseInt(formData.price) * 100));
+      data.append('tags', JSON.stringify(formData.tags));
+      
+      // Add files
+      formData.files.forEach(file => {
+        data.append('files', file);
+      });
+      
+      // Upload with progress simulation
+      setUploadProgress(10);
+      
+      const response = await fetch(`${API_URL}/listings/create`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: data
+      });
+      
+      setUploadProgress(80);
+      
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.detail || 'Failed to create listing');
+      }
+      
+      const result = await response.json();
+      setUploadProgress(100);
+      
+      // Redirect to dashboard
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Failed to submit listing');
+      setSubmitting(false);
+      setUploadProgress(0);
     }
-    
-    // TODO: Actually upload files to API
-    alert('Listing submitted for security review! You\'ll be notified when it\'s approved.');
-    window.location.href = '/dashboard';
   };
 
   const toggleTag = (tag: string) => {
@@ -276,9 +320,16 @@ export default function Sell() {
               <div className="space-y-6">
                 <h2 className="text-xl font-semibold text-slate-900">Upload Your Files</h2>
                 <p className="text-slate-600">
-                  Drop a folder containing your SKILL.md and any supporting files. 
+                  Drop a folder containing your SKILL.md and any supporting files.
                   Buyers will download this as a ZIP file and extract it to their OpenClaw skills folder.
                 </p>
+
+                {/* Error Display */}
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p className="text-red-700 text-sm">{error}</p>
+                  </div>
+                )}
                 
                 {/* File Drop Zone */}
                 <div
