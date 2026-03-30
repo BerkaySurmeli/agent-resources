@@ -204,6 +204,7 @@ class ListingCreate(BaseModel):
 
 class ListingResponse(BaseModel):
     id: str
+    slug: str
     name: str
     description: str
     category: str
@@ -480,6 +481,7 @@ async def get_my_listings(
     return [
         ListingResponse(
             id=str(l.id),
+            slug=l.slug,
             name=l.name,
             description=l.description,
             category=l.category,
@@ -533,14 +535,16 @@ async def get_public_listings(
     session = Depends(get_session)
 ):
     """Get published/approved listings for public browsing"""
+    from models import User, Product
     
-    query = select(Listing).where(Listing.status == 'approved')
+    query = select(Listing, User, Product).join(User, Listing.owner_id == User.id).outerjoin(Product, Listing.product_id == Product.id).where(Listing.status == 'approved')
     
     if slug:
         # Return single listing by slug
-        listing = session.exec(query.where(Listing.slug == slug)).first()
-        if not listing:
+        result = session.exec(query.where(Listing.slug == slug)).first()
+        if not result:
             raise HTTPException(status_code=404, detail="Listing not found")
+        listing, user, product = result
         return [{
             "id": str(listing.id),
             "slug": listing.slug,
@@ -552,7 +556,13 @@ async def get_public_listings(
             "file_count": listing.file_count,
             "file_size_bytes": listing.file_size_bytes,
             "scan_results": listing.scan_results,
-            "created_at": listing.created_at
+            "created_at": listing.created_at,
+            "seller": {
+                "id": str(user.id),
+                "name": user.name or "Anonymous",
+                "avatar_url": user.avatar_url
+            },
+            "is_verified": product.is_verified if product else False
         }]
     
     if category:
@@ -564,7 +574,7 @@ async def get_public_listings(
             (Listing.description.ilike(f"%{search}%"))
         )
     
-    listings = session.exec(query.order_by(Listing.created_at.desc())).all()
+    results = session.exec(query.order_by(Listing.created_at.desc())).all()
     
     return [
         {
@@ -575,9 +585,15 @@ async def get_public_listings(
             "category": l.category,
             "price_cents": l.price_cents,
             "tags": l.category_tags,
-            "created_at": l.created_at
+            "created_at": l.created_at,
+            "seller": {
+                "id": str(u.id),
+                "name": u.name or "Anonymous",
+                "avatar_url": u.avatar_url
+            },
+            "is_verified": p.is_verified if p else False
         }
-        for l in listings
+        for l, u, p in results
     ]
 
 
@@ -587,13 +603,16 @@ async def get_listing_detail(
     session = Depends(get_session)
 ):
     """Get detailed information about a listing"""
+    from models import User, Product
     
-    listing = session.exec(
-        select(Listing).where(Listing.slug == slug)
+    result = session.exec(
+        select(Listing, User, Product).join(User, Listing.owner_id == User.id).outerjoin(Product, Listing.product_id == Product.id).where(Listing.slug == slug)
     ).first()
     
-    if not listing:
+    if not result:
         raise HTTPException(status_code=404, detail="Listing not found")
+    
+    listing, user, product = result
     
     # Only show approved listings publicly
     if listing.status != 'approved':
@@ -609,7 +628,14 @@ async def get_listing_detail(
         "tags": listing.category_tags,
         "file_count": listing.file_count,
         "file_size_bytes": listing.file_size_bytes,
-        "created_at": listing.created_at
+        "scan_results": listing.scan_results,
+        "created_at": listing.created_at,
+        "seller": {
+            "id": str(user.id),
+            "name": user.name or "Anonymous",
+            "avatar_url": user.avatar_url
+        },
+        "is_verified": product.is_verified if product else False
     }
 
 
