@@ -167,7 +167,7 @@ async def create_listing(
         file_count=file_count,
         file_size_bytes=total_size,
         listing_fee_cents=LISTING_FEE_CENTS,
-        status=ListingStatus.PENDING_PAYMENT if LISTING_FEE_CENTS > 0 else ListingStatus.PENDING_SCAN
+        status='pending_payment' if LISTING_FEE_CENTS > 0 else 'pending_scan'
     )
     
     session.add(listing)
@@ -178,7 +178,7 @@ async def create_listing(
     if LISTING_FEE_CENTS == 0:
         # In production, this would be a background job
         # For now, we'll auto-approve after a delay
-        listing.status = ListingStatus.APPROVED
+        listing.status = 'approved'
         listing.scan_completed_at = datetime.utcnow()
         listing.scan_results = {
             "virustotal": {"status": "clean"},
@@ -279,7 +279,7 @@ async def get_public_listings(
 ):
     """Get published/approved listings for public browsing"""
     
-    query = select(Listing).where(Listing.status == ListingStatus.APPROVED)
+    query = select(Listing).where(Listing.status == 'approved')
     
     if category:
         query = query.where(Listing.category == category)
@@ -355,11 +355,11 @@ async def pay_listing_fee(
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
     
-    if listing.status != ListingStatus.PENDING_PAYMENT:
+    if listing.status != 'pending_payment':
         raise HTTPException(status_code=400, detail="Listing is not awaiting payment")
     
     # Mock payment success
-    listing.status = ListingStatus.PENDING_SCAN
+    listing.status = 'pending_scan'
     listing.payment_status = "succeeded"
     session.commit()
     
