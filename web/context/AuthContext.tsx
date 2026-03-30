@@ -37,31 +37,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount (client-side only)
   useEffect(() => {
-    const saved = localStorage.getItem('ar-user');
-    const token = localStorage.getItem('ar-token');
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      setIsLoading(false);
+      return;
+    }
     
-    if (saved && token) {
-      try {
+    try {
+      const saved = localStorage.getItem('ar-user');
+      const token = localStorage.getItem('ar-token');
+      
+      if (saved && token) {
         const parsedUser = JSON.parse(saved);
         setUser(parsedUser);
-      } catch (err) {
-        console.error('Failed to parse saved user:', err);
-        localStorage.removeItem('ar-user');
-        localStorage.removeItem('ar-token');
       }
+    } catch (err) {
+      console.error('Failed to parse saved user:', err);
+      // Don't clear on parse error - might be temporary
     }
     setIsLoading(false);
   }, []);
 
-  // Save to localStorage when user changes
+  // Save to localStorage when user changes (client-side only)
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     if (user) {
       localStorage.setItem('ar-user', JSON.stringify(user));
     } else {
-      localStorage.removeItem('ar-user');
-      localStorage.removeItem('ar-token');
+      // Only clear if we have a user to begin with (not on initial load)
+      const hasExistingUser = localStorage.getItem('ar-user');
+      if (hasExistingUser) {
+        localStorage.removeItem('ar-user');
+        localStorage.removeItem('ar-token');
+      }
     }
   }, [user]);
 
@@ -79,7 +90,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const data = await response.json();
     console.log('Login response:', data);
-    localStorage.setItem('ar-token', data.access_token);
     
     const userData = {
       id: data.user.id,
@@ -89,6 +99,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isDeveloper: data.user.is_developer,
       isVerified: data.user.is_verified,
     };
+    
+    // Save to localStorage BEFORE setting state
+    localStorage.setItem('ar-token', data.access_token);
+    localStorage.setItem('ar-user', JSON.stringify(userData));
+    
     console.log('Setting user:', userData);
     setUser(userData);
   };
@@ -106,16 +121,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const data = await response.json();
-    localStorage.setItem('ar-token', data.access_token);
     
-    setUser({
+    const userData = {
       id: data.user.id,
       email: data.user.email,
       name: data.user.name || name,
       initials: getInitials(data.user.name || name),
       isDeveloper: data.user.is_developer,
       isVerified: data.user.is_verified,
-    });
+    };
+    
+    // Save to localStorage BEFORE setting state
+    localStorage.setItem('ar-token', data.access_token);
+    localStorage.setItem('ar-user', JSON.stringify(userData));
+    
+    setUser(userData);
   };
 
   const logout = () => {
