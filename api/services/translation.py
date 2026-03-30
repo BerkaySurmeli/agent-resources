@@ -4,7 +4,7 @@ Uses LibreTranslate API (self-hosted or public instance).
 """
 import os
 import requests
-from typing import Optional
+from typing import Optional, Dict
 from datetime import datetime
 
 # LibreTranslate API endpoint (can be self-hosted for production)
@@ -81,7 +81,7 @@ def translate_text(text: str, source_lang: str, target_lang: str) -> Optional[st
         return None
 
 
-def translate_listing(name: str, description: str, source_lang: str) -> dict:
+def translate_listing(name: str, description: str, source_lang: str) -> Dict[str, Dict[str, str]]:
     """
     Translate a listing to all supported languages.
     Returns a dictionary of translations.

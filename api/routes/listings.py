@@ -443,6 +443,40 @@ async def create_listing(
                     "status": listing.status,
                     "message": f"Listing rejected: {analysis.get('reason')}"
                 }
+                
+        except asyncio.TimeoutError:
+            # Scan is taking too long - will complete in background
+            return {
+                "id": str(listing.id),
+                "slug": listing.slug,
+                "status": "scanning",
+                "message": "Security scan in progress. Check back in a few minutes."
+            }
+        except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"[VIRUSTOTAL ERROR] {str(e)}\n{error_details}")
+            
+            listing.status = 'pending_scan'
+            listing.scan_results = {
+                "virustotal": {"status": "error", "error": str(e), "trace": error_details[:500]}
+            }
+            session.commit()
+            
+            return {
+                "id": str(listing.id),
+                "slug": listing.slug,
+                "status": listing.status,
+                "message": f"Listing created but security scan failed: {str(e)[:100]}"
+            }
+    
+    return {
+        "id": str(listing.id),
+        "slug": listing.slug,
+        "status": listing.status,
+        "message": "Listing created successfully. Please complete payment to proceed."
+    }
+
 
 async def generate_translations(listing_id: uuid.UUID, name: str, description: str, source_lang: str, session):
     """Generate translations for a listing in the background"""
@@ -466,33 +500,16 @@ async def generate_translations(listing_id: uuid.UUID, name: str, description: s
         import traceback
         traceback.print_exc()
 
-        except asyncio.TimeoutError:
-            # Scan is taking too long - will complete in background
-            # User should poll for status
-            return {
-                "id": str(listing.id),
-                "slug": listing.slug,
-                "status": "scanning",
-                "message": "Security scan in progress. Check back in a few minutes."
-            }
-        except Exception as e:
-            # Scan failed - mark as pending for manual review
-            import traceback
-            error_details = traceback.format_exc()
-            print(f"[VIRUSTOTAL ERROR] {str(e)}\n{error_details}")
 
-            listing.status = 'pending_scan'
-            listing.scan_results = {
-                "virustotal": {"status": "error", "error": str(e), "trace": error_details[:500]}
-            }
-            session.commit()
-
-            return {
-                "id": str(listing.id),
-                "slug": listing.slug,
-                "status": listing.status,
-                "message": f"Listing created but security scan failed: {str(e)[:100]}"
-            }
+# Background task wrapper for translations
+async def generate_translations_bg(listing_id: uuid.UUID, name: str, description: str, source_lang: str):
+    """Background task wrapper for translations"""
+    from core.database import get_session
+    session = next(get_session())
+    try:
+        await generate_translations(listing_id, name, description, source_lang, session)
+    finally:
+        session.close()
     
     return {
         "id": str(listing.id),
