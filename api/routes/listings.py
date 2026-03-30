@@ -20,7 +20,7 @@ router = APIRouter(prefix="/listings", tags=["Listings"])
 
 # Config
 LISTING_FEE_CENTS = 0  # Free for first 500 listings
-UPLOAD_DIR = "/tmp/listings"  # In production, use S3 or similar
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "/tmp/listings")  # Use persistent storage in production
 
 # VirusTotal Config
 VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "")
