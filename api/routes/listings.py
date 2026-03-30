@@ -211,7 +211,7 @@ async def create_listing(
     return {
         "id": str(listing.id),
         "slug": listing.slug,
-        "status": listing.status.value,
+        "status": listing.status,
         "message": "Listing created successfully" + (" and approved (free listing)" if LISTING_FEE_CENTS == 0 else ". Please complete payment to proceed.")
     }
 
