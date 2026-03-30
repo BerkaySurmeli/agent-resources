@@ -70,11 +70,13 @@ export default function ListingDetail() {
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [submitting, setSubmitting] = useState(false);
   const [hasPurchased, setHasPurchased] = useState(false);
+  const [versions, setVersions] = useState<any[]>([]);
 
   useEffect(() => {
     if (slug) {
       fetchListing();
       fetchReviews();
+      fetchVersions();
     }
   }, [slug]);
 
@@ -116,6 +118,18 @@ export default function ListingDetail() {
       }
     } catch (err) {
       console.error('Failed to fetch reviews:', err);
+    }
+  };
+
+  const fetchVersions = async () => {
+    try {
+      const res = await fetch(`${API_URL}/products/${slug}/versions`);
+      if (res.ok) {
+        const data = await res.json();
+        setVersions(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch versions:', err);
     }
   };
 

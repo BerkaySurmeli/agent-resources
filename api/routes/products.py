@@ -41,6 +41,14 @@ class ProductStatsResponse(BaseModel):
     total_sales: int
     total_revenue_cents: int
 
+class VersionResponse(BaseModel):
+    id: str
+    semver: str
+    download_url: str
+    checksum: str
+    created_at: datetime
+    changes: Optional[str] = None
+
 @router.get("/{slug}", response_model=ProductDetailResponse)
 async def get_product_detail(
     slug: str,
@@ -302,3 +310,34 @@ async def toggle_product_status(
         download_count=product.download_count,
         created_at=product.created_at
     )
+
+
+@router.get("/{slug}/versions", response_model=List[VersionResponse])
+async def get_product_versions(
+    slug: str,
+    session = Depends(get_session)
+):
+    """Get version history for a product"""
+    from models import Version
+
+    product = session.exec(select(Product).where(Product.slug == slug)).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    versions = session.exec(
+        select(Version)
+        .where(Version.product_id == product.id)
+        .order_by(Version.created_at.desc())
+    ).all()
+
+    return [
+        VersionResponse(
+            id=str(v.id),
+            semver=v.semver,
+            download_url=v.download_url,
+            checksum=v.checksum,
+            created_at=v.created_at,
+            changes=v.compatibility_matrix.get("changes") if v.compatibility_matrix else None
+        )
+        for v in versions
+    ]
