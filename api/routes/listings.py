@@ -195,7 +195,7 @@ async def create_listing(
             name=name,
             slug=slug,
             description=description,
-            category=cat,
+            category=category,  # Use the string value directly
             category_tags=tag_list,
             price_cents=price_cents,
             is_active=True,

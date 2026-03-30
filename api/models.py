@@ -52,9 +52,9 @@ class Product(SQLModel, table=True):
     name: str
     slug: str = Field(unique=True, index=True)
     description: Optional[str] = None
-    category: ProductCategory
+    category: str
     category_tags: List[str] = Field(sa_column=Column(ARRAY(TEXT), default=[]))
-    privacy_level: PrivacyLevel = Field(default=PrivacyLevel.LOCAL)
+    privacy_level: str = Field(default='local')
     price_cents: int = Field(default=0)
     one_click_json: Dict = Field(default={}, sa_column=Column(JSON))
     is_active: bool = Field(default=True)
