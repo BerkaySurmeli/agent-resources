@@ -428,9 +428,13 @@ async def create_listing(
                 
         except Exception as e:
             # Scan failed - mark as pending for manual review
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"[VIRUSTOTAL ERROR] {str(e)}\n{error_details}")
+            
             listing.status = 'pending_scan'
             listing.scan_results = {
-                "virustotal": {"status": "error", "error": str(e)}
+                "virustotal": {"status": "error", "error": str(e), "trace": error_details[:500]}
             }
             session.commit()
             
@@ -438,7 +442,7 @@ async def create_listing(
                 "id": str(listing.id),
                 "slug": listing.slug,
                 "status": listing.status,
-                "message": "Listing created but security scan failed. Will retry."
+                "message": f"Listing created but security scan failed: {str(e)[:100]}"
             }
     
     return {
