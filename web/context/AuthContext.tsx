@@ -33,53 +33,80 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
+// Helper to safely get localStorage value
+function getLocalStorage(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+// Helper to safely set localStorage value
+function setLocalStorage(key: string, value: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ignore errors
+  }
+}
+
+// Helper to safely remove localStorage value
+function removeLocalStorage(key: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Ignore errors
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
+  // Initialize with null, will load from localStorage after mount
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
-  // Mark as mounted after hydration
+  // This effect runs once on mount (client-side only)
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Load from localStorage on mount (client-side only)
-  useEffect(() => {
-    // Only run on client side after mount
-    if (!mounted || typeof window === 'undefined') {
-      setIsLoading(false);
-      return;
-    }
+    setIsClient(true);
     
-    try {
-      const saved = localStorage.getItem('ar-user');
-      const token = localStorage.getItem('ar-token');
-      
-      if (saved && token) {
+    // Load user from localStorage
+    const saved = getLocalStorage('ar-user');
+    const token = getLocalStorage('ar-token');
+    
+    if (saved && token) {
+      try {
         const parsedUser = JSON.parse(saved);
         setUser(parsedUser);
+      } catch (err) {
+        console.error('Failed to parse saved user:', err);
+        // Clear invalid data
+        removeLocalStorage('ar-user');
+        removeLocalStorage('ar-token');
       }
-    } catch (err) {
-      console.error('Failed to parse saved user:', err);
     }
+    
     setIsLoading(false);
-  }, [mounted]);
+  }, []);
 
-  // Save to localStorage when user changes (client-side only)
+  // Save user to localStorage whenever it changes
   useEffect(() => {
-    if (!mounted || typeof window === 'undefined') return;
+    if (!isClient) return;
     
     if (user) {
-      localStorage.setItem('ar-user', JSON.stringify(user));
+      setLocalStorage('ar-user', JSON.stringify(user));
     } else {
-      // Only clear if we have a user to begin with (not on initial load)
-      const hasExistingUser = localStorage.getItem('ar-user');
-      if (hasExistingUser) {
-        localStorage.removeItem('ar-user');
-        localStorage.removeItem('ar-token');
+      // Check if we had a user before clearing
+      const hadUser = getLocalStorage('ar-user');
+      if (hadUser) {
+        removeLocalStorage('ar-user');
+        removeLocalStorage('ar-token');
       }
     }
-  }, [user, mounted]);
+  }, [user, isClient]);
 
   const login = async (email: string, password: string) => {
     const response = await fetch(`${API_URL}/auth/login`, {
@@ -94,8 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const data = await response.json();
-    console.log('Login response:', data);
-
+    
     const userData = {
       id: data.user.id,
       email: data.user.email,
@@ -104,14 +130,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isDeveloper: data.user.is_developer,
       isVerified: data.user.is_verified,
     };
-
-    // Save to localStorage BEFORE setting state
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('ar-token', data.access_token);
-      localStorage.setItem('ar-user', JSON.stringify(userData));
-    }
-
-    console.log('Setting user:', userData);
+    
+    // Save to localStorage
+    setLocalStorage('ar-token', data.access_token);
+    setLocalStorage('ar-user', JSON.stringify(userData));
+    
+    // Update state
     setUser(userData);
   };
 
@@ -137,13 +161,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isDeveloper: data.user.is_developer,
       isVerified: data.user.is_verified,
     };
-
-    // Save to localStorage BEFORE setting state
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('ar-token', data.access_token);
-      localStorage.setItem('ar-user', JSON.stringify(userData));
-    }
-
+    
+    // Save to localStorage
+    setLocalStorage('ar-token', data.access_token);
+    setLocalStorage('ar-user', JSON.stringify(userData));
+    
+    // Update state
     setUser(userData);
   };
 
