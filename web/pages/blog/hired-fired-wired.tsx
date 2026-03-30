@@ -1,6 +1,5 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import { format } from 'date-fns';
 
 export default function BlogPost() {
   const post = {
@@ -24,7 +23,7 @@ export default function BlogPost() {
           {/* Header */}
           <header className="mb-12">
             <div className="flex items-center gap-4 text-sm text-slate-500 mb-6">
-              <time dateTime={post.date}>{format(new Date(post.date), 'MMMM d, yyyy')}</time>
+              <time dateTime={post.date}>March 30, 2026</time>
               <span>•</span>
               <span>{post.readTime}</span>
             </div>
