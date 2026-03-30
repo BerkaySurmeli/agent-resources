@@ -1,8 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import UserMenu from '../components/UserMenu';
-import CartIcon from '../components/CartIcon';
 import { useCart } from '../context/CartContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
@@ -128,43 +126,6 @@ export default function Home() {
         />
       </Head>
 
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50" role="navigation" aria-label="Main navigation">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" aria-label="Agent Resources Home">
-            <Logo />
-          </Link>
-          
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
-            <Link href="/listings" className="text-slate-600 hover:text-slate-900 transition-colors">Listings</Link>
-            <Link href="/wizard" className="text-blue-600 hover:text-blue-700 transition-colors font-medium whitespace-nowrap">Build Your Team</Link>
-            <Link href="/blog" className="text-slate-600 hover:text-slate-900 transition-colors">Blog</Link>
-            <CartIcon />
-            <UserMenu />
-          </div>
-          
-          {/* Mobile Navigation */}
-          <div className="flex md:hidden items-center gap-4">
-            <CartIcon />
-            <Link href="/wizard" className="text-blue-600 hover:text-blue-700">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </Link>
-            <Link href="/listings" className="text-slate-600 hover:text-slate-900">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </Link>
-            <Link href="/login" className="text-slate-600 hover:text-slate-900">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </Link>
-          </div>
-        </div>
-      </nav>
 
       {/* Hero */}
       <main className="pt-32 pb-20 px-6" role="main">
