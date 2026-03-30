@@ -296,8 +296,7 @@ export default function Sell() {
                     ref={fileInputRef}
                     type="file"
                     multiple
-                    webkitdirectory=""
-                    directory=""
+                    {...{ webkitdirectory: '', directory: '' } as any}
                     onChange={handleFileSelect}
                     className="hidden"
                   />
