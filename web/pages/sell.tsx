@@ -31,7 +31,7 @@ export default function Sell() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <p className="text-slate-600 mb-4">Please sign in to sell listings</p>
+          <p className="text-slate-600 mb-4">Please sign in to list an item</p>
           <Link href="/login" className="text-blue-600 hover:underline">
             Sign In
           </Link>
