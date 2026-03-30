@@ -118,24 +118,6 @@ export default function Dashboard() {
         <title>Your Dashboard | Agent Resources</title>
       </Head>
 
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">AR</span>
-            </div>
-            <span className="font-semibold text-slate-900">Agent Resources</span>
-          </Link>
-          <div className="flex items-center gap-6">
-            <Link href="/listings" className="text-slate-600 hover:text-slate-900">Browse</Link>
-            <Link href="/sell" className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700">
-              + New Listing
-            </Link>
-          </div>
-        </div>
-      </nav>
-
       <main className="pt-24 pb-12 px-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}

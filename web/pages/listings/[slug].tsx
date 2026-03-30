@@ -407,7 +407,7 @@ export default function ListingDetail() {
                     addToCart({
                       slug: listing.slug,
                       name: listing.name,
-                      price: listing.price_cents / 100,
+                      price: Math.round(listing.price_cents) / 100,
                       category: listing.category
                     });
                     router.push('/cart');

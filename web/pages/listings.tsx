@@ -2,7 +2,6 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useMemo, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
-import CartIcon from '../components/CartIcon';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
@@ -136,22 +135,6 @@ export default function Listings() {
         <meta name="description" content="Browse AI personas, skills, and MCP servers for your OpenClaw environment" />
       </Head>
 
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">AR</span>
-            </div>
-            <span className="font-semibold text-slate-900">Agent Resources</span>
-          </Link>
-          <div className="flex items-center gap-6">
-            <CartIcon />
-            <Link href="/" className="text-slate-600 hover:text-slate-900">Home</Link>
-          </div>
-        </div>
-      </nav>
-
       <main className="pt-24 pb-12 px-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
@@ -276,7 +259,7 @@ export default function Listings() {
                           onClick={() => addToCart({
                             slug: listing.slug,
                             name: listing.name,
-                            price: listing.price_cents / 100,
+                            price: Math.round(listing.price_cents) / 100,
                             category: listing.category
                           })}
                           disabled={isInCart(listing.slug)}
