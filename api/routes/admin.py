@@ -1,9 +1,15 @@
 from fastapi import APIRouter, HTTPException
-from sqlmodel import text
+from sqlmodel import text, select
 from core.database import get_session
+from models import User, Product
+from passlib.context import CryptContext
 import os
+from uuid import uuid4
+from datetime import datetime
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
+
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 @router.post("/run-migrations")
 async def run_migrations():
@@ -103,5 +109,103 @@ async def fix_migrations():
         except Exception as e:
             session.rollback()
             results.append({"file": "005_add_listings.sql", "status": "error", "error": str(e)})
-    
+
     return {"migrations": results}
+
+
+@router.post("/seed-claudia")
+async def seed_claudia():
+    """Seed Claudia developer and the 3 persona products"""
+
+    for session in get_session():
+        try:
+            # Check if Claudia already exists
+            claudia = session.exec(select(User).where(User.email == "claudia@agentresources.com")).first()
+
+            if not claudia:
+                print("Creating Claudia developer user...")
+                claudia = User(
+                    id=uuid4(),
+                    email="claudia@agentresources.com",
+                    password_hash=pwd_context.hash("claudia123"),
+                    name="Claudia",
+                    avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=Claudia&backgroundColor=b6e3f4",
+                    is_developer=True,
+                    is_verified=True,
+                    created_at=datetime.utcnow()
+                )
+                session.add(claudia)
+                session.commit()
+                session.refresh(claudia)
+            else:
+                # Ensure she's marked as developer
+                if not claudia.is_developer:
+                    claudia.is_developer = True
+                    session.commit()
+
+            # Define the 3 products
+            products_data = [
+                {
+                    "slug": "claudia-project-manager",
+                    "name": "AI Project Manager",
+                    "description": "Your AI project orchestrator. Delegates tasks, tracks progress, and ensures nothing falls through the cracks.",
+                    "category": "persona",
+                    "price_cents": 4900,
+                    "category_tags": ["project-management", "productivity", "team-leadership"]
+                },
+                {
+                    "slug": "chen-developer",
+                    "name": "AI Developer",
+                    "description": "Your AI software engineer. Writes clean, efficient code across any stack.",
+                    "category": "persona",
+                    "price_cents": 5900,
+                    "category_tags": ["coding", "software-engineering", "full-stack"]
+                },
+                {
+                    "slug": "adrian-ux-designer",
+                    "name": "AI UX Designer",
+                    "description": "Your AI design partner. Creates interfaces, writes copy, and crafts user experiences.",
+                    "category": "persona",
+                    "price_cents": 4900,
+                    "category_tags": ["design", "ux-ui", "creative"]
+                }
+            ]
+
+            created_products = []
+            for prod_data in products_data:
+                existing = session.exec(select(Product).where(Product.slug == prod_data["slug"])).first()
+
+                if not existing:
+                    product = Product(
+                        id=uuid4(),
+                        owner_id=claudia.id,
+                        name=prod_data["name"],
+                        slug=prod_data["slug"],
+                        description=prod_data["description"],
+                        category=prod_data["category"],
+                        category_tags=prod_data["category_tags"],
+                        price_cents=prod_data["price_cents"],
+                        is_active=True,
+                        is_verified=True,
+                        created_at=datetime.utcnow()
+                    )
+                    session.add(product)
+                    session.commit()
+                    created_products.append(prod_data["name"])
+                else:
+                    # Ensure it's owned by Claudia
+                    if existing.owner_id != claudia.id:
+                        existing.owner_id = claudia.id
+                        session.commit()
+
+            return {
+                "status": "success",
+                "claudia_id": str(claudia.id),
+                "claudia_email": claudia.email,
+                "products_created": created_products,
+                "message": "Seeding complete"
+            }
+
+        except Exception as e:
+            session.rollback()
+            raise HTTPException(status_code=500, detail=f"Seed error: {str(e)}")
