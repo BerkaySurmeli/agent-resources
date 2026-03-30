@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
@@ -47,6 +48,7 @@ const Logo = ({ className = '' }: { className?: string }) => (
 );
 
 export default function Home() {
+  const { t } = useLanguage();
   const [showWaitlist, setShowWaitlist] = useState(false);
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -140,32 +142,32 @@ export default function Home() {
 
           <FadeIn delay={200}>
             <p className="text-xl text-slate-600 mb-4 max-w-2xl mx-auto leading-relaxed">
-              Equipping the Agentic Workforce.
+              {t.home.heroSubtitle}
             </p>
           </FadeIn>
 
           <FadeIn delay={250}>
             <p className="text-lg text-blue-600 font-medium mb-10 max-w-2xl mx-auto">
-              Trade MCP Servers, Skills, and Personas.
+              {t.home.heroDescription}
             </p>
           </FadeIn>
-          
+
           <FadeIn delay={300}>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link 
+              <Link
                 href="/wizard"
                 className="bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 transition-all hover:scale-105 inline-flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                Build Your AI Team
+                {t.nav.buildTeam}
               </Link>
-              <Link 
+              <Link
                 href="/listings"
                 className="bg-slate-100 text-slate-700 px-8 py-4 rounded-xl font-medium hover:bg-slate-200 transition-colors inline-flex items-center justify-center gap-2"
               >
-                Browse all listings
+                {t.home.browseListings}
                 <Icon name="arrowRight" className="w-4 h-4" />
               </Link>
             </div>
@@ -177,7 +179,7 @@ export default function Home() {
       <section className="py-24 px-6 bg-slate-50">
         <div className="max-w-6xl mx-auto">
           <FadeIn>
-            <h2 className="text-3xl font-semibold text-slate-900 mb-12 text-center">Featured Personas</h2>
+            <h2 className="text-3xl font-semibold text-slate-900 mb-12 text-center">{t.home.featuredAgents}</h2>
           </FadeIn>
 
           <div className="grid md:grid-cols-3 gap-8">
