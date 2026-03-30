@@ -7,9 +7,9 @@ import { useAuth } from '../context/AuthContext';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
 const categories = [
-  { id: 'personas', name: 'AI Persona', description: 'A complete AI worker with specific skills and personality' },
-  { id: 'skills', name: 'Agent Skill', description: 'A specific capability or workflow for an AI agent' },
-  { id: 'mcps', name: 'MCP Server', description: 'Infrastructure that connects agents to external systems' },
+  { id: 'persona', name: 'AI Persona', description: 'A complete AI worker with specific skills and personality' },
+  { id: 'skill', name: 'Agent Skill', description: 'A specific capability or workflow for an AI agent' },
+  { id: 'mcp_server', name: 'MCP Server', description: 'Infrastructure that connects agents to external systems' },
 ];
 
 const tags = [
@@ -24,7 +24,7 @@ export default function Sell() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
-    category: 'personas',
+    category: 'persona',
     description: '',
     price: '',
     tags: [] as string[],
