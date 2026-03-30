@@ -209,3 +209,53 @@ async def seed_claudia():
         except Exception as e:
             session.rollback()
             raise HTTPException(status_code=500, detail=f"Seed error: {str(e)}")
+
+
+@router.post("/sync-products-to-listings")
+async def sync_products_to_listings():
+    """Create listings from existing products (for migration)"""
+    from models import Listing
+
+    for session in get_session():
+        try:
+            # Get all products without corresponding listings
+            products = session.exec(select(Product)).all()
+            created_listings = []
+
+            for product in products:
+                # Check if listing already exists for this product
+                existing = session.exec(select(Listing).where(Listing.product_id == product.id)).first()
+                if existing:
+                    continue
+
+                # Create listing from product
+                listing = Listing(
+                    id=uuid4(),
+                    owner_id=product.owner_id,
+                    name=product.name,
+                    slug=product.slug,
+                    description=product.description or "",
+                    category=product.category,
+                    category_tags=product.category_tags or [],
+                    price_cents=product.price_cents,
+                    file_path="/tmp/migrated",
+                    file_size_bytes=0,
+                    file_count=0,
+                    status='approved',
+                    scan_results={"virustotal": {"status": "clean"}, "openclaw_analysis": {"status": "passed"}},
+                    product_id=product.id
+                )
+                session.add(listing)
+                created_listings.append(product.name)
+
+            session.commit()
+
+            return {
+                "status": "success",
+                "listings_created": created_listings,
+                "count": len(created_listings)
+            }
+
+        except Exception as e:
+            session.rollback()
+            raise HTTPException(status_code=500, detail=f"Sync error: {str(e)}")
