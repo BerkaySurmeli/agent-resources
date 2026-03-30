@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import UserMenu from './UserMenu';
+import GlobalSearch from './GlobalSearch';
 
 export default function Navbar() {
   const { user } = useAuth();
@@ -15,6 +16,11 @@ export default function Navbar() {
           </div>
           <span className="font-semibold text-slate-900 hidden sm:block">Agent Resources</span>
         </Link>
+
+        {/* Search - Desktop */}
+        <div className="hidden lg:block flex-1 max-w-md mx-8">
+          <GlobalSearch />
+        </div>
 
         {/* Main Navigation */}
         <div className="hidden md:flex items-center gap-6">

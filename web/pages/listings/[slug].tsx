@@ -224,7 +224,10 @@ export default function ListingDetail() {
               <p className="text-slate-600 mb-6">{listing.description}</p>
               
               {/* Developer Info */}
-              <div className="flex items-center gap-3 mb-8 p-4 bg-slate-50 rounded-xl">
+              <Link 
+                href={listing.seller ? `/developers/${listing.seller.id}` : '#'}
+                className="flex items-center gap-3 mb-8 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
+              >
                 {listing.seller?.avatar_url ? (
                   <img 
                     src={listing.seller.avatar_url} 
@@ -247,7 +250,7 @@ export default function ListingDetail() {
                     </div>
                   )}
                 </div>
-              </div>
+              </Link>
 
               {/* File Info */}
               <div className="flex items-center gap-6 text-slate-500 mb-8">
