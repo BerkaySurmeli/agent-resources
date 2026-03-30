@@ -170,7 +170,7 @@ class Listing(SQLModel, table=True):
     name: str
     slug: str = Field(unique=True, index=True)
     description: str
-    category: ProductCategory
+    category: str
     category_tags: List[str] = Field(sa_column=Column(ARRAY(TEXT), default=[]))
     price_cents: int
     
