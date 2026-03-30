@@ -39,7 +39,7 @@ class RateLimiter:
         async with self.lock:
             now = datetime.utcnow()
             # Remove calls outside the period
-            self.calls = [c for c in self.calls if now - c < self.period]
+            self.calls = [c for c in self.calls if (now - c).total_seconds() < self.period]
             
             if len(self.calls) >= self.max_calls:
                 # Wait until we can make another call
