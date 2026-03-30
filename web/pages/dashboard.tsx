@@ -139,7 +139,7 @@ export default function Dashboard() {
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-semibold text-slate-900">Your Dashboard</h1>
+            <h1 className="text-3xl font-semibold text-slate-900">Developer Dashboard</h1>
             <p className="text-slate-600">Manage your listings and track sales</p>
           </div>
 
@@ -243,9 +243,9 @@ export default function Dashboard() {
                               Pay Fee
                             </button>
                           )}
-                          {listing.status === 'approved' && listing.product_id && (
+                          {listing.status === 'approved' && (
                             <Link 
-                              href={`/listings/${listing.product_id}`}
+                              href={`/listings/${listing.slug}`}
                               className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                             >
                               View

@@ -529,11 +529,31 @@ async def get_dashboard_stats(
 async def get_public_listings(
     category: Optional[str] = None,
     search: Optional[str] = None,
+    slug: Optional[str] = None,
     session = Depends(get_session)
 ):
     """Get published/approved listings for public browsing"""
     
     query = select(Listing).where(Listing.status == 'approved')
+    
+    if slug:
+        # Return single listing by slug
+        listing = session.exec(query.where(Listing.slug == slug)).first()
+        if not listing:
+            raise HTTPException(status_code=404, detail="Listing not found")
+        return [{
+            "id": str(listing.id),
+            "slug": listing.slug,
+            "name": listing.name,
+            "description": listing.description,
+            "category": listing.category,
+            "price_cents": listing.price_cents,
+            "tags": listing.category_tags,
+            "file_count": listing.file_count,
+            "file_size_bytes": listing.file_size_bytes,
+            "scan_results": listing.scan_results,
+            "created_at": listing.created_at
+        }]
     
     if category:
         query = query.where(Listing.category == category)
@@ -584,7 +604,7 @@ async def get_listing_detail(
         "slug": listing.slug,
         "name": listing.name,
         "description": listing.description,
-        "category": listing.category.value,
+        "category": listing.category,
         "price_cents": listing.price_cents,
         "tags": listing.category_tags,
         "file_count": listing.file_count,

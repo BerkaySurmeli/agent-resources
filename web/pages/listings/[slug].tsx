@@ -1,95 +1,86 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 import { useCart } from '../../context/CartContext';
 
-const listings: Record<string, any> = {
-  'claudia-project-manager': {
-    name: 'Claudia',
-    subtitle: 'AI Project Manager',
-    price: 49,
-    description: 'Your AI project orchestrator. Delegates tasks, tracks progress, and ensures nothing falls through the cracks.',
-    features: [
-      { title: 'Project Planning', desc: 'Breaks down complex projects into actionable tasks' },
-      { title: 'Agent Delegation', desc: 'Assigns work to specialized agents based on skills' },
-      { title: 'Progress Tracking', desc: 'Monitors status and identifies blockers early' },
-      { title: 'Quality Assurance', desc: 'Reviews deliverables before completion' },
-    ],
-    useCases: ['Managing multi-agent workflows', 'Coordinating complex projects', 'Keeping distributed work organized'],
-    developer: { name: 'Claudia', initials: 'C', photo: true },
-    category: 'personas',
-    rating: 5,
-    reviews: 1,
-    downloads: 1,
-    verified: true,
-  },
-  'chen-developer': {
-    name: 'Chen',
-    subtitle: 'AI Developer',
-    price: 59,
-    description: 'Your AI software engineer. Writes clean, efficient code across any stack.',
-    features: [
-      { title: 'Full-Stack Development', desc: 'Frontend, backend, APIs, databases' },
-      { title: 'Code Review', desc: 'Analyzes code for bugs and improvements' },
-      { title: 'Architecture', desc: 'Designs scalable system structures' },
-      { title: 'Debugging', desc: 'Finds and fixes issues quickly' },
-    ],
-    useCases: ['Building new features', 'Refactoring legacy code', 'Setting up infrastructure'],
-    developer: { name: 'Claudia', initials: 'C', photo: true },
-    category: 'personas',
-    rating: 5,
-    reviews: 1,
-    downloads: 1,
-    verified: true,
-  },
-  'adrian-ux-designer': {
-    name: 'Adrian',
-    subtitle: 'AI UX Designer',
-    price: 49,
-    description: 'Your AI design partner. Creates interfaces, writes copy, and crafts user experiences.',
-    features: [
-      { title: 'Interface Design', desc: 'Clean, usable UI components' },
-      { title: 'Copywriting', desc: 'Headlines, CTAs, user-facing text' },
-      { title: 'User Flows', desc: 'Optimal paths through your product' },
-      { title: 'Landing Pages', desc: 'High-converting marketing pages' },
-    ],
-    useCases: ['Designing new products', 'Improving existing UX', 'Creating marketing materials'],
-    developer: { name: 'Claudia', initials: 'C', photo: true },
-    category: 'personas',
-    rating: 5,
-    reviews: 1,
-    downloads: 1,
-    verified: true,
-  },
-  'dream-team-bundle': {
-    name: 'Dream Team Bundle',
-    subtitle: 'All Three Personas',
-    price: 99,
-    originalPrice: 157,
-    description: 'Get Claudia, Chen, and Adrian. The complete AI team for your projects.',
-    features: [
-      { title: 'Claudia - AI Project Manager', desc: 'Keeps your projects on track ($49 value)' },
-      { title: 'Chen - AI Developer', desc: 'Writes production-ready code ($59 value)' },
-      { title: 'Adrian - AI UX Designer', desc: 'Creates beautiful interfaces ($49 value)' },
-    ],
-    useCases: ['Complete AI team setup', 'End-to-end project delivery', 'Maximum cost savings'],
-    developer: { name: 'Claudia', initials: 'C', photo: true },
-    category: 'bundle',
-    rating: 0,
-    reviews: 0,
-    downloads: 0,
-    verified: true,
-  },
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+
+interface ListingDetail {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  category: string;
+  price_cents: number;
+  tags: string[];
+  file_count: number;
+  file_size_bytes: number;
+  created_at: string;
+  scan_results?: any;
+}
+
+const getCategoryName = (category: string) => {
+  const names: Record<string, string> = {
+    'persona': 'AI Persona',
+    'skill': 'Agent Skill',
+    'mcp_server': 'MCP Server',
+  };
+  return names[category] || category;
+};
+
+const getCategoryColor = (category: string) => {
+  switch (category) {
+    case 'persona': return 'bg-blue-100 text-blue-700';
+    case 'skill': return 'bg-purple-100 text-purple-700';
+    case 'mcp_server': return 'bg-green-100 text-green-700';
+    default: return 'bg-slate-100 text-slate-700';
+  }
 };
 
 export default function ListingDetail() {
   const router = useRouter();
   const { slug } = router.query;
   const { addToCart } = useCart();
-  
-  const listing = listings[slug as string];
+  const [listing, setListing] = useState<ListingDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  if (!listing) {
+  useEffect(() => {
+    if (slug) {
+      fetchListing();
+    }
+  }, [slug]);
+
+  const fetchListing = async () => {
+    try {
+      const res = await fetch(`${API_URL}/listings/public?slug=${slug}`);
+      if (!res.ok) {
+        throw new Error('Listing not found');
+      }
+      const data = await res.json();
+      // Find the specific listing from the array
+      const found = data.find((l: ListingDetail) => l.slug === slug);
+      if (!found) {
+        throw new Error('Listing not found');
+      }
+      setListing(found);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error || !listing) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
@@ -102,14 +93,11 @@ export default function ListingDetail() {
     );
   }
 
-  const handleBuyNow = () => {
-    addToCart({
-      slug: slug as string,
-      name: `${listing.name} - ${listing.subtitle}`,
-      price: listing.price,
-      category: listing.category
-    });
-    window.location.href = '/cart';
+  const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   return (
@@ -136,98 +124,93 @@ export default function ListingDetail() {
           <div className="grid md:grid-cols-2 gap-12">
             {/* Left Column */}
             <div>
-              {/* Icon */}
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-                <span className="text-white font-bold text-3xl">{listing.developer.initials}</span>
-              </div>
+              {/* Category Badge */}
+              <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full mb-4 ${getCategoryColor(listing.category)}`}>
+                {getCategoryName(listing.category)}
+              </span>
               
-              <h1 className="text-4xl font-semibold text-slate-900 mb-2">{listing.name}</h1>
-              <p className="text-xl text-blue-600 mb-4">{listing.subtitle}</p>
+              <h1 className="text-4xl font-semibold text-slate-900 mb-4">{listing.name}</h1>
               <p className="text-slate-600 mb-6">{listing.description}</p>
               
-              {/* Developer with photo */}
+              {/* Developer Info */}
               <div className="flex items-center gap-3 mb-8 p-4 bg-slate-50 rounded-xl">
-                <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex-shrink-0 ring-2 ring-white shadow-md">
-                  <img 
-                    src="/claudia-photo.jpg" 
-                    alt="Claudia"
-                    className="w-full h-full object-cover object-center"
-                    style={{ objectPosition: 'center top' }}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                      (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-white font-bold text-lg flex items-center justify-center w-full h-full">C</span>';
-                    }}
-                  />
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                  D
                 </div>
                 <div>
-                  <p className="font-medium text-slate-900">{listing.developer.name}</p>
-                  <p className="text-sm text-slate-500">Developer</p>
+                  <p className="font-medium text-slate-900">Developer</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-500">Verified</span>
+                    <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
               </div>
 
-              {/* Stats */}
+              {/* File Info */}
               <div className="flex items-center gap-6 text-slate-500 mb-8">
                 <span className="flex items-center gap-1.5">
-                  <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span className="font-medium">{listing.rating > 0 ? listing.rating : 'New'}</span>
-                  {listing.reviews > 0 && <span>({listing.reviews} reviews)</span>}
+                  {listing.file_count} files
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
                   </svg>
-                  <span>{listing.downloads} downloads</span>
+                  {formatFileSize(listing.file_size_bytes)}
                 </span>
               </div>
 
-              {/* Features */}
-              <div className="mb-8">
-                <h2 className="text-lg font-semibold text-slate-900 mb-4">What {listing.name} Does</h2>
-                <div className="space-y-4">
-                  {listing.features.map((feature: any, i: number) => (
-                    <div key={i} className="flex gap-4 p-4 bg-slate-50 rounded-xl">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-slate-900">{feature.title}</h3>
-                        <p className="text-sm text-slate-600">{feature.desc}</p>
-                      </div>
-                    </div>
-                  ))}
+              {/* Tags */}
+              {listing.tags && listing.tags.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-sm font-medium text-slate-900 mb-2">Tags</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {listing.tags.map((tag, i) => (
+                      <span key={i} className="px-2 py-1 bg-slate-100 text-slate-600 text-sm rounded">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Use Cases */}
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900 mb-4">Perfect For</h2>
-                <ul className="space-y-2">
-                  {listing.useCases.map((useCase: string, i: number) => (
-                    <li key={i} className="flex items-center gap-2 text-slate-600">
-                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
-                      {useCase}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {/* Security Info */}
+              {listing.scan_results?.virustotal?.status === 'clean' && (
+                <div className="mb-8 p-4 bg-green-50 rounded-xl">
+                  <div className="flex items-center gap-2 text-green-700">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    <span className="font-medium">Security Verified</span>
+                  </div>
+                  <p className="text-sm text-green-600 mt-1">
+                    Scanned by VirusTotal - No threats detected
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Right Column - Pricing */}
             <div className="md:sticky md:top-24 h-fit">
               <div className="bg-slate-50 rounded-2xl p-8">
                 <div className="flex items-baseline gap-3 mb-6">
-                  <span className="text-4xl font-bold text-slate-900">${listing.price}</span>
-                  {listing.originalPrice && (
-                    <span className="text-xl text-slate-400 line-through">${listing.originalPrice}</span>
-                  )}
+                  <span className="text-4xl font-bold text-slate-900">{formatPrice(listing.price_cents)}</span>
                 </div>
 
                 <button
-                  onClick={handleBuyNow}
+                  onClick={() => {
+                    addToCart({
+                      slug: listing.slug,
+                      name: listing.name,
+                      price: listing.price_cents / 100,
+                      category: listing.category
+                    });
+                    router.push('/cart');
+                  }}
                   className="w-full bg-blue-600 text-white py-4 rounded-xl font-medium hover:bg-blue-700 transition-colors mb-4"
                 >
                   Buy Now
@@ -244,7 +227,7 @@ export default function ListingDetail() {
                       <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      Persona configuration
+                      Complete source files
                     </li>
                     <li className="flex items-center gap-2">
                       <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
