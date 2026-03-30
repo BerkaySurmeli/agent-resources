@@ -80,6 +80,11 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('ar-token');
+      if (!token) {
+        setError('Please sign in to view your dashboard');
+        setLoading(false);
+        return;
+      }
       
       // Fetch listings
       const listingsRes = await fetch(`${API_URL}/listings/my-listings`, {
@@ -89,6 +94,9 @@ export default function Dashboard() {
       if (listingsRes.ok) {
         const listingsData = await listingsRes.json();
         setListings(listingsData);
+      } else {
+        const errorData = await listingsRes.json().catch(() => ({}));
+        console.error('Listings fetch error:', errorData);
       }
       
       // Fetch stats
@@ -99,9 +107,13 @@ export default function Dashboard() {
       if (statsRes.ok) {
         const statsData = await statsRes.json();
         setStats(statsData);
+      } else {
+        const errorData = await statsRes.json().catch(() => ({}));
+        console.error('Stats fetch error:', errorData);
       }
-    } catch (err) {
-      setError('Failed to load dashboard data');
+    } catch (err: any) {
+      console.error('Dashboard error:', err);
+      setError(`Failed to load dashboard data: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -135,6 +147,27 @@ export default function Dashboard() {
 
       <main className="pt-24 pb-12 px-6">
         <div className="max-w-6xl mx-auto">
+          {/* Email Verification Banner */}
+          {user && !user.is_verified && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-8 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <p className="font-medium text-yellow-800">Please verify your email</p>
+                  <p className="text-sm text-yellow-700">You must verify your email before creating listings or making purchases.</p>
+                </div>
+              </div>
+              <Link
+                href="/verify-email"
+                className="bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-yellow-700 transition-colors whitespace-nowrap"
+              >
+                Verify Email
+              </Link>
+            </div>
+          )}
+
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-semibold text-slate-900">Developer Dashboard</h1>

@@ -14,6 +14,8 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
 
+  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -32,8 +34,8 @@ export default function Signup() {
 
     try {
       await signup(email, password, name);
-      // Use Next.js router for client-side navigation
-      router.push('/');
+      // Show verification message instead of redirecting immediately
+      setShowVerificationMessage(true);
     } catch (err: any) {
       const msg = err.message || 'Failed to create account';
       // Clean up common error messages
@@ -48,6 +50,50 @@ export default function Signup() {
       setLoading(false);
     }
   };
+
+  if (showVerificationMessage) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
+        <Head>
+          <title>Verify Your Email | Agent Resources</title>
+        </Head>
+
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-semibold text-slate-900 mb-4">Verify Your Email</h1>
+            <p className="text-slate-600 mb-6">
+              We've sent a verification link to <strong>{email}</strong>. 
+              Please check your inbox and click the link to verify your account.
+            </p>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 text-left">
+              <p className="text-sm text-yellow-800">
+                <strong>Important:</strong> You must verify your email before you can create listings or make purchases.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={() => router.push('/login')}
+                className="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
+              >
+                Go to Login
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full bg-slate-100 text-slate-700 py-3 rounded-xl font-medium hover:bg-slate-200 transition-colors"
+              >
+                I verified my email
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
