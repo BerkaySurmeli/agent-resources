@@ -266,7 +266,11 @@ async def create_listing(
     current_user: User = Depends(get_current_user_from_token)
 ):
     """Create a new listing with file upload"""
-    
+
+    # Check if user is verified
+    if not current_user.is_verified:
+        raise HTTPException(status_code=403, detail="Please verify your email before creating a listing")
+
     ensure_upload_dir()
     
     # Parse tags

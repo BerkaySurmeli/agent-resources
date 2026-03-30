@@ -7,8 +7,104 @@ from passlib.context import CryptContext
 from core.database import get_session
 from models import User
 import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+# Zoho Mail configuration
+ZOHO_SMTP_SERVER = os.getenv("ZOHO_SMTP_SERVER", "smtp.zoho.com")
+ZOHO_SMTP_PORT = int(os.getenv("ZOHO_SMTP_PORT", "587"))
+ZOHO_EMAIL = os.getenv("ZOHO_EMAIL", "info@shopagentresources.com")
+ZOHO_PASSWORD = os.getenv("ZOHO_PASSWORD", "")
+
+def send_verification_email(to_email: str, name: str, token: str):
+    """Send verification email via Zoho SMTP"""
+    if not ZOHO_PASSWORD:
+        print("[EMAIL] Zoho password not configured, skipping email send")
+        print(f"[EMAIL] Verification link: https://shopagentresources.com/verify-email?token={token}")
+        return
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = 'Welcome to Agent Resources - Verify Your Email'
+    msg['From'] = f"Agent Resources <{ZOHO_EMAIL}>"
+    msg['To'] = to_email
+
+    verification_url = f"https://shopagentresources.com/verify-email?token={token}"
+
+    # Plain text version
+    text_body = f"""
+Hi {name},
+
+Welcome to Agent Resources! Please verify your email address to start buying and selling AI agents.
+
+Click the link below to verify your email:
+{verification_url}
+
+This link will expire in 24 hours.
+
+If you didn't create an account, you can safely ignore this email.
+
+Best regards,
+The Agent Resources Team
+"""
+
+    # HTML version
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email</title>
+</head>
+<body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <div style="width: 60px; height: 60px; background: #2563eb; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+            <span style="color: white; font-weight: bold; font-size: 24px;">AR</span>
+        </div>
+        <h1 style="color: #0f172a; margin: 0;">Welcome to Agent Resources</h1>
+    </div>
+
+    <div style="background: #f8fafc; border-radius: 12px; padding: 30px; margin-bottom: 20px;">
+        <p style="margin-top: 0;">Hi {name},</p>
+        <p>Welcome to Agent Resources! Please verify your email address to start buying and selling AI agents.</p>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{verification_url}" style="display: inline-block; background: #2563eb; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 500;">
+                Verify Email Address
+            </a>
+        </div>
+
+        <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">
+            This link will expire in 24 hours. If you didn't create an account, you can safely ignore this email.
+        </p>
+    </div>
+
+    <div style="text-align: center; font-size: 14px; color: #64748b;">
+        <p>Best regards,<br>The Agent Resources Team</p>
+        <p style="margin-top: 20px;">
+            <a href="https://shopagentresources.com" style="color: #2563eb;">shopagentresources.com</a>
+        </p>
+    </div>
+</body>
+</html>
+"""
+
+    part1 = MIMEText(text_body, 'plain')
+    part2 = MIMEText(html_body, 'html')
+
+    msg.attach(part1)
+    msg.attach(part2)
+
+    # Send email
+    with smtplib.SMTP(ZOHO_SMTP_SERVER, ZOHO_SMTP_PORT) as server:
+        server.starttls()
+        server.login(ZOHO_EMAIL, ZOHO_PASSWORD)
+        server.send_message(msg)
+
+    print(f"[EMAIL] Verification email sent to {to_email}")
 
 # Security - use argon2 which doesn't have the 72-byte limit
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -95,9 +191,12 @@ def signup(user_data: UserSignup, session = Depends(get_session)):
         session.commit()
         session.refresh(user)
         
-        # TODO: Send verification email
-        # For now, just print to logs (in production, use SendGrid/AWS SES)
-        print(f"[EMAIL] Verification link: https://shopagentresources.com/verify-email?token={verification_token}")
+        # Send verification email via Zoho
+        try:
+            send_verification_email(user_data.email, user_data.name, verification_token)
+        except Exception as e:
+            print(f"[EMAIL ERROR] Failed to send verification email: {e}")
+            # Don't fail signup if email fails, just log it
         
     except HTTPException:
         session.rollback()
@@ -197,7 +296,58 @@ def verify_email(token: str, session = Depends(get_session)):
     user = session.exec(select(User).where(User.verification_token == token)).first()
     if not user:
         raise HTTPException(status_code=400, detail="Invalid verification token")
-    
+
+    # Check if token is expired (24 hours)
+    if user.verification_sent_at:
+        time_diff = datetime.utcnow() - user.verification_sent_at
+        if time_diff > timedelta(hours=24):
+            raise HTTPException(status_code=400, detail="Verification link expired")
+
+    # Mark user as verified
+    user.is_verified = True
+    user.verification_token = None
+    session.commit()
+
+    return {"message": "Email verified successfully"}
+
+@router.post("/resend-verification")
+def resend_verification(
+    request: Request,
+    session = Depends(get_session)
+):
+    """Resend verification email"""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    token = auth_header.split(" ")[1]
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        user = session.exec(select(User).where(User.id == user_id)).first()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if user.is_verified:
+            raise HTTPException(status_code=400, detail="Email already verified")
+
+        # Generate new token
+        import secrets
+        user.verification_token = secrets.token_urlsafe(32)
+        user.verification_sent_at = datetime.utcnow()
+        session.commit()
+
+        # Send email
+        try:
+            send_verification_email(user.email, user.name, user.verification_token)
+        except Exception as e:
+            print(f"[EMAIL ERROR] {e}")
+
+        return {"message": "Verification email sent"}
+
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
     # Mark as verified
     user.is_verified = True
     user.verification_token = None
