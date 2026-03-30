@@ -414,17 +414,11 @@ def delete_account(
     current_user: User = Depends(get_current_user_from_token)
 ):
     """Delete user account and all associated data"""
-    from models import Listing, Product, Transaction, Review, ListingTranslation, WaitlistEntry
+    from models import Listing, Product, Transaction, Review, ListingTranslation
     
     try:
         user_id = current_user.id
         print(f"[DELETE ACCOUNT] Starting deletion for user {user_id}")
-        
-        # Delete waitlist entries
-        waitlist_entries = session.exec(select(WaitlistEntry).where(WaitlistEntry.email == current_user.email)).all()
-        for entry in waitlist_entries:
-            session.delete(entry)
-        print(f"[DELETE ACCOUNT] Deleted {len(waitlist_entries)} waitlist entries")
         
         # Delete user's reviews first (to avoid foreign key issues)
         reviews = session.exec(select(Review).where(Review.user_id == user_id)).all()
