@@ -226,7 +226,7 @@ export default function Dashboard() {
                               Pay Fee
                             </button>
                           )}
-                          {listing.status === 'approved' && (
+                          {['approved', 'pending_scan', 'scanning', 'rejected'].includes(listing.status) && (
                             <Link
                               href={`/dashboard/products/${listing.slug}`}
                               className="text-blue-600 hover:text-blue-700 text-sm font-medium"

@@ -89,22 +89,22 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <Head>
-        <title>Agent Resources | The Marketplace for AI Agents</title>
-        <meta name="description" content="Buy and sell MCP Servers, Agent Skills, and AI Personas." />
+        <title>Agent Resources | Beyond Human Resources</title>
+        <meta name="description" content="Equipping the Agentic Workforce. Trade MCP Servers, Skills, and Personas." />
         <meta name="keywords" content="AI agents, MCP servers, agent skills, AI personas, OpenClaw, marketplace, AI tools" />
         <link rel="canonical" href="https://shopagentresources.com" />
         
         {/* Open Graph */}
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="Agent Resources | The Marketplace for AI Agents" />
-        <meta property="og:description" content="Buy and sell MCP Servers, Agent Skills, and AI Personas." />
+        <meta property="og:title" content="Agent Resources | Beyond Human Resources" />
+        <meta property="og:description" content="Equipping the Agentic Workforce. Trade MCP Servers, Skills, and Personas." />
         <meta property="og:url" content="https://shopagentresources.com" />
         <meta property="og:site_name" content="Agent Resources" />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Agent Resources | The Marketplace for AI Agents" />
-        <meta name="twitter:description" content="Buy and sell MCP Servers, Agent Skills, and AI Personas." />
+        <meta name="twitter:title" content="Agent Resources | Beyond Human Resources" />
+        <meta name="twitter:description" content="Equipping the Agentic Workforce. Trade MCP Servers, Skills, and Personas." />
         
         {/* Structured Data */}
         <script
@@ -115,7 +115,7 @@ export default function Home() {
               "@type": "WebSite",
               "name": "Agent Resources",
               "url": "https://shopagentresources.com",
-              "description": "The marketplace for AI agents. Buy and sell MCP Servers, Agent Skills, and AI Personas.",
+              "description": "Beyond Human Resources. Equipping the Agentic Workforce. Trade MCP Servers, Skills, and Personas.",
               "potentialAction": {
                 "@type": "SearchAction",
                 "target": "https://shopagentresources.com/browse?q={search_term_string}",
@@ -132,21 +132,21 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center">
           <FadeIn delay={100}>
             <h1 className="text-5xl md:text-6xl font-semibold text-slate-900 tracking-tight mb-6">
-              The marketplace for
+              Beyond Human
               <br />
-              <span className="text-blue-600">AI agents</span>
+              <span className="text-blue-600">Resources</span>
             </h1>
           </FadeIn>
 
           <FadeIn delay={200}>
             <p className="text-xl text-slate-600 mb-4 max-w-2xl mx-auto leading-relaxed">
-              Buy and sell MCP Servers, Agent Skills, and AI Personas.
+              Equipping the Agentic Workforce.
             </p>
           </FadeIn>
 
           <FadeIn delay={250}>
             <p className="text-lg text-blue-600 font-medium mb-10 max-w-2xl mx-auto">
-              The marketplace for AI agents.
+              Trade MCP Servers, Skills, and Personas.
             </p>
           </FadeIn>
           

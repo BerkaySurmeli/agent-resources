@@ -371,7 +371,7 @@ export default function ListingDetail() {
                 {/* Reviews List */}
                 <div className="space-y-4">
                   {reviews.length === 0 ? (
-                    <p className="text-slate-500">No reviews yet. Be the first to review!</p>
+                    <p className="text-slate-500">No reviews yet.</p>
                   ) : (
                     reviews.map((review) => (
                       <div key={review.id} className="border-b border-slate-100 pb-4 last:border-0">
@@ -430,9 +430,20 @@ export default function ListingDetail() {
                   Buy Now
                 </button>
 
-                <p className="text-sm text-slate-500 text-center">
+                <p className="text-sm text-slate-500 text-center mb-4">
                   One-time purchase. Yours forever.
                 </p>
+
+                <button
+                  onClick={() => {
+                    const subject = `Report Listing: ${listing?.name || 'Unknown'}`;
+                    const body = `I would like to report the following listing:\n\nName: ${listing?.name}\nSlug: ${listing?.slug}\n\nReason for report:\n`;
+                    window.location.href = `mailto:info@shopagentresources.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                  }}
+                  className="w-full text-slate-500 text-sm hover:text-red-600 transition-colors"
+                >
+                  Report this listing
+                </button>
 
                 <div className="mt-6 pt-6 border-t border-slate-200">
                   <h3 className="font-semibold text-slate-900 mb-3">What's included:</h3>
