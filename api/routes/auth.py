@@ -406,3 +406,61 @@ def get_current_user_from_token(
         
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+
+@router.delete("/account")
+def delete_account(
+    session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Delete user account and all associated data"""
+    from models import Listing, Product, Transaction, Review, ListingTranslation
+    
+    try:
+        user_id = current_user.id
+        
+        # Delete user's listings and their translations
+        listings = session.exec(select(Listing).where(Listing.owner_id == user_id)).all()
+        for listing in listings:
+            # Delete translations first
+            translations = session.exec(select(ListingTranslation).where(ListingTranslation.listing_id == listing.id)).all()
+            for t in translations:
+                session.delete(t)
+            session.delete(listing)
+        
+        # Delete user's products
+        products = session.exec(select(Product).where(Product.owner_id == user_id)).all()
+        for product in products:
+            session.delete(product)
+        
+        # Delete user's reviews
+        reviews = session.exec(select(Review).where(Review.user_id == user_id)).all()
+        for review in reviews:
+            session.delete(review)
+        
+        # Note: We keep transactions for record-keeping but anonymize them
+        # This is important for financial/tax records
+        transactions = session.exec(
+            select(Transaction).where(
+                (Transaction.buyer_id == user_id) | (Transaction.seller_id == user_id)
+            )
+        ).all()
+        for t in transactions:
+            # Anonymize the transaction
+            if t.buyer_id == user_id:
+                t.buyer_id = None  # Will show as "Deleted User"
+            if t.seller_id == user_id:
+                t.seller_id = None
+        
+        # Finally, delete the user
+        session.delete(current_user)
+        session.commit()
+        
+        return {"message": "Account deleted successfully"}
+        
+    except Exception as e:
+        session.rollback()
+        print(f"[DELETE ACCOUNT ERROR] {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Failed to delete account")
