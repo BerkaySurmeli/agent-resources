@@ -7,6 +7,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresourc
 
 interface Listing {
   id: string;
+  slug: string;
   name: string;
   description: string;
   category: string;
