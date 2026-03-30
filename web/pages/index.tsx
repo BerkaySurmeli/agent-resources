@@ -304,20 +304,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 px-6 border-t border-slate-200 mt-auto" role="contentinfo">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <Link href="/" aria-label="Agent Resources Home">
-            <Logo />
-          </Link>
-          <div className="flex items-center gap-6 text-slate-600">
-            <Link href="/blog" className="hover:text-slate-900 transition-colors">Blog</Link>
-            <a href="https://twitter.com" className="hover:text-slate-900 transition-colors" aria-label="Follow us on Twitter">Twitter</a>
-            
-          </div>
-        </div>
-      </footer>
-
       {/* Waitlist Modal */}
       {showWaitlist && (
         <div 

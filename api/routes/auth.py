@@ -414,10 +414,23 @@ def delete_account(
     current_user: User = Depends(get_current_user_from_token)
 ):
     """Delete user account and all associated data"""
-    from models import Listing, Product, Transaction, Review, ListingTranslation
+    from models import Listing, Product, Transaction, Review, ListingTranslation, WaitlistEntry
     
     try:
         user_id = current_user.id
+        print(f"[DELETE ACCOUNT] Starting deletion for user {user_id}")
+        
+        # Delete waitlist entries
+        waitlist_entries = session.exec(select(WaitlistEntry).where(WaitlistEntry.email == current_user.email)).all()
+        for entry in waitlist_entries:
+            session.delete(entry)
+        print(f"[DELETE ACCOUNT] Deleted {len(waitlist_entries)} waitlist entries")
+        
+        # Delete user's reviews first (to avoid foreign key issues)
+        reviews = session.exec(select(Review).where(Review.user_id == user_id)).all()
+        for review in reviews:
+            session.delete(review)
+        print(f"[DELETE ACCOUNT] Deleted {len(reviews)} reviews")
         
         # Delete user's listings and their translations
         listings = session.exec(select(Listing).where(Listing.owner_id == user_id)).all()
@@ -427,40 +440,38 @@ def delete_account(
             for t in translations:
                 session.delete(t)
             session.delete(listing)
+        print(f"[DELETE ACCOUNT] Deleted {len(listings)} listings")
         
         # Delete user's products
         products = session.exec(select(Product).where(Product.owner_id == user_id)).all()
         for product in products:
             session.delete(product)
-        
-        # Delete user's reviews
-        reviews = session.exec(select(Review).where(Review.user_id == user_id)).all()
-        for review in reviews:
-            session.delete(review)
+        print(f"[DELETE ACCOUNT] Deleted {len(products)} products")
         
         # Note: We keep transactions for record-keeping but anonymize them
-        # This is important for financial/tax records
         transactions = session.exec(
             select(Transaction).where(
                 (Transaction.buyer_id == user_id) | (Transaction.seller_id == user_id)
             )
         ).all()
         for t in transactions:
-            # Anonymize the transaction
             if t.buyer_id == user_id:
-                t.buyer_id = None  # Will show as "Deleted User"
+                t.buyer_id = None
             if t.seller_id == user_id:
                 t.seller_id = None
+        print(f"[DELETE ACCOUNT] Anonymized {len(transactions)} transactions")
         
         # Finally, delete the user
         session.delete(current_user)
         session.commit()
+        print(f"[DELETE ACCOUNT] Successfully deleted user {user_id}")
         
         return {"message": "Account deleted successfully"}
         
     except Exception as e:
         session.rollback()
-        print(f"[DELETE ACCOUNT ERROR] {e}")
+        error_msg = str(e)
+        print(f"[DELETE ACCOUNT ERROR] {error_msg}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail="Failed to delete account")
+        raise HTTPException(status_code=500, detail=f"Failed to delete account: {error_msg}")
