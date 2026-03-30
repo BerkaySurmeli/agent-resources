@@ -123,7 +123,7 @@ export default function BlogPost() {
           <div className="flex space-x-6 text-gray-400">
             <Link href="/" className="hover:text-white">Home</Link>
             <a href="https://twitter.com" className="hover:text-white">Twitter</a>
-            <a href="https://github.com/BerkaySurmeli/agent-resources" className="hover:text-white">GitHub</a>
+            
           </div>
         </div>
       </footer>

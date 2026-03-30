@@ -29,7 +29,7 @@ export default function Sell() {
     price: '',
     tags: [] as string[],
     files: [] as File[],
-    licenseAccepted: false,
+    termsAccepted: false,
   });
   const [isDragging, setIsDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -106,6 +106,21 @@ export default function Sell() {
       if (!token) {
         throw new Error('Please sign in first');
       }
+
+      // Validate category
+      if (!formData.category) {
+        throw new Error('Please select a category');
+      }
+
+      // Validate terms acceptance
+      if (!formData.termsAccepted) {
+        throw new Error('Please accept the Terms and Conditions');
+      }
+
+      // Validate skill.md for skill category
+      if (formData.category === 'skill' && !hasSkillMd) {
+        throw new Error('Please include a skill.md file for skills');
+      }
       
       // Create FormData
       const data = new FormData();
@@ -164,19 +179,6 @@ export default function Sell() {
       <Head>
         <title>List an Item | Agent Resources</title>
       </Head>
-
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">AR</span>
-            </div>
-            <span className="font-semibold text-slate-900">Agent Resources</span>
-          </Link>
-          <Link href="/listings" className="text-slate-600 hover:text-slate-900">Browse</Link>
-        </div>
-      </nav>
 
       <main className="pt-24 pb-12 px-6">
         <div className="max-w-4xl mx-auto">
@@ -273,7 +275,7 @@ export default function Sell() {
                     />
                   </div>
                   <p className="text-sm text-slate-500 mt-1">
-                    First 500 listings: No commission. After that: 15% platform fee.
+                    No commission for free listings. Paid listings: 15% platform fee.
                   </p>
                 </div>
 
@@ -410,8 +412,8 @@ export default function Sell() {
                     <li className={hasSkillMd ? 'text-green-600' : 'text-slate-500'}>
                       {hasSkillMd ? '✓' : '○'} SKILL.md is required
                     </li>
-                    <li className={formData.licenseAccepted ? 'text-green-600' : 'text-slate-500'}>
-                      {formData.licenseAccepted ? '✓' : '○'} Accept the MIT-0 license terms
+                    <li className={formData.termsAccepted ? 'text-green-600' : 'text-slate-500'}>
+                      {formData.termsAccepted ? '✓' : '○'} Accept the <Link href="/terms" target="_blank" className="underline">Terms and Conditions</Link>
                     </li>
                   </ul>
                 </div>
@@ -431,8 +433,8 @@ export default function Sell() {
                   <label className="flex items-start gap-3">
                     <input
                       type="checkbox"
-                      checked={formData.licenseAccepted}
-                      onChange={(e) => setFormData(prev => ({ ...prev, licenseAccepted: e.target.checked }))}
+                      checked={formData.termsAccepted}
+                      onChange={(e) => setFormData(prev => ({ ...prev, termsAccepted: e.target.checked }))}
                       className="mt-1 w-4 h-4 text-blue-600 rounded border-slate-300"
                     />
                     <span className="text-sm text-slate-700">
@@ -481,7 +483,7 @@ export default function Sell() {
                     </button>
                     <button
                       onClick={handleSubmit}
-                      disabled={!hasSkillMd || formData.files.length === 0 || !formData.licenseAccepted}
+                      disabled={formData.files.length === 0 || !formData.termsAccepted || (formData.category === 'skill' && !hasSkillMd)}
                       className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
                     >
                       Submit for Security Review

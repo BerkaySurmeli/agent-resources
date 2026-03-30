@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
@@ -59,6 +60,7 @@ export default function ListingDetail() {
   const router = useRouter();
   const { slug } = router.query;
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const [listing, setListing] = useState<ListingDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewStats, setReviewStats] = useState({ average: 0, total: 0 });
@@ -67,6 +69,7 @@ export default function ListingDetail() {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [hasPurchased, setHasPurchased] = useState(false);
 
   useEffect(() => {
     if (slug) {
@@ -87,6 +90,12 @@ export default function ListingDetail() {
         throw new Error('Listing not found');
       }
       setListing(found);
+
+      // Check if current user is the owner and redirect to manage page
+      if (user && found.seller && user.id === found.seller.id) {
+        router.push(`/dashboard/products/${slug}`);
+        return;
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -114,13 +123,15 @@ export default function ListingDetail() {
     setSubmitting(true);
     try {
       const token = localStorage.getItem('ar-token');
-      const res = await fetch(`${API_URL}/listings/${slug}/reviews`, {
+      const params = new URLSearchParams({
+        rating: newReview.rating.toString(),
+        comment: newReview.comment
+      });
+      const res = await fetch(`${API_URL}/listings/${slug}/reviews?${params}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(newReview)
+        }
       });
 
       if (res.ok) {
@@ -293,12 +304,14 @@ export default function ListingDetail() {
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={() => setShowReviewForm(true)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
-                  >
-                    Write a Review
-                  </button>
+                  {user && (
+                    <button
+                      onClick={() => setShowReviewForm(true)}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
+                    >
+                      Write a Review
+                    </button>
+                  )}
                 </div>
 
                 {/* Review Form */}

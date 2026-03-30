@@ -50,7 +50,8 @@ export default function SEO({
       <meta name="twitter:image" content={ogImage} />
       
       {/* Favicon */}
-      <link rel="icon" href="/favicon.ico" />
+      <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+      <link rel="alternate icon" href="/favicon.ico" />
       <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
       
       {/* Theme */}

@@ -846,3 +846,77 @@ async def process_pending_scans(
         "processed": len(results),
         "results": results
     }
+
+
+@router.delete("/my-listings/{listing_id}")
+async def delete_listing(
+    listing_id: str,
+    session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Delete a listing (owner only)"""
+    from models import Review
+    
+    listing = session.exec(
+        select(Listing).where(Listing.id == listing_id)
+    ).first()
+    
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    # Check if user is the owner
+    if str(listing.owner_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorized to delete this listing")
+    
+    # Delete associated product if exists
+    if listing.product_id:
+        product = session.exec(
+            select(Product).where(Product.id == listing.product_id)
+        ).first()
+        if product:
+            # Delete reviews for this product
+            session.exec(
+                select(Review).where(Review.product_id == product.id)
+            )
+            session.delete(product)
+    
+    # Delete the listing
+    session.delete(listing)
+    session.commit()
+    
+    return {"message": "Listing deleted successfully"}
+
+
+@router.post("/my-listings/{listing_id}/toggle-status")
+async def toggle_listing_status(
+    listing_id: str,
+    session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Toggle listing active status (owner only)"""
+    listing = session.exec(
+        select(Listing).where(Listing.id == listing_id)
+    ).first()
+    
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    # Check if user is the owner
+    if str(listing.owner_id) != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorized to modify this listing")
+    
+    # Toggle by updating the associated product
+    if listing.product_id:
+        product = session.exec(
+            select(Product).where(Product.id == listing.product_id)
+        ).first()
+        if product:
+            product.is_active = not product.is_active
+            session.commit()
+            session.refresh(product)
+            return {
+                "message": "Status updated",
+                "is_active": product.is_active
+            }
+    
+    return {"message": "No product associated with this listing"}

@@ -159,7 +159,7 @@ export default function Dashboard() {
               <h2 className="text-xl font-semibold text-slate-900 mb-2">Start Selling</h2>
               <p className="text-slate-600 mb-6 max-w-md mx-auto">
                 Create your first listing and reach thousands of AI agent users. 
-                First 500 listings pay zero commission.
+                Start selling your AI agents today.
               </p>
               <Link 
                 href="/sell" 

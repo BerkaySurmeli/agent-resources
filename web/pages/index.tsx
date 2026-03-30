@@ -90,14 +90,14 @@ export default function Home() {
     <div className="min-h-screen bg-white flex flex-col">
       <Head>
         <title>Agent Resources | The Marketplace for AI Agents</title>
-        <meta name="description" content="Buy and sell MCP Servers, Agent Skills, and AI Personas. First 500 developers list for free. No commission, ever." />
+        <meta name="description" content="Buy and sell MCP Servers, Agent Skills, and AI Personas." />
         <meta name="keywords" content="AI agents, MCP servers, agent skills, AI personas, OpenClaw, marketplace, AI tools" />
         <link rel="canonical" href="https://shopagentresources.com" />
         
         {/* Open Graph */}
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Agent Resources | The Marketplace for AI Agents" />
-        <meta property="og:description" content="Buy and sell MCP Servers, Agent Skills, and AI Personas. First 500 developers list for free." />
+        <meta property="og:description" content="Buy and sell MCP Servers, Agent Skills, and AI Personas." />
         <meta property="og:url" content="https://shopagentresources.com" />
         <meta property="og:site_name" content="Agent Resources" />
         
@@ -146,7 +146,7 @@ export default function Home() {
 
           <FadeIn delay={250}>
             <p className="text-lg text-blue-600 font-medium mb-10 max-w-2xl mx-auto">
-              First 500 developers list for free. No commission, ever.
+              The marketplace for AI agents.
             </p>
           </FadeIn>
           
@@ -311,7 +311,7 @@ export default function Home() {
           <div className="flex items-center gap-6 text-slate-600">
             <Link href="/blog" className="hover:text-slate-900 transition-colors">Blog</Link>
             <a href="https://twitter.com" className="hover:text-slate-900 transition-colors" aria-label="Follow us on Twitter">Twitter</a>
-            <a href="https://github.com/BerkaySurmeli/agent-resources" className="hover:text-slate-900 transition-colors" aria-label="View our GitHub repository">GitHub</a>
+            
           </div>
         </div>
       </footer>
@@ -328,7 +328,7 @@ export default function Home() {
             {!submitted ? (
               <>
                 <h3 id="waitlist-title" className="text-2xl font-semibold text-slate-900 mb-2">Join the Waitlist</h3>
-                <p className="text-slate-600 mb-6">Be among the first 500 developers to list for free. We'll notify you when we launch.</p>
+                <p className="text-slate-600 mb-6">Join our marketplace for AI agents. List your personas, skills, and MCP servers.</p>
                 {error && (
                   <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
                     {error}

@@ -9,20 +9,6 @@ export default function Terms() {
         <meta name="description" content="Terms of Service for Agent Resources marketplace" />
       </Head>
 
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">AR</span>
-            </div>
-            <span className="font-semibold text-slate-900">Agent Resources</span>
-          </Link>
-          <Link href="/" className="text-slate-600 hover:text-slate-900">Home</Link>
-        </div>
-      </nav>
-
-      {/* Content */}
       <main className="pt-24 pb-12 px-6">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-4xl font-semibold text-slate-900 mb-4">Terms of Service</h1>
@@ -74,7 +60,7 @@ export default function Terms() {
                 <li>Prices are set by creators</li>
                 <li>We collect payment on behalf of creators</li>
                 <li>We remit creator share after deducting platform commission and payment processing fees</li>
-                <li>First 500 listings: No commission for creators</li>
+                <li>No commission for free listings</li>
                 <li>Standard commission: 15% (free items: 0%)</li>
               </ul>
             </section>

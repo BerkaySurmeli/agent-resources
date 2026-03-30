@@ -75,41 +75,49 @@ export default function ManageProduct() {
     try {
       const token = localStorage.getItem('ar-token');
 
-      // Fetch product details
-      const productRes = await fetch(`${API_URL}/products/${slug}`, {
+      // Fetch all user listings and find the one with matching slug
+      const listingsRes = await fetch(`${API_URL}/listings/my-listings`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      if (!productRes.ok) {
-        throw new Error('Product not found');
+      if (!listingsRes.ok) {
+        throw new Error('Failed to fetch listings');
       }
 
-      const productData = await productRes.json();
-      setProduct(productData);
+      const listings = await listingsRes.json();
+      const listing = listings.find((l: any) => l.slug === slug);
+
+      if (!listing) {
+        throw new Error('Listing not found');
+      }
+
+      setProduct(listing);
       setEditForm({
-        name: productData.name,
-        description: productData.description,
-        price_cents: productData.price_cents
+        name: listing.name,
+        description: listing.description,
+        price_cents: listing.price_cents
       });
 
-      // Fetch reviews
-      const reviewsRes = await fetch(`${API_URL}/products/${slug}/reviews`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      // Fetch reviews (using product_id if available)
+      if (listing.product_id) {
+        const reviewsRes = await fetch(`${API_URL}/products/${slug}/reviews`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
 
-      if (reviewsRes.ok) {
-        const reviewsData = await reviewsRes.json();
-        setReviews(reviewsData);
-      }
+        if (reviewsRes.ok) {
+          const reviewsData = await reviewsRes.json();
+          setReviews(reviewsData);
+        }
 
-      // Fetch stats
-      const statsRes = await fetch(`${API_URL}/products/${slug}/stats`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+        // Fetch stats
+        const statsRes = await fetch(`${API_URL}/products/${slug}/stats`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
 
-      if (statsRes.ok) {
-        const statsData = await statsRes.json();
-        setStats(statsData);
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          setStats(statsData);
+        }
       }
     } catch (err: any) {
       setError(err.message);
@@ -149,7 +157,12 @@ export default function ManageProduct() {
     setDeleting(true);
     try {
       const token = localStorage.getItem('ar-token');
-      const res = await fetch(`${API_URL}/products/${slug}`, {
+      // Use listing ID for deletion
+      const listingId = product?.id;
+      if (!listingId) {
+        throw new Error('Listing ID not found');
+      }
+      const res = await fetch(`${API_URL}/listings/my-listings/${listingId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -157,7 +170,8 @@ export default function ManageProduct() {
       if (res.ok) {
         router.push('/dashboard');
       } else {
-        throw new Error('Failed to delete product');
+        const err = await res.json();
+        throw new Error(err.detail || 'Failed to delete listing');
       }
     } catch (err: any) {
       setError(err.message);
