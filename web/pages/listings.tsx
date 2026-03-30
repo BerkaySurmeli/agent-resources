@@ -2,21 +2,9 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useMemo, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
-
-const categories = [
-  { id: 'all', name: 'All Listings' },
-  { id: 'persona', name: 'AI Personas' },
-  { id: 'skill', name: 'Agent Skills' },
-  { id: 'mcp_server', name: 'MCP Servers' },
-];
-
-const sortOptions = [
-  { id: 'newest', label: 'Newest' },
-  { id: 'price-low', label: 'Price: Low to High' },
-  { id: 'price-high', label: 'Price: High to Low' },
-];
 
 const getCategoryColor = (category: string) => {
   switch (category) {
@@ -76,12 +64,26 @@ interface Listing {
 }
 
 export default function Listings() {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const { addToCart, items: cartItems } = useCart();
+
+  const categories = [
+    { id: 'all', name: t.listings.allCategories },
+    { id: 'persona', name: t.listings.personas },
+    { id: 'skill', name: t.listings.skills },
+    { id: 'mcp_server', name: t.listings.mcpServers },
+  ];
+
+  const sortOptions = [
+    { id: 'newest', label: t.listings.newest },
+    { id: 'price-low', label: t.listings.priceLow },
+    { id: 'price-high', label: t.listings.priceHigh },
+  ];
 
   useEffect(() => {
     fetchListings();
@@ -139,8 +141,8 @@ export default function Listings() {
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-semibold text-slate-900 mb-2">Browse Listings</h1>
-            <p className="text-slate-600">Find AI personas, skills, and tools for your OpenClaw environment</p>
+            <h1 className="text-3xl font-semibold text-slate-900 mb-2">{t.listings.title}</h1>
+            <p className="text-slate-600">{t.listings.subtitle}</p>
           </div>
 
           {/* Search */}
@@ -150,7 +152,7 @@ export default function Listings() {
             </svg>
             <input
               type="text"
-              placeholder="Search listings..."
+              placeholder={t.listings.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-lg"
@@ -189,7 +191,7 @@ export default function Listings() {
           </div>
 
           {/* Results count */}
-          <p className="text-slate-500 mb-6">{filteredListings.length} listings found</p>
+          <p className="text-slate-500 mb-6">{filteredListings.length} {t.listings.listingsFound}</p>
 
           {/* Loading */}
           {loading && (

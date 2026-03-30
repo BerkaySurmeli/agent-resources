@@ -27,14 +27,11 @@ export default function Navbar() {
 
         {/* Main Navigation */}
         <div className="hidden md:flex items-center gap-6">
-          <Link href="/listings" className="text-slate-600 hover:text-slate-900 transition-colors">
+          <Link href="/listings" className="text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap">
             {t.nav.listings}
           </Link>
           <Link href="/wizard" className="text-blue-600 hover:text-blue-700 transition-colors font-medium whitespace-nowrap">
             {t.nav.buildTeam}
-          </Link>
-          <Link href="/blog" className="text-slate-600 hover:text-slate-900 transition-colors">
-            {t.nav.blog}
           </Link>
         </div>
 
