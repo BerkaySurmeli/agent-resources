@@ -263,7 +263,7 @@ async def get_dashboard_stats(
     
     return DashboardStats(
         total_listings=len(listings),
-        approved_listings=sum(1 for l in listings if l.status == ListingStatus.APPROVED),
+        approved_listings=sum(1 for l in listings if l.status == 'approved'),
         pending_listings=sum(1 for l in listings if l.status in [ListingStatus.PENDING_PAYMENT, ListingStatus.PENDING_SCAN, ListingStatus.SCANNING]),
         rejected_listings=sum(1 for l in listings if l.status == ListingStatus.REJECTED),
         total_revenue_cents=total_revenue,
@@ -322,7 +322,7 @@ async def get_listing_detail(
         raise HTTPException(status_code=404, detail="Listing not found")
     
     # Only show approved listings publicly
-    if listing.status != ListingStatus.APPROVED:
+    if listing.status != 'approved':
         raise HTTPException(status_code=404, detail="Listing not found")
     
     return {
