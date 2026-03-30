@@ -1,9 +1,11 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,9 +19,10 @@ export default function Login() {
 
     try {
       await login(email, password);
-      window.location.href = '/';
-    } catch (err) {
-      setError('Invalid email or password');
+      // Use Next.js router for client-side navigation
+      router.push('/');
+    } catch (err: any) {
+      setError(err.message || 'Invalid email or password');
     } finally {
       setLoading(false);
     }

@@ -1,9 +1,11 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Signup() {
+  const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,7 +32,8 @@ export default function Signup() {
 
     try {
       await signup(email, password, name);
-      window.location.href = '/';
+      // Use Next.js router for client-side navigation
+      router.push('/');
     } catch (err: any) {
       const msg = err.message || 'Failed to create account';
       // Clean up common error messages

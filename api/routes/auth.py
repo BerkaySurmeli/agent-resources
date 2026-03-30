@@ -144,7 +144,8 @@ def login(user_data: UserLogin, session = Depends(get_session)):
             "email": user.email,
             "name": user.name,
             "is_developer": user.is_developer,
-            "avatar_url": user.avatar_url
+            "avatar_url": user.avatar_url,
+            "is_verified": user.is_verified
         }
     }
 
