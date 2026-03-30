@@ -535,7 +535,7 @@ async def get_public_listings(
             "slug": l.slug,
             "name": l.name,
             "description": l.description[:200] + "..." if len(l.description) > 200 else l.description,
-            "category": l.category.value,
+            "category": l.category,
             "price_cents": l.price_cents,
             "tags": l.category_tags,
             "created_at": l.created_at
