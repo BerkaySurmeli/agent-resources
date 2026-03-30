@@ -6,7 +6,7 @@ type TranslationType = typeof translations.en;
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: TranslationType;
+  t: any;
   languages: { code: Language; name: string; flag: string }[];
 }
 
