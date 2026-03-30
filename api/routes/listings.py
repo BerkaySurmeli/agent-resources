@@ -218,6 +218,7 @@ class ListingResponse(BaseModel):
     scan_results: dict
     rejection_reason: Optional[str]
     product_id: Optional[str]
+    translation_status: Optional[str]
 
 
 class DashboardStats(BaseModel):
@@ -481,6 +482,12 @@ async def create_listing(
 async def generate_translations(listing_id: uuid.UUID, name: str, description: str, source_lang: str, session):
     """Generate translations for a listing in the background"""
     try:
+        # Update status to translating
+        listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
+        if listing:
+            listing.translation_status = 'translating'
+            session.commit()
+        
         print(f"[TRANSLATION] Starting translation for listing {listing_id}")
         translations = translate_listing(name, description, source_lang)
         
@@ -493,12 +500,23 @@ async def generate_translations(listing_id: uuid.UUID, name: str, description: s
             )
             session.add(translation)
         
+        # Update status to completed
+        if listing:
+            listing.translation_status = 'completed'
+            session.commit()
+        
         session.commit()
         print(f"[TRANSLATION] Completed translations for listing {listing_id}: {list(translations.keys())}")
     except Exception as e:
         print(f"[TRANSLATION] Error generating translations: {e}")
         import traceback
         traceback.print_exc()
+        
+        # Update status to failed
+        listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
+        if listing:
+            listing.translation_status = 'failed'
+            session.commit()
 
 
 # Background task wrapper for translations
@@ -510,13 +528,6 @@ async def generate_translations_bg(listing_id: uuid.UUID, name: str, description
         await generate_translations(listing_id, name, description, source_lang, session)
     finally:
         session.close()
-    
-    return {
-        "id": str(listing.id),
-        "slug": listing.slug,
-        "status": listing.status,
-        "message": "Listing created successfully. Please complete payment to proceed."
-    }
 
 
 @router.get("/my-listings", response_model=List[ListingResponse])
@@ -545,7 +556,8 @@ async def get_my_listings(
             updated_at=l.updated_at,
             scan_results=l.scan_results,
             rejection_reason=l.rejection_reason,
-            product_id=str(l.product_id) if l.product_id else None
+            product_id=str(l.product_id) if l.product_id else None,
+            translation_status=l.translation_status
         )
         for l in listings
     ]

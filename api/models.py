@@ -176,6 +176,7 @@ class Listing(SQLModel, table=True):
     
     # Translation support
     original_language: str = Field(default='en')  # Language the listing was created in
+    translation_status: str = Field(default='pending')  # pending, translating, completed, failed
     
     # File storage
     file_path: str  # Path to stored ZIP file

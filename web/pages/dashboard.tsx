@@ -20,6 +20,7 @@ interface Listing {
   scan_results: any;
   rejection_reason: string | null;
   product_id: string | null;
+  translation_status?: string;
 }
 
 interface DashboardStats {
@@ -47,6 +48,20 @@ const statusLabels: Record<string, string> = {
   approved: 'Published',
   rejected: 'Rejected',
   payment_failed: 'Payment Failed',
+};
+
+const translationStatusColors: Record<string, string> = {
+  pending: 'bg-gray-100 text-gray-600',
+  translating: 'bg-blue-100 text-blue-700 animate-pulse',
+  completed: 'bg-green-100 text-green-700',
+  failed: 'bg-red-100 text-red-700',
+};
+
+const translationStatusLabels: Record<string, string> = {
+  pending: 'Translation Pending',
+  translating: 'Translating...',
+  completed: 'Translated',
+  failed: 'Translation Failed',
 };
 
 export default function Dashboard() {
@@ -207,9 +222,16 @@ export default function Dashboard() {
                           {formatPrice(listing.price_cents)}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[listing.status] || 'bg-slate-100 text-slate-800'}`}>
-                            {statusLabels[listing.status] || listing.status}
-                          </span>
+                          <div className="space-y-1">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[listing.status] || 'bg-slate-100 text-slate-800'}`}>
+                              {statusLabels[listing.status] || listing.status}
+                            </span>
+                            {listing.status === 'approved' && listing.translation_status && (
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${translationStatusColors[listing.translation_status] || 'bg-gray-100 text-gray-600'}`}>
+                                {translationStatusLabels[listing.translation_status] || listing.translation_status}
+                              </span>
+                            )}
+                          </div>
                           {listing.status === 'rejected' && listing.rejection_reason && (
                             <p className="text-xs text-red-600 mt-1">{listing.rejection_reason}</p>
                           )}
