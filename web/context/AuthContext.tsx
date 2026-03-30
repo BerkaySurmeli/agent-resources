@@ -37,16 +37,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount and validate token
   useEffect(() => {
-    const saved = localStorage.getItem('ar-user');
-    const token = localStorage.getItem('ar-token');
-    if (saved && token) {
-      try {
-        setUser(JSON.parse(saved));
-      } catch {}
-    }
-    setIsLoading(false);
+    const loadUser = async () => {
+      const saved = localStorage.getItem('ar-user');
+      const token = localStorage.getItem('ar-token');
+      
+      if (saved && token) {
+        try {
+          // Validate token with backend
+          const response = await fetch(`${API_URL}/auth/validate`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            setUser({
+              id: userData.id,
+              email: userData.email,
+              name: userData.name || userData.email.split('@')[0],
+              initials: getInitials(userData.name || userData.email.split('@')[0]),
+              isDeveloper: userData.is_developer,
+              isVerified: userData.is_verified,
+            });
+          } else {
+            // Token invalid, clear storage
+            localStorage.removeItem('ar-user');
+            localStorage.removeItem('ar-token');
+          }
+        } catch (err) {
+          console.error('Auth validation error:', err);
+          // Don't clear on network error, keep existing user
+          try {
+            setUser(JSON.parse(saved));
+          } catch {}
+        }
+      }
+      setIsLoading(false);
+    };
+    
+    loadUser();
   }, []);
 
   // Save to localStorage when user changes

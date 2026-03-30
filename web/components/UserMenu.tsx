@@ -22,9 +22,9 @@ export default function UserMenu() {
 
   return (
     <div className="flex items-center gap-4">
-      {/* Seller features - shown to all users, no badge/label */}
-      <Link 
-        href="/sell" 
+      {/* Developer features - shown to all users */}
+      <Link
+        href="/sell"
         className="text-slate-600 hover:text-slate-900 text-sm font-medium"
       >
         List an Item
@@ -55,11 +55,11 @@ export default function UserMenu() {
             >
               Profile
             </Link>
-            <Link 
-              href="/dashboard" 
+            <Link
+              href="/dashboard"
               className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
             >
-              Seller Dashboard
+              Developer Dashboard
             </Link>
             <hr className="my-2 border-slate-100" />
             <button 
