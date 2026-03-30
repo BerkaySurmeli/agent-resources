@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext';
 const steps = [
   { id: 'orchestrator', title: 'Choose Your Orchestrator', description: 'Select a project manager to coordinate your AI team' },
   { id: 'team', title: 'Build Your Team', description: 'Add specialists to handle specific tasks' },
+  { id: 'mcp', title: 'Add MCP Servers', description: 'Supercharge your team with tools and integrations' },
   { id: 'review', title: 'Review & Download', description: 'One-click setup for your complete AI team' },
 ];
 
@@ -22,6 +23,21 @@ const teamMembers = [
   { slug: 'operations-manager', name: 'Oliver', role: 'Operations Manager', category: 'operations', price: 42, description: 'Streamlines processes, manages tools, optimizes workflows', icon: 'cog' },
 ];
 
+const mcpServers = [
+  { slug: 'mcp-github', name: 'GitHub', category: 'development', price: 0.99, description: 'Create repos, manage issues, review PRs, and search code', icon: 'github' },
+  { slug: 'mcp-slack', name: 'Slack', category: 'communication', price: 0.99, description: 'Send messages, manage channels, and search conversations', icon: 'slack' },
+  { slug: 'mcp-notion', name: 'Notion', category: 'productivity', price: 0.99, description: 'Create pages, manage databases, and search workspace', icon: 'notion' },
+  { slug: 'mcp-linear', name: 'Linear', category: 'project-management', price: 0.99, description: 'Create issues, manage projects, and track progress', icon: 'linear' },
+  { slug: 'mcp-postgres', name: 'PostgreSQL', category: 'database', price: 0.99, description: 'Query databases, analyze data, and generate reports', icon: 'database' },
+  { slug: 'mcp-puppeteer', name: 'Puppeteer', category: 'automation', price: 0.99, description: 'Web scraping, screenshots, and browser automation', icon: 'browser' },
+  { slug: 'mcp-filesystem', name: 'File System', category: 'utilities', price: 0.99, description: 'Read, write, and manage files with intelligent search', icon: 'folder' },
+  { slug: 'mcp-fetch', name: 'Fetch', category: 'utilities', price: 0.99, description: 'Make HTTP requests and fetch data from any API', icon: 'globe' },
+  { slug: 'mcp-brave', name: 'Brave Search', category: 'research', price: 0.99, description: 'Web search with privacy-focused results', icon: 'search' },
+  { slug: 'mcp-weather', name: 'Weather', category: 'utilities', price: 0.99, description: 'Get current weather and forecasts for any location', icon: 'cloud' },
+  { slug: 'mcp-calendar', name: 'Google Calendar', category: 'productivity', price: 0.99, description: 'Schedule meetings, check availability, manage events', icon: 'calendar' },
+  { slug: 'mcp-gmail', name: 'Gmail', category: 'communication', price: 0.99, description: 'Send emails, search inbox, manage labels', icon: 'mail' },
+];
+
 const sortOptions = [
   { id: 'popular', label: 'Most Popular' },
   { id: 'price-low', label: 'Price: Low to High' },
@@ -33,12 +49,19 @@ export default function Wizard() {
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedOrchestrator, setSelectedOrchestrator] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<string[]>([]);
+  const [selectedMCPs, setSelectedMCPs] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('popular');
   const [email, setEmail] = useState('');
   const { addToCart } = useCart();
 
   const toggleTeamMember = (slug: string) => {
-    setSelectedTeam(prev => 
+    setSelectedTeam(prev =>
+      prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug]
+    );
+  };
+
+  const toggleMCP = (slug: string) => {
+    setSelectedMCPs(prev =>
       prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug]
     );
   };
@@ -54,7 +77,8 @@ export default function Wizard() {
 
   const selectedItems = [
     ...(selectedOrchestrator ? orchestrators.filter(o => o.slug === selectedOrchestrator) : []),
-    ...teamMembers.filter(t => selectedTeam.includes(t.slug))
+    ...teamMembers.filter(t => selectedTeam.includes(t.slug)),
+    ...mcpServers.filter(m => selectedMCPs.includes(m.slug))
   ];
 
   const total = selectedItems.reduce((sum, item) => sum + item.price, 0);
@@ -204,22 +228,102 @@ export default function Wizard() {
             )}
 
             {currentStep === 2 && (
+              <>
+                <p className="text-slate-600 mb-6">
+                  MCP (Model Context Protocol) servers give your AI team superpowers. Each server adds new capabilities like searching the web, managing databases, or automating tasks. Only $0.99 each with 1-click installation.
+                </p>
+
+                {/* MCP Categories */}
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {mcpServers.map(mcp => (
+                    <button
+                      key={mcp.slug}
+                      onClick={() => toggleMCP(mcp.slug)}
+                      className={`p-4 rounded-xl border-2 text-left transition-all ${
+                        selectedMCPs.includes(mcp.slug)
+                          ? 'border-blue-600 bg-blue-50'
+                          : 'border-slate-200 bg-white hover:border-blue-300'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-slate-900">{mcp.name}</h3>
+                          <p className="text-blue-600 text-sm capitalize">{mcp.category}</p>
+                          <p className="text-slate-600 text-sm mt-1">{mcp.description}</p>
+                        </div>
+                        <div className="text-right ml-2">
+                          <span className="font-semibold text-slate-900">${mcp.price}</span>
+                          {selectedMCPs.includes(mcp.slug) && (
+                            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mt-2 ml-auto">
+                              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {selectedMCPs.length > 0 && (
+                  <div className="mt-6 p-4 bg-blue-50 rounded-xl">
+                    <p className="text-blue-800 font-medium">
+                      {selectedMCPs.length} MCP server{selectedMCPs.length > 1 ? 's' : ''} selected
+                    </p>
+                    <p className="text-blue-600 text-sm">
+                      Your agents will prompt for API keys during setup. Zero configuration needed.
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {currentStep === 3 && (
               <div className="space-y-6">
                 {/* Selected Items */}
                 <div className="bg-white rounded-xl p-6">
-                  <h3 className="font-semibold text-slate-900 mb-4">Your AI Team</h3>
-                  <div className="space-y-3">
-                    {selectedItems.map(item => (
-                      <div key={item.slug} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                        <div>
-                          <span className="font-medium text-slate-900">{item.name}</span>
-                          <span className="text-slate-500 text-sm ml-2">({item.role})</span>
+                  <h3 className="font-semibold text-slate-900 mb-4">Your Complete AI Team</h3>
+
+                  {/* Orchestrator */}
+                  {selectedOrchestrator && (
+                    <div className="mb-4">
+                      <p className="text-sm text-slate-500 mb-2">Orchestrator</p>
+                      {orchestrators.filter(o => o.slug === selectedOrchestrator).map(o => (
+                        <div key={o.slug} className="flex items-center justify-between py-2">
+                          <span className="font-medium text-slate-900">{o.name} ({o.role})</span>
+                          <span className="font-semibold">${o.price}</span>
                         </div>
-                        <span className="font-semibold">${item.price}</span>
-                      </div>
-                    ))}
-                  </div>
-                  
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Team Members */}
+                  {selectedTeam.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-sm text-slate-500 mb-2">Team Members</p>
+                      {teamMembers.filter(t => selectedTeam.includes(t.slug)).map(t => (
+                        <div key={t.slug} className="flex items-center justify-between py-2">
+                          <span className="font-medium text-slate-900">{t.name} ({t.role})</span>
+                          <span className="font-semibold">${t.price}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* MCP Servers */}
+                  {selectedMCPs.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-sm text-slate-500 mb-2">MCP Servers</p>
+                      {mcpServers.filter(m => selectedMCPs.includes(m.slug)).map(m => (
+                        <div key={m.slug} className="flex items-center justify-between py-2">
+                          <span className="font-medium text-slate-900">{m.name}</span>
+                          <span className="font-semibold">${m.price}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Pricing */}
                   <div className="mt-6 pt-4 border-t border-slate-200">
                     <div className="flex justify-between text-slate-600 mb-2">

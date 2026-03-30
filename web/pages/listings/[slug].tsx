@@ -12,6 +12,15 @@ interface Seller {
   avatar_url?: string;
 }
 
+interface Review {
+  id: string;
+  rating: number;
+  comment: string;
+  user_name: string;
+  created_at: string;
+  is_verified_purchase: boolean;
+}
+
 interface ListingDetail {
   id: string;
   slug: string;
@@ -51,12 +60,18 @@ export default function ListingDetail() {
   const { slug } = router.query;
   const { addToCart } = useCart();
   const [listing, setListing] = useState<ListingDetail | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewStats, setReviewStats] = useState({ average: 0, total: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (slug) {
       fetchListing();
+      fetchReviews();
     }
   }, [slug]);
 
@@ -67,7 +82,6 @@ export default function ListingDetail() {
         throw new Error('Listing not found');
       }
       const data = await res.json();
-      // Find the specific listing from the array
       const found = data.find((l: ListingDetail) => l.slug === slug);
       if (!found) {
         throw new Error('Listing not found');
@@ -77,6 +91,50 @@ export default function ListingDetail() {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const res = await fetch(`${API_URL}/listings/${slug}/reviews`);
+      if (res.ok) {
+        const data = await res.json();
+        setReviews(data);
+        if (data.length > 0) {
+          const avg = data.reduce((sum: number, r: Review) => sum + r.rating, 0) / data.length;
+          setReviewStats({ average: avg, total: data.length });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch reviews:', err);
+    }
+  };
+
+  const submitReview = async () => {
+    setSubmitting(true);
+    try {
+      const token = localStorage.getItem('ar-token');
+      const res = await fetch(`${API_URL}/listings/${slug}/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(newReview)
+      });
+
+      if (res.ok) {
+        setShowReviewForm(false);
+        setNewReview({ rating: 5, comment: '' });
+        fetchReviews();
+      } else {
+        const err = await res.json();
+        alert(err.detail || 'Failed to submit review');
+      }
+    } catch (err) {
+      alert('Failed to submit review');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -210,6 +268,131 @@ export default function ListingDetail() {
                   </p>
                 </div>
               )}
+
+              {/* Reviews Section */}
+              <div className="border-t border-slate-200 pt-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-slate-900">Reviews</h2>
+                    {reviewStats.total > 0 && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center">
+                          {[...Array(5)].map((_, i) => (
+                            <svg
+                              key={i}
+                              className={`w-5 h-5 ${i < Math.round(reviewStats.average) ? 'text-yellow-400' : 'text-slate-200'}`}
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </div>
+                        <span className="text-slate-600">{reviewStats.average.toFixed(1)} out of 5</span>
+                        <span className="text-slate-400">({reviewStats.total} reviews)</span>
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setShowReviewForm(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
+                  >
+                    Write a Review
+                  </button>
+                </div>
+
+                {/* Review Form */}
+                {showReviewForm && (
+                  <div className="bg-slate-50 rounded-xl p-6 mb-6">
+                    <h3 className="font-semibold text-slate-900 mb-4">Write a Review</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Rating</label>
+                        <div className="flex items-center gap-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              onClick={() => setNewReview({ ...newReview, rating: star })}
+                              className="p-1"
+                            >
+                              <svg
+                                className={`w-8 h-8 ${star <= newReview.rating ? 'text-yellow-400' : 'text-slate-200'}`}
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                              </svg>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Review</label>
+                        <textarea
+                          value={newReview.comment}
+                          onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                          rows={4}
+                          className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
+                          placeholder="Share your experience with this product..."
+                        />
+                      </div>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={submitReview}
+                          disabled={submitting || !newReview.comment.trim()}
+                          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          {submitting ? 'Submitting...' : 'Submit Review'}
+                        </button>
+                        <button
+                          onClick={() => setShowReviewForm(false)}
+                          className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Reviews List */}
+                <div className="space-y-4">
+                  {reviews.length === 0 ? (
+                    <p className="text-slate-500">No reviews yet. Be the first to review!</p>
+                  ) : (
+                    reviews.map((review) => (
+                      <div key={review.id} className="border-b border-slate-100 pb-4 last:border-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-slate-900">{review.user_name}</span>
+                            {review.is_verified_purchase && (
+                              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                                Verified Purchase
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-sm text-slate-400">
+                            {new Date(review.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 mb-2">
+                          {[...Array(5)].map((_, i) => (
+                            <svg
+                              key={i}
+                              className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-slate-200'}`}
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </div>
+                        <p className="text-slate-700">{review.comment}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Right Column - Pricing */}

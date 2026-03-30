@@ -604,20 +604,20 @@ async def get_listing_detail(
 ):
     """Get detailed information about a listing"""
     from models import User, Product
-    
+
     result = session.exec(
         select(Listing, User, Product).join(User, Listing.owner_id == User.id).outerjoin(Product, Listing.product_id == Product.id).where(Listing.slug == slug)
     ).first()
-    
+
     if not result:
         raise HTTPException(status_code=404, detail="Listing not found")
-    
+
     listing, user, product = result
-    
+
     # Only show approved listings publicly
     if listing.status != 'approved':
         raise HTTPException(status_code=404, detail="Listing not found")
-    
+
     return {
         "id": str(listing.id),
         "slug": listing.slug,
@@ -637,6 +637,86 @@ async def get_listing_detail(
         },
         "is_verified": product.is_verified if product else False
     }
+
+
+@router.get("/{slug}/reviews")
+async def get_listing_reviews(
+    slug: str,
+    session = Depends(get_session)
+):
+    """Get reviews for a listing"""
+    from models import Review, User, Product
+
+    listing = session.exec(select(Listing).where(Listing.slug == slug)).first()
+    if not listing or not listing.product_id:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    reviews = session.exec(
+        select(Review, User)
+        .join(User, Review.user_id == User.id, isouter=True)
+        .where(Review.product_id == listing.product_id)
+        .order_by(Review.created_at.desc())
+    ).all()
+
+    return [
+        {
+            "id": str(review.id),
+            "rating": review.rating,
+            "comment": review.comment,
+            "user_name": user.name if user else "Anonymous",
+            "created_at": review.created_at,
+            "is_verified_purchase": review.is_verified_purchase
+        }
+        for review, user in reviews
+    ]
+
+
+@router.post("/{slug}/reviews")
+async def create_listing_review(
+    slug: str,
+    rating: int,
+    comment: Optional[str] = None,
+    session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Create a review for a listing"""
+    from models import Review, Product
+
+    listing = session.exec(select(Listing).where(Listing.slug == slug)).first()
+    if not listing or not listing.product_id:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    # Check if user already reviewed this product
+    existing = session.exec(
+        select(Review)
+        .where(Review.product_id == listing.product_id, Review.user_id == current_user.id)
+    ).first()
+
+    if existing:
+        raise HTTPException(status_code=400, detail="You have already reviewed this product")
+
+    # Check if user purchased this product
+    purchase = session.exec(
+        select(Transaction)
+        .where(
+            Transaction.product_id == listing.product_id,
+            Transaction.buyer_id == current_user.id,
+            Transaction.status == "completed"
+        )
+    ).first()
+
+    review = Review(
+        user_id=current_user.id,
+        product_id=listing.product_id,
+        rating=rating,
+        comment=comment,
+        is_verified_purchase=purchase is not None
+    )
+
+    session.add(review)
+    session.commit()
+
+    return {"message": "Review created successfully", "review_id": str(review.id)}
 
 
 # Mock payment endpoint for testing
