@@ -1,18 +1,23 @@
 -- Migration: Add listings table with security scan support
 -- Created: 2026-03-29
 
--- Create enum type for listing status
-CREATE TYPE listing_status AS ENUM (
-    'pending_payment',
-    'pending_scan',
-    'scanning',
-    'approved',
-    'rejected',
-    'payment_failed'
-);
+-- Create enum type for listing status (if not exists)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'listing_status') THEN
+        CREATE TYPE listing_status AS ENUM (
+            'pending_payment',
+            'pending_scan',
+            'scanning',
+            'approved',
+            'rejected',
+            'payment_failed'
+        );
+    END IF;
+END $$;
 
--- Create listings table
-CREATE TABLE listings (
+-- Create listings table (if not exists)
+CREATE TABLE IF NOT EXISTS listings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     owner_id UUID NOT NULL REFERENCES users(id),
     
@@ -50,14 +55,14 @@ CREATE TABLE listings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create indexes
-CREATE INDEX idx_listings_owner ON listings(owner_id);
-CREATE INDEX idx_listings_status ON listings(status);
-CREATE INDEX idx_listings_slug ON listings(slug);
-CREATE INDEX idx_listings_product ON listings(product_id);
-CREATE INDEX idx_listings_created ON listings(created_at DESC);
+-- Create indexes (if not exists)
+CREATE INDEX IF NOT EXISTS idx_listings_owner ON listings(owner_id);
+CREATE INDEX IF NOT EXISTS idx_listings_status ON listings(status);
+CREATE INDEX IF NOT EXISTS idx_listings_slug ON listings(slug);
+CREATE INDEX IF NOT EXISTS idx_listings_product ON listings(product_id);
+CREATE INDEX IF NOT EXISTS idx_listings_created ON listings(created_at DESC);
 
--- Create trigger to update updated_at
+-- Create trigger to update updated_at (if not exists)
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -66,7 +71,12 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_listings_updated_at
-    BEFORE UPDATE ON listings
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_listings_updated_at') THEN
+        CREATE TRIGGER update_listings_updated_at
+            BEFORE UPDATE ON listings
+            FOR EACH ROW
+            EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END $$;
