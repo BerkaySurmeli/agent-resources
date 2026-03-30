@@ -12,12 +12,186 @@ from routes.auth import get_current_user_from_token
 import aiofiles
 import zipfile
 import hashlib
+import httpx
+import asyncio
+from typing import Dict, Any
 
 router = APIRouter(prefix="/listings", tags=["Listings"])
 
 # Config
 LISTING_FEE_CENTS = 0  # Free for first 500 listings
 UPLOAD_DIR = "/tmp/listings"  # In production, use S3 or similar
+
+# VirusTotal Config
+VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "")
+VIRUSTOTAL_BASE_URL = "https://www.virustotal.com/api/v3"
+VIRUSTOTAL_RATE_LIMIT = 4  # requests per minute (free tier)
+
+# Rate limiter for VirusTotal
+class RateLimiter:
+    def __init__(self, max_calls: int, period: float):
+        self.max_calls = max_calls
+        self.period = period
+        self.calls = []
+        self.lock = asyncio.Lock()
+    
+    async def acquire(self):
+        async with self.lock:
+            now = datetime.utcnow()
+            # Remove calls outside the period
+            self.calls = [c for c in self.calls if now - c < self.period]
+            
+            if len(self.calls) >= self.max_calls:
+                # Wait until we can make another call
+                oldest = self.calls[0]
+                wait_time = self.period - (now - oldest).total_seconds()
+                if wait_time > 0:
+                    await asyncio.sleep(wait_time)
+                    self.calls = self.calls[1:]
+            
+            self.calls.append(now)
+
+# Global rate limiter: 4 calls per 60 seconds
+vt_rate_limiter = RateLimiter(VIRUSTOTAL_RATE_LIMIT, 60.0)
+
+
+async def scan_with_virustotal(file_path: str) -> Dict[str, Any]:
+    """
+    Scan a file with VirusTotal.
+    Returns scan results or raises exception on error.
+    """
+    if not VIRUSTOTAL_API_KEY:
+        raise HTTPException(status_code=500, detail="VirusTotal API key not configured")
+    
+    # Wait for rate limit
+    await vt_rate_limiter.acquire()
+    
+    # Calculate file hash
+    sha256_hash = hashlib.sha256()
+    async with aiofiles.open(file_path, 'rb') as f:
+        while chunk := await f.read(8192):
+            sha256_hash.update(chunk)
+    file_hash = sha256_hash.hexdigest()
+    
+    async with httpx.AsyncClient() as client:
+        headers = {"x-apikey": VIRUSTOTAL_API_KEY}
+        
+        # Step 1: Check if file already analyzed
+        await vt_rate_limiter.acquire()
+        response = await client.get(
+            f"{VIRUSTOTAL_BASE_URL}/files/{file_hash}",
+            headers=headers,
+            timeout=30.0
+        )
+        
+        if response.status_code == 200:
+            # File already analyzed
+            return {
+                "status": "completed",
+                "source": "cache",
+                "data": response.json()
+            }
+        
+        # Step 2: Upload file for analysis
+        await vt_rate_limiter.acquire()
+        
+        async with aiofiles.open(file_path, 'rb') as f:
+            file_content = await f.read()
+        
+        files = {"file": (os.path.basename(file_path), file_content)}
+        upload_response = await client.post(
+            f"{VIRUSTOTAL_BASE_URL}/files",
+            headers=headers,
+            files=files,
+            timeout=60.0
+        )
+        
+        if upload_response.status_code not in [200, 201]:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"VirusTotal upload failed: {upload_response.text}"
+            )
+        
+        analysis_id = upload_response.json()["data"]["id"]
+        
+        # Step 3: Poll for results (max 10 attempts, with rate limiting)
+        for attempt in range(10):
+            await asyncio.sleep(15)  # Wait between polls
+            await vt_rate_limiter.acquire()
+            
+            analysis_response = await client.get(
+                f"{VIRUSTOTAL_BASE_URL}/analyses/{analysis_id}",
+                headers=headers,
+                timeout=30.0
+            )
+            
+            if analysis_response.status_code == 200:
+                analysis_data = analysis_response.json()
+                status = analysis_data["data"]["attributes"]["status"]
+                
+                if status == "completed":
+                    return {
+                        "status": "completed",
+                        "source": "fresh",
+                        "data": analysis_data
+                    }
+        
+        # Timeout waiting for analysis
+        return {
+            "status": "pending",
+            "source": "timeout",
+            "analysis_id": analysis_id
+        }
+
+
+def analyze_virustotal_results(vt_result: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Analyze VirusTotal results and determine if file is safe.
+    """
+    if vt_result.get("status") != "completed":
+        return {
+            "is_safe": False,
+            "reason": "scan_incomplete",
+            "details": vt_result
+        }
+    
+    data = vt_result.get("data", {})
+    attributes = data.get("attributes", {})
+    stats = attributes.get("stats", {})
+    
+    malicious = stats.get("malicious", 0)
+    suspicious = stats.get("suspicious", 0)
+    total = sum(stats.values()) if stats else 0
+    
+    # Thresholds
+    if malicious > 0:
+        return {
+            "is_safe": False,
+            "reason": "malware_detected",
+            "malicious_count": malicious,
+            "suspicious_count": suspicious,
+            "total_engines": total,
+            "details": stats
+        }
+    
+    if suspicious > 2:
+        return {
+            "is_safe": False,
+            "reason": "too_many_suspicious",
+            "malicious_count": malicious,
+            "suspicious_count": suspicious,
+            "total_engines": total,
+            "details": stats
+        }
+    
+    return {
+        "is_safe": True,
+        "reason": "clean",
+        "malicious_count": malicious,
+        "suspicious_count": suspicious,
+        "total_engines": total,
+        "details": stats
+    }
 
 
 class ListingCreate(BaseModel):
@@ -180,39 +354,98 @@ async def create_listing(
     
     # If free, trigger security scan
     if LISTING_FEE_CENTS == 0:
-        # In production, this would be a background job
-        # For now, we'll auto-approve after a delay
-        listing.status = 'approved'
-        listing.scan_completed_at = datetime.utcnow()
-        listing.scan_results = {
-            "virustotal": {"status": "clean"},
-            "openclaw_analysis": {"status": "passed"}
-        }
-        
-        # Create product from listing
-        product = Product(
-            owner_id=current_user.id,
-            name=name,
-            slug=slug,
-            description=description,
-            category=category,  # Use the string value directly
-            category_tags=tag_list,
-            price_cents=price_cents,
-            is_active=True,
-            is_verified=True
-        )
-        session.add(product)
+        # Start scanning
+        listing.status = 'scanning'
+        listing.scan_started_at = datetime.utcnow()
         session.commit()
-        session.refresh(product)
         
-        listing.product_id = product.id
-        session.commit()
+        # Run VirusTotal scan
+        try:
+            vt_result = await scan_with_virustotal(zip_path)
+            analysis = analyze_virustotal_results(vt_result)
+            
+            if analysis["is_safe"]:
+                # Approve listing
+                listing.status = 'approved'
+                listing.scan_completed_at = datetime.utcnow()
+                listing.scan_results = {
+                    "virustotal": {
+                        "status": "clean",
+                        "source": vt_result.get("source", "unknown"),
+                        "stats": analysis.get("details", {})
+                    },
+                    "openclaw_analysis": {"status": "passed"}
+                }
+                listing.virustotal_report = vt_result.get("data")
+                
+                # Create product from listing
+                product = Product(
+                    owner_id=current_user.id,
+                    name=name,
+                    slug=slug,
+                    description=description,
+                    category=category,
+                    category_tags=tag_list,
+                    price_cents=price_cents,
+                    is_active=True,
+                    is_verified=True
+                )
+                session.add(product)
+                session.commit()
+                session.refresh(product)
+                
+                listing.product_id = product.id
+                session.commit()
+                
+                return {
+                    "id": str(listing.id),
+                    "slug": listing.slug,
+                    "status": listing.status,
+                    "message": "Listing created and approved after security scan"
+                }
+            else:
+                # Reject listing
+                listing.status = 'rejected'
+                listing.scan_completed_at = datetime.utcnow()
+                listing.scan_results = {
+                    "virustotal": {
+                        "status": "suspicious",
+                        "reason": analysis.get("reason"),
+                        "malicious": analysis.get("malicious_count"),
+                        "suspicious": analysis.get("suspicious_count"),
+                        "total": analysis.get("total_engines")
+                    }
+                }
+                listing.rejection_reason = f"Security scan failed: {analysis.get('reason')}"
+                session.commit()
+                
+                return {
+                    "id": str(listing.id),
+                    "slug": listing.slug,
+                    "status": listing.status,
+                    "message": f"Listing rejected: {analysis.get('reason')}"
+                }
+                
+        except Exception as e:
+            # Scan failed - mark as pending for manual review
+            listing.status = 'pending_scan'
+            listing.scan_results = {
+                "virustotal": {"status": "error", "error": str(e)}
+            }
+            session.commit()
+            
+            return {
+                "id": str(listing.id),
+                "slug": listing.slug,
+                "status": listing.status,
+                "message": "Listing created but security scan failed. Will retry."
+            }
     
     return {
         "id": str(listing.id),
         "slug": listing.slug,
         "status": listing.status,
-        "message": "Listing created successfully" + (" and approved (free listing)" if LISTING_FEE_CENTS == 0 else ". Please complete payment to proceed.")
+        "message": "Listing created successfully. Please complete payment to proceed."
     }
 
 
