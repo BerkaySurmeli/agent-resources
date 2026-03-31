@@ -1,7 +1,5 @@
--- Migration: Add missing listing translation fields and table
--- Fixes: Issue #2 - Delete developer account has database error
--- The Listing model has original_language and translation_status fields
--- and a ListingTranslation relationship that weren't in the original migration
+-- Direct SQL to fix the missing columns issue
+-- Run this in the Railway database console
 
 -- Add missing columns to listings table
 ALTER TABLE listings 
@@ -28,3 +26,8 @@ CREATE TABLE IF NOT EXISTS listing_translations (
 -- Create indexes for translations
 CREATE INDEX IF NOT EXISTS idx_listing_translations_listing ON listing_translations(listing_id);
 CREATE INDEX IF NOT EXISTS idx_listing_translations_language ON listing_translations(language);
+
+-- Mark this migration as applied
+INSERT INTO applied_migrations (filename) 
+VALUES ('009_add_listing_translation_fields.sql')
+ON CONFLICT (filename) DO NOTHING;

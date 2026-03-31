@@ -174,9 +174,9 @@ class Listing(SQLModel, table=True):
     category_tags: List[str] = Field(sa_column=Column(ARRAY(TEXT), default=[]))
     price_cents: int
     
-    # Translation support
-    original_language: str = Field(default='en')  # Language the listing was created in
-    translation_status: str = Field(default='pending')  # pending, translating, completed, failed
+    # Translation support (nullable until migration runs)
+    original_language: Optional[str] = Field(default=None)  # Language the listing was created in
+    translation_status: Optional[str] = Field(default=None)  # pending, translating, completed, failed
     
     # File storage
     file_path: str  # Path to stored ZIP file
