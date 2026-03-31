@@ -3,7 +3,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import create_engine
 from core.config import settings
-from core.database import run_migrations
 from models import SQLModel
 from routes import waitlist, payments, auth, listings, admin, products, developers, search, contact
 
@@ -12,8 +11,6 @@ async def lifespan(app: FastAPI):
     # Startup
     engine = create_engine(settings.DATABASE_URL, echo=settings.DB_ECHO)
     app.state.engine = engine
-    # Run pending migrations
-    run_migrations()
     yield
     # Shutdown
     engine.dispose()
