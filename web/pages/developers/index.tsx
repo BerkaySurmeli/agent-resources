@@ -22,7 +22,7 @@ const FadeIn = ({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
 export default function Developers() {
   const { t } = useLanguage();
   
-  // Featured developers data with translations
+  // Featured developers data with translations - only Claudia is a developer
   const featuredDevelopers = [
     {
       id: 'claudia',
@@ -35,32 +35,6 @@ export default function Developers() {
       textColor: 'text-blue-600',
       borderColor: 'hover:border-blue-300',
       listings: 3,
-      verified: true,
-    },
-    {
-      id: 'chen',
-      name: 'Chen',
-      role: t.developers.chenRole,
-      description: t.developers.chenDesc,
-      avatar: 'Ch',
-      color: 'from-slate-700 to-slate-900',
-      bgColor: 'bg-slate-100',
-      textColor: 'text-slate-600',
-      borderColor: 'hover:border-slate-300',
-      listings: 5,
-      verified: true,
-    },
-    {
-      id: 'adrian',
-      name: 'Adrian',
-      role: t.developers.adrianRole,
-      description: t.developers.adrianDesc,
-      avatar: 'A',
-      color: 'from-purple-500 to-purple-700',
-      bgColor: 'bg-purple-100',
-      textColor: 'text-purple-600',
-      borderColor: 'hover:border-purple-300',
-      listings: 4,
       verified: true,
     },
   ];
@@ -90,7 +64,7 @@ export default function Developers() {
           </FadeIn>
 
           {/* Featured Developers Grid */}
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
+          <div className="grid md:grid-cols-1 gap-8 mb-16 max-w-md mx-auto">
             {developers.map((dev, index) => (
               <FadeIn key={dev.id} delay={index * 100}>
                 <Link 
@@ -149,7 +123,7 @@ export default function Developers() {
             ))}
           </div>
 
-          {/* Dream Team Section */}
+          {/* Dream Team Section - Chen and Adrian are products, not developers */}
           <FadeIn delay={400}>
             <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 rounded-2xl p-8 md:p-12 text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500 rounded-full filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
@@ -174,8 +148,8 @@ export default function Developers() {
                     <span className="text-4xl font-bold">$99</span>
                     <span className="text-slate-500 line-through ml-2 text-xl">$157</span>
                   </div>
-                  <Link 
-                    href="/listings/dream-team-bundle" 
+                  <Link
+                    href="/listings/dream-team-bundle"
                     className="bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
                   >
                     {t.developers.getBundle}

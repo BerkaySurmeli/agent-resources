@@ -84,13 +84,19 @@ export default function ContactPage() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
       const response = await fetch(`${apiUrl}/contact/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const data = await response.json();
@@ -107,7 +113,15 @@ export default function ContactPage() {
       });
     } catch (err) {
       setStatus('error');
-      setErrorMessage(err instanceof Error ? err.message : t.contact.error);
+      if (err instanceof Error) {
+        if (err.name === 'AbortError') {
+          setErrorMessage('Request timed out. Please try again.');
+        } else {
+          setErrorMessage(err.message);
+        }
+      } else {
+        setErrorMessage(t.contact.error);
+      }
     }
   };
 
@@ -128,20 +142,6 @@ export default function ContactPage() {
       </Head>
 
       <div className="min-h-screen bg-slate-50">
-        {/* Header */}
-        <header className="bg-white border-b border-slate-200">
-          <div className="max-w-6xl mx-auto px-6 py-4">
-            <div className="flex items-center gap-2">
-              <Link href="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">AR</span>
-                </div>
-                <span className="font-semibold text-slate-900">Agent Resources</span>
-              </Link>
-            </div>
-          </div>
-        </header>
-
         {/* Main Content */}
         <main className="max-w-2xl mx-auto px-6 py-12">
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">

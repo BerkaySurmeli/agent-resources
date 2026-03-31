@@ -6,26 +6,18 @@ import { useLanguage } from '../../context/LanguageContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
-// Developer role and description translations
+// Developer role and description translations - only Claudia is a developer
 const getDeveloperInfo = (t: any, developerId: string) => {
   const info: Record<string, { role: string; description: string }> = {
     claudia: {
       role: t.developers.claudiaRole,
       description: t.developers.claudiaDesc,
     },
-    chen: {
-      role: t.developers.chenRole,
-      description: t.developers.chenDesc,
-    },
-    adrian: {
-      role: t.developers.adrianRole,
-      description: t.developers.adrianDesc,
-    },
   };
   return info[developerId] || { role: 'Developer', description: '' };
 };
 
-// Featured developers fallback data
+// Featured developers fallback data - only Claudia is a developer
 const featuredDevelopers: Record<string, { developer: Developer; listings: Listing[]; stats: DeveloperStats }> = {
   claudia: {
     developer: {
@@ -44,47 +36,6 @@ const featuredDevelopers: Record<string, { developer: Developer; listings: Listi
       total_sales: 128,
       average_rating: 5.0,
       total_reviews: 47,
-    },
-  },
-  chen: {
-    developer: {
-      id: 'chen',
-      name: 'Chen',
-      avatar_url: '',
-      is_verified: true,
-    },
-    listings: [
-      { id: '4', slug: 'chen-developer', name: 'AI Developer', category: 'persona', price_cents: 5900, is_verified: true },
-      { id: '5', slug: 'chen-code-reviewer', name: 'AI Code Reviewer', category: 'skill', price_cents: 2900, is_verified: true },
-      { id: '6', slug: 'chen-architect', name: 'AI System Architect', category: 'persona', price_cents: 7900, is_verified: true },
-      { id: '7', slug: 'chen-debugger', name: 'AI Debugger Pro', category: 'skill', price_cents: 3900, is_verified: true },
-      { id: '8', slug: 'chen-devops', name: 'AI DevOps Engineer', category: 'persona', price_cents: 6900, is_verified: true },
-    ],
-    stats: {
-      total_listings: 5,
-      total_sales: 256,
-      average_rating: 4.9,
-      total_reviews: 89,
-    },
-  },
-  adrian: {
-    developer: {
-      id: 'adrian',
-      name: 'Adrian',
-      avatar_url: '',
-      is_verified: true,
-    },
-    listings: [
-      { id: '9', slug: 'adrian-ux-designer', name: 'AI UX Designer', category: 'persona', price_cents: 4900, is_verified: true },
-      { id: '10', slug: 'adrian-copywriter', name: 'AI Copywriter', category: 'skill', price_cents: 2900, is_verified: true },
-      { id: '11', slug: 'adrian-brand-designer', name: 'AI Brand Designer', category: 'persona', price_cents: 5900, is_verified: true },
-      { id: '12', slug: 'adrian-researcher', name: 'AI UX Researcher', category: 'skill', price_cents: 3900, is_verified: true },
-    ],
-    stats: {
-      total_listings: 4,
-      total_sales: 184,
-      average_rating: 5.0,
-      total_reviews: 62,
     },
   },
 };
