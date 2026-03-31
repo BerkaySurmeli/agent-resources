@@ -7,7 +7,8 @@ import LanguageSwitcher from './LanguageSwitcher';
 
 export default function Navbar() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isRTL = language === 'ar';
 
   return (
     <nav className="fixed top-0 inset-x-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
@@ -21,7 +22,7 @@ export default function Navbar() {
         </Link>
 
         {/* Search - Desktop */}
-        <div className="hidden lg:block flex-1 max-w-md mx-8" dir="ltr">
+        <div className="hidden lg:block flex-1 max-w-md ms-8 me-8">
           <GlobalSearch />
         </div>
 

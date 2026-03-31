@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-// import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
@@ -19,58 +19,59 @@ const FadeIn = ({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
   );
 };
 
-// Featured developers data
-const featuredDevelopers = [
-  {
-    id: 'claudia',
-    name: 'Claudia',
-    role: 'AI Project Manager',
-    description: 'Expert in project orchestration, task delegation, and team coordination. Claudia ensures nothing falls through the cracks.',
-    avatar: 'C',
-    color: 'from-blue-500 to-blue-700',
-    bgColor: 'bg-blue-100',
-    textColor: 'text-blue-600',
-    borderColor: 'hover:border-blue-300',
-    listings: 3,
-    verified: true,
-  },
-  {
-    id: 'chen',
-    name: 'Chen',
-    role: 'AI Developer',
-    description: 'Senior software engineer specializing in clean, efficient code across any stack. From frontend to backend, Chen delivers.',
-    avatar: 'Ch',
-    color: 'from-slate-700 to-slate-900',
-    bgColor: 'bg-slate-100',
-    textColor: 'text-slate-600',
-    borderColor: 'hover:border-slate-300',
-    listings: 5,
-    verified: true,
-  },
-  {
-    id: 'adrian',
-    name: 'Adrian',
-    role: 'AI UX Designer',
-    description: 'Creative designer focused on user experiences, interface design, and compelling copy that converts.',
-    avatar: 'A',
-    color: 'from-purple-500 to-purple-700',
-    bgColor: 'bg-purple-100',
-    textColor: 'text-purple-600',
-    borderColor: 'hover:border-purple-300',
-    listings: 4,
-    verified: true,
-  },
-];
-
 export default function Developers() {
-  // const { t } = useLanguage();
+  const { t } = useLanguage();
+  
+  // Featured developers data with translations
+  const featuredDevelopers = [
+    {
+      id: 'claudia',
+      name: 'Claudia',
+      role: t.developers.claudiaRole,
+      description: t.developers.claudiaDesc,
+      avatar: 'C',
+      color: 'from-blue-500 to-blue-700',
+      bgColor: 'bg-blue-100',
+      textColor: 'text-blue-600',
+      borderColor: 'hover:border-blue-300',
+      listings: 3,
+      verified: true,
+    },
+    {
+      id: 'chen',
+      name: 'Chen',
+      role: t.developers.chenRole,
+      description: t.developers.chenDesc,
+      avatar: 'Ch',
+      color: 'from-slate-700 to-slate-900',
+      bgColor: 'bg-slate-100',
+      textColor: 'text-slate-600',
+      borderColor: 'hover:border-slate-300',
+      listings: 5,
+      verified: true,
+    },
+    {
+      id: 'adrian',
+      name: 'Adrian',
+      role: t.developers.adrianRole,
+      description: t.developers.adrianDesc,
+      avatar: 'A',
+      color: 'from-purple-500 to-purple-700',
+      bgColor: 'bg-purple-100',
+      textColor: 'text-purple-600',
+      borderColor: 'hover:border-purple-300',
+      listings: 4,
+      verified: true,
+    },
+  ];
+
   const [developers, setDevelopers] = useState(featuredDevelopers);
   const [loading, setLoading] = useState(false);
 
   return (
     <div className="min-h-screen bg-white">
       <Head>
-        <title>Developers | Agent Resources</title>
+        <title>{t.nav.developers} | Agent Resources</title>
         <meta name="description" content="Meet our featured AI developers - Claudia, Chen, and Adrian. Expert AI personas for your projects." />
       </Head>
 
@@ -80,10 +81,10 @@ export default function Developers() {
           <FadeIn>
             <div className="text-center mb-16">
               <h1 className="text-4xl md:text-5xl font-semibold text-slate-900 mb-4">
-                Featured Developers
+                {t.developers.title}
               </h1>
               <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-                Meet the expert AI personas behind Agent Resources. Each developer brings unique skills to help you build faster.
+                {t.developers.subtitle}
               </p>
             </div>
           </FadeIn>
@@ -103,7 +104,7 @@ export default function Developers() {
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                         </svg>
-                        Verified
+                        {t.developers.verified}
                       </span>
                     </div>
                   )}
@@ -124,7 +125,7 @@ export default function Developers() {
                   <div className="flex items-center gap-4 pt-4 border-t border-slate-100">
                     <div>
                       <span className="text-2xl font-bold text-slate-900">{dev.listings}</span>
-                      <span className="text-slate-500 text-sm ml-1">listings</span>
+                      <span className="text-slate-500 text-sm ml-1">{t.developers.listings}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
@@ -137,7 +138,7 @@ export default function Developers() {
                   {/* View Profile Button */}
                   <div className="mt-6">
                     <span className="inline-flex items-center gap-2 text-blue-600 font-medium group-hover:gap-3 transition-all">
-                      View Profile
+                      {t.developers.viewProfile}
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                       </svg>
@@ -155,10 +156,9 @@ export default function Developers() {
               <div className="relative flex flex-col md:flex-row items-center justify-between gap-8">
                 <div className="flex-1">
                   <div className="text-blue-400 text-sm font-medium mb-2">Agent Resources</div>
-                  <h2 className="text-3xl md:text-4xl font-bold mb-4">The Dream Team</h2>
+                  <h2 className="text-3xl md:text-4xl font-bold mb-4">{t.developers.dreamTeamTitle}</h2>
                   <p className="text-slate-300 text-lg mb-6 max-w-xl">
-                    Get all three expert AI personas. Claudia manages, Chen codes, and Adrian designs. 
-                    Your complete AI team for any project.
+                    {t.developers.dreamTeamDesc}
                   </p>
                   <div className="flex items-center gap-4">
                     <div className="flex -space-x-3">
@@ -166,7 +166,7 @@ export default function Developers() {
                       <div className="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-900 rounded-full flex items-center justify-center border-2 border-slate-900 text-white font-bold text-sm">Ch</div>
                       <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center border-2 border-slate-900 text-white font-bold text-sm">A</div>
                     </div>
-                    <span className="text-slate-400">3 developers · 12+ listings</span>
+                    <span className="text-slate-400">{t.developers.developersCount} · {t.developers.listingsCount}</span>
                   </div>
                 </div>
                 <div className="flex flex-col items-center md:items-end gap-4">
@@ -178,7 +178,7 @@ export default function Developers() {
                     href="/listings/dream-team-bundle" 
                     className="bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
                   >
-                    Get the Bundle
+                    {t.developers.getBundle}
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                     </svg>
@@ -191,12 +191,12 @@ export default function Developers() {
           {/* Browse All Listings Link */}
           <FadeIn delay={500}>
             <div className="text-center mt-12">
-              <p className="text-slate-600 mb-4">Looking for something specific?</p>
+              <p className="text-slate-600 mb-4">{t.developers.lookingFor}</p>
               <Link 
                 href="/listings" 
                 className="inline-flex items-center gap-2 text-blue-600 font-medium hover:text-blue-700 transition-colors"
               >
-                Browse all listings
+                {t.developers.browseAll}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                 </svg>

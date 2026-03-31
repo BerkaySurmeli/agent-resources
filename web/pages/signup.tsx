@@ -3,9 +3,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Signup() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,12 +23,12 @@ export default function Signup() {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t.signup.passwordsMismatch);
       return;
     }
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t.signup.passwordTooShort);
       return;
     }
 
@@ -37,12 +39,12 @@ export default function Signup() {
       // Show verification message instead of redirecting immediately
       setShowVerificationMessage(true);
     } catch (err: any) {
-      const msg = err.message || 'Failed to create account';
+      const msg = err.message || t.signup.serverError;
       // Clean up common error messages
       if (msg.includes('Email already registered')) {
-        setError('This email is already registered. Try logging in instead.');
+        setError(t.signup.emailRegistered);
       } else if (msg.includes('Server error')) {
-        setError('Something went wrong. Please try again.');
+        setError(t.signup.serverError);
       } else {
         setError(msg);
       }
@@ -55,7 +57,7 @@ export default function Signup() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
         <Head>
-          <title>Verify Your Email | Agent Resources</title>
+          <title>{t.signup.verifyTitle} | Agent Resources</title>
         </Head>
 
         <div className="w-full max-w-md">
@@ -65,14 +67,13 @@ export default function Signup() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-semibold text-slate-900 mb-4">Verify Your Email</h1>
+            <h1 className="text-2xl font-semibold text-slate-900 mb-4">{t.signup.verifyTitle}</h1>
             <p className="text-slate-600 mb-6">
-              We've sent a verification link to <strong>{email}</strong>. 
-              Please check your inbox and click the link to verify your account.
+              {t.signup.verifyMessage.replace('{email}', email)}
             </p>
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 text-left">
               <p className="text-sm text-yellow-800">
-                <strong>Important:</strong> You must verify your email before you can create listings or make purchases.
+                <strong>{t.common.important || 'Important:'}</strong> {t.signup.verifyImportant}
               </p>
             </div>
             <div className="space-y-3">
@@ -80,13 +81,13 @@ export default function Signup() {
                 onClick={() => router.push('/login')}
                 className="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
               >
-                Go to Login
+                {t.signup.goToLogin}
               </button>
               <button
                 onClick={() => window.location.reload()}
                 className="w-full bg-slate-100 text-slate-700 py-3 rounded-xl font-medium hover:bg-slate-200 transition-colors"
               >
-                I verified my email
+                {t.signup.verifiedRefresh}
               </button>
             </div>
           </div>
@@ -98,7 +99,7 @@ export default function Signup() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
       <Head>
-        <title>Sign Up | Agent Resources</title>
+        <title>{t.auth.signUp} | Agent Resources</title>
       </Head>
 
       <div className="w-full max-w-md">
@@ -108,8 +109,8 @@ export default function Signup() {
               <span className="text-white font-bold text-xl">AR</span>
             </div>
           </Link>
-          <h1 className="text-2xl font-semibold text-slate-900">Create your account</h1>
-          <p className="text-slate-600 mt-2">Start selling your AI personas and skills</p>
+          <h1 className="text-2xl font-semibold text-slate-900">{t.signup.title}</h1>
+          <p className="text-slate-600 mt-2">{t.signup.subtitle}</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
@@ -122,7 +123,7 @@ export default function Signup() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Full Name
+                {t.signup.fullName}
               </label>
               <input
                 type="text"
@@ -136,7 +137,7 @@ export default function Signup() {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Email
+                {t.signup.email}
               </label>
               <input
                 type="email"
@@ -150,7 +151,7 @@ export default function Signup() {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Password
+                {t.signup.password}
               </label>
               <input
                 type="password"
@@ -160,12 +161,12 @@ export default function Signup() {
                 className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 placeholder="••••••••"
               />
-              <p className="text-xs text-slate-500 mt-1">Must be at least 8 characters</p>
+              <p className="text-xs text-slate-500 mt-1">{t.signup.passwordMinLength}</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Confirm Password
+                {t.signup.confirmPassword}
               </label>
               <input
                 type="password"
@@ -182,15 +183,15 @@ export default function Signup() {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? t.signup.creatingAccount : t.signup.createAccount}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-slate-600">
-              Already have an account?{' '}
+              {t.signup.hasAccount}{' '}
               <Link href="/login" className="text-blue-600 hover:underline font-medium">
-                Sign in
+                {t.signup.signIn}
               </Link>
             </p>
           </div>

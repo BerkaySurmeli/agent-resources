@@ -3,9 +3,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Login() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -22,7 +24,7 @@ export default function Login() {
       // Use Next.js router for client-side navigation
       router.push('/');
     } catch (err: any) {
-      setError(err.message || 'Invalid email or password');
+      setError(err.message || t.login.invalidCredentials);
     } finally {
       setLoading(false);
     }
@@ -31,7 +33,7 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
       <Head>
-        <title>Login | Agent Resources</title>
+        <title>{t.auth.signIn} | Agent Resources</title>
       </Head>
 
       <div className="w-full max-w-md">
@@ -41,8 +43,8 @@ export default function Login() {
               <span className="text-white font-bold text-xl">AR</span>
             </div>
           </Link>
-          <h1 className="text-2xl font-semibold text-slate-900">Welcome back</h1>
-          <p className="text-slate-600 mt-2">Sign in to your Agent Resources account</p>
+          <h1 className="text-2xl font-semibold text-slate-900">{t.login.title}</h1>
+          <p className="text-slate-600 mt-2">{t.login.subtitle}</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
@@ -55,7 +57,7 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Email
+                {t.login.email}
               </label>
               <input
                 type="email"
@@ -69,7 +71,7 @@ export default function Login() {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Password
+                {t.login.password}
               </label>
               <input
                 type="password"
@@ -86,15 +88,15 @@ export default function Login() {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? t.login.signingIn : t.login.signIn}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-slate-600">
-              Don't have an account?{' '}
+              {t.login.noAccount}{' '}
               <Link href="/signup" className="text-blue-600 hover:underline font-medium">
-                Sign up
+                {t.login.signUp}
               </Link>
             </p>
           </div>

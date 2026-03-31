@@ -22,9 +22,9 @@ ZOHO_PASSWORD = os.getenv("ZOHO_PASSWORD", "")
 def send_verification_email(to_email: str, name: str, token: str):
     """Send verification email via Zoho SMTP"""
     if not ZOHO_PASSWORD:
-        print("[EMAIL] Zoho password not configured, skipping email send")
+        print("[EMAIL] Zoho password not configured, cannot send email")
         print(f"[EMAIL] Verification link: https://shopagentresources.com/verify-email?token={token}")
-        return
+        raise Exception("Email service not configured. Please contact support.")
 
     msg = MIMEMultipart('alternative')
     msg['Subject'] = 'Welcome to Agent Resources - Verify Your Email'
@@ -341,10 +341,10 @@ def resend_verification(
         # Send email
         try:
             send_verification_email(user.email, user.name, user.verification_token)
+            return {"message": "Verification email sent"}
         except Exception as e:
             print(f"[EMAIL ERROR] {e}")
-
-        return {"message": "Verification email sent"}
+            raise HTTPException(status_code=500, detail="Failed to send verification email. Please try again later.")
 
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")

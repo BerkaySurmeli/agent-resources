@@ -82,10 +82,10 @@ export default function GlobalSearch() {
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => query.length >= 2 && setShowResults(true)}
           placeholder={t.nav.search}
-          className="w-64 md:w-80 pl-10 pr-4 py-2 bg-slate-100 border border-transparent rounded-lg text-sm focus:bg-white focus:border-blue-500 focus:outline-none transition-all"
+          className="w-64 md:w-80 ps-10 pe-4 py-2 bg-slate-100 border border-transparent rounded-lg text-sm focus:bg-white focus:border-blue-500 focus:outline-none transition-all"
         />
         <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+          className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -93,14 +93,14 @@ export default function GlobalSearch() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         {loading && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <div className="absolute end-3 top-1/2 -translate-y-1/2">
             <div className="w-4 h-4 border-2 border-slate-300 border-t-blue-600 rounded-full animate-spin"></div>
           </div>
         )}
       </div>
 
       {showResults && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 max-h-96 overflow-y-auto">
+        <div className="absolute top-full inset-x-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 max-h-96 overflow-y-auto">
           {results.map((result) => (
             <Link
               key={`${result.type}-${result.id}`}
@@ -136,7 +136,7 @@ export default function GlobalSearch() {
                 <p className="text-sm text-slate-500">
                   {result.type === 'developer' ? 'Developer' : getCategoryIcon(result.category)}
                   {result.price_cents !== undefined && result.price_cents !== null && (
-                    <span className="ml-2 font-medium text-slate-700">{formatPrice(result.price_cents)}</span>
+                    <span className="ms-2 font-medium text-slate-700">{formatPrice(result.price_cents)}</span>
                   )}
                 </p>
                 {result.description && (
@@ -149,7 +149,7 @@ export default function GlobalSearch() {
       )}
 
       {showResults && query.length >= 2 && !loading && results.length === 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 p-4 text-center text-slate-500">
+        <div className="absolute top-full inset-x-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 p-4 text-center text-slate-500">
           No results found
         </div>
       )}

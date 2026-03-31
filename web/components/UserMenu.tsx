@@ -47,7 +47,7 @@ export default function UserMenu() {
         </button>
         
         {/* Dropdown */}
-        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+        <div className="absolute end-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
           <div className="py-2">
             <Link 
               href="/profile" 
@@ -64,7 +64,7 @@ export default function UserMenu() {
             <hr className="my-2 border-slate-100" />
             <button 
               onClick={logout}
-              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-slate-50"
+              className="block w-full text-start px-4 py-2 text-sm text-red-600 hover:bg-slate-50"
             >
               Sign Out
             </button>

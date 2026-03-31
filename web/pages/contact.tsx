@@ -3,32 +3,33 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useLanguage } from '../context/LanguageContext';
 
-const categories = [
-  'Product Support',
-  'Purchase Issues', 
-  'General Inquiry',
-  'Report a Problem',
-  'Partnership/Sales'
-];
-
-interface FormData {
-  name: string;
-  email: string;
-  category: string;
-  subject: string;
-  message: string;
-}
-
-interface FormErrors {
-  name?: string;
-  email?: string;
-  category?: string;
-  subject?: string;
-  message?: string;
-}
-
 export default function ContactPage() {
   const { t } = useLanguage();
+  
+  const categories = [
+    t.contact.productSupport,
+    t.contact.purchaseIssues,
+    t.contact.generalInquiry,
+    t.contact.reportProblem,
+    t.contact.partnershipSales,
+  ];
+
+  interface FormData {
+    name: string;
+    email: string;
+    category: string;
+    subject: string;
+    message: string;
+  }
+
+  interface FormErrors {
+    name?: string;
+    email?: string;
+    category?: string;
+    subject?: string;
+    message?: string;
+  }
+
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -44,27 +45,27 @@ export default function ContactPage() {
     const newErrors: FormErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = t.contact.nameRequired;
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t.contact.emailRequired;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = t.contact.emailInvalid;
     }
 
     if (!formData.category) {
-      newErrors.category = 'Please select a category';
+      newErrors.category = t.contact.categoryRequired;
     }
 
     if (!formData.subject.trim()) {
-      newErrors.subject = 'Subject is required';
+      newErrors.subject = t.contact.subjectRequired;
     }
 
     if (!formData.message.trim()) {
-      newErrors.message = 'Message is required';
+      newErrors.message = t.contact.messageRequired;
     } else if (formData.message.length < 10) {
-      newErrors.message = 'Message must be at least 10 characters';
+      newErrors.message = t.contact.messageMinLength;
     }
 
     setErrors(newErrors);
@@ -106,7 +107,7 @@ export default function ContactPage() {
       });
     } catch (err) {
       setStatus('error');
-      setErrorMessage(err instanceof Error ? err.message : 'An unexpected error occurred');
+      setErrorMessage(err instanceof Error ? err.message : t.contact.error);
     }
   };
 
@@ -122,7 +123,7 @@ export default function ContactPage() {
   return (
     <>
       <Head>
-        <title>Contact Us | Agent Resources</title>
+        <title>{t.contact.title} | Agent Resources</title>
         <meta name="description" content="Get in touch with Agent Resources support team" />
       </Head>
 
@@ -145,9 +146,9 @@ export default function ContactPage() {
         <main className="max-w-2xl mx-auto px-6 py-12">
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">Contact Us</h1>
+              <h1 className="text-3xl font-bold text-slate-900 mb-2">{t.contact.title}</h1>
               <p className="text-slate-600">
-                Have a question or need help? We&apos;re here to assist you.
+                {t.contact.subtitle}
               </p>
             </div>
 
@@ -158,15 +159,15 @@ export default function ContactPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h2 className="text-xl font-semibold text-slate-900 mb-2">Message Sent!</h2>
+                <h2 className="text-xl font-semibold text-slate-900 mb-2">{t.contact.successTitle}</h2>
                 <p className="text-slate-600 mb-6">
-                  Thank you for reaching out. We&apos;ll get back to you as soon as possible.
+                  {t.contact.successMessage}
                 </p>
                 <button
                   onClick={() => setStatus('idle')}
                   className="text-blue-600 hover:text-blue-700 font-medium"
                 >
-                  Send another message
+                  {t.contact.sendAnother}
                 </button>
               </div>
             ) : (
@@ -174,7 +175,7 @@ export default function ContactPage() {
                 {/* Name Field */}
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">
-                    Name <span className="text-red-500">*</span>
+                    {t.contact.name} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -185,7 +186,7 @@ export default function ContactPage() {
                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${
                       errors.name ? 'border-red-500' : 'border-slate-300'
                     }`}
-                    placeholder="Your name"
+                    placeholder={t.contact.name}
                   />
                   {errors.name && (
                     <p className="mt-1 text-sm text-red-600">{errors.name}</p>
@@ -195,7 +196,7 @@ export default function ContactPage() {
                 {/* Email Field */}
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
-                    Email <span className="text-red-500">*</span>
+                    {t.contact.email} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -216,7 +217,7 @@ export default function ContactPage() {
                 {/* Category Field */}
                 <div>
                   <label htmlFor="category" className="block text-sm font-medium text-slate-700 mb-1">
-                    Category <span className="text-red-500">*</span>
+                    {t.contact.category} <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="category"
@@ -227,7 +228,7 @@ export default function ContactPage() {
                       errors.category ? 'border-red-500' : 'border-slate-300'
                     }`}
                   >
-                    <option value="">Select a category</option>
+                    <option value="">{t.contact.selectCategory}</option>
                     {categories.map((category) => (
                       <option key={category} value={category}>
                         {category}
@@ -242,7 +243,7 @@ export default function ContactPage() {
                 {/* Subject Field */}
                 <div>
                   <label htmlFor="subject" className="block text-sm font-medium text-slate-700 mb-1">
-                    Subject <span className="text-red-500">*</span>
+                    {t.contact.subject} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -253,7 +254,7 @@ export default function ContactPage() {
                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${
                       errors.subject ? 'border-red-500' : 'border-slate-300'
                     }`}
-                    placeholder="What is this about?"
+                    placeholder={t.contact.subject}
                   />
                   {errors.subject && (
                     <p className="mt-1 text-sm text-red-600">{errors.subject}</p>
@@ -263,7 +264,7 @@ export default function ContactPage() {
                 {/* Message Field */}
                 <div>
                   <label htmlFor="message" className="block text-sm font-medium text-slate-700 mb-1">
-                    Message <span className="text-red-500">*</span>
+                    {t.contact.message} <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     id="message"
@@ -274,7 +275,7 @@ export default function ContactPage() {
                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none ${
                       errors.message ? 'border-red-500' : 'border-slate-300'
                     }`}
-                    placeholder="Please describe your question or issue in detail..."
+                    placeholder={t.contact.message}
                   />
                   {errors.message && (
                     <p className="mt-1 text-sm text-red-600">{errors.message}</p>
@@ -288,7 +289,7 @@ export default function ContactPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div>
-                      <h3 className="text-sm font-medium text-red-800">Error</h3>
+                      <h3 className="text-sm font-medium text-red-800">{t.contact.error}</h3>
                       <p className="text-sm text-red-700 mt-1">{errorMessage}</p>
                     </div>
                   </div>
@@ -306,15 +307,15 @@ export default function ContactPage() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      Sending...
+                      {t.contact.sending}
                     </>
                   ) : (
-                    'Send Message'
+                    t.contact.sendMessage
                   )}
                 </button>
 
                 <p className="text-center text-sm text-slate-500">
-                  We typically respond within 24-48 hours.
+                  {t.contact.responseTime}
                 </p>
               </form>
             )}

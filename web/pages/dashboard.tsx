@@ -93,7 +93,7 @@ export default function Dashboard() {
       });
 
       if (response.ok) {
-        setVerificationMessage('Verification email sent');
+        setVerificationMessage('Verification email sent! Please check your inbox and spam folder.');
       } else {
         const data = await response.json().catch(() => ({}));
         setVerificationMessage(data.detail || 'Failed to send verification email');
@@ -197,7 +197,7 @@ export default function Dashboard() {
                 </button>
               </div>
               {verificationMessage && (
-                <p className={`mt-3 text-sm ${verificationMessage === 'Verification email sent' ? 'text-green-700' : 'text-red-700'}`}>
+                <p className={`mt-3 text-sm ${verificationMessage.includes('Verification email sent') ? 'text-green-700' : 'text-red-700'}`}>
                   {verificationMessage}
                 </p>
               )}

@@ -6,6 +6,25 @@ import { useLanguage } from '../../context/LanguageContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
+// Developer role and description translations
+const getDeveloperInfo = (t: any, developerId: string) => {
+  const info: Record<string, { role: string; description: string }> = {
+    claudia: {
+      role: t.developers.claudiaRole,
+      description: t.developers.claudiaDesc,
+    },
+    chen: {
+      role: t.developers.chenRole,
+      description: t.developers.chenDesc,
+    },
+    adrian: {
+      role: t.developers.adrianRole,
+      description: t.developers.adrianDesc,
+    },
+  };
+  return info[developerId] || { role: 'Developer', description: '' };
+};
+
 // Featured developers fallback data
 const featuredDevelopers: Record<string, { developer: Developer; listings: Listing[]; stats: DeveloperStats }> = {
   claudia: {
@@ -153,12 +172,15 @@ export default function DeveloperProfile() {
 
   const getCategoryName = (category: string) => {
     const names: Record<string, string> = {
-      'persona': 'AI Persona',
-      'skill': 'Agent Skill',
-      'mcp_server': 'MCP Server',
+      'persona': t.developer.aiPersonas,
+      'skill': t.developer.agentSkills,
+      'mcp_server': t.developer.mcpServers,
     };
     return names[category] || category;
   };
+
+  // Get translated developer info
+  const devInfo = developer ? getDeveloperInfo(t, developer.id) : { role: '', description: '' };
 
   if (loading) {
     return (
@@ -172,9 +194,9 @@ export default function DeveloperProfile() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">{t.developer.notFound || 'Developer not found'}</h1>
+          <h1 className="text-2xl font-bold mb-4">{t.developers.notFound}</h1>
           <Link href="/developers" className="text-blue-600 hover:underline">
-            {t.developer.browseDevelopers || 'Browse developers'}
+            {t.developers.browseDevelopers}
           </Link>
         </div>
       </div>
@@ -225,11 +247,11 @@ export default function DeveloperProfile() {
                   )}
                 </div>
                 <p className="text-slate-600">
-                  {developer.id === 'claudia' && 'AI Project Manager'}
-                  {developer.id === 'chen' && 'AI Developer'}
-                  {developer.id === 'adrian' && 'AI UX Designer'}
-                  {!['claudia', 'chen', 'adrian'].includes(developer.id) && 'Developer'}
+                  {devInfo.role}
                 </p>
+                {devInfo.description && (
+                  <p className="text-slate-500 mt-2 max-w-xl">{devInfo.description}</p>
+                )}
               </div>
             </div>
 
