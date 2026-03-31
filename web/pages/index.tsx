@@ -164,10 +164,10 @@ export default function Home() {
                 {t.nav.buildTeam}
               </Link>
               <Link
-                href="/listings"
+                href="/developers"
                 className="bg-slate-100 text-slate-700 px-8 py-4 rounded-xl font-medium hover:bg-slate-200 transition-colors inline-flex items-center justify-center gap-2"
               >
-                {t.home.browseListings}
+                Meet the Developers
                 <Icon name="arrowRight" className="w-4 h-4" />
               </Link>
             </div>
@@ -185,7 +185,7 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8">
             {/* Claudia Card */}
             <FadeIn delay={100}>
-              <Link href="/listings/claudia-project-manager" className="block bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative group">
+              <Link href="/developers/claudia" className="block bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative group">
                 {/* Icon */}
                 <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center mb-6 shadow-lg" aria-hidden="true">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,7 +214,7 @@ export default function Home() {
 
             {/* Chen Card */}
             <FadeIn delay={200}>
-              <Link href="/listings/chen-developer" className="block bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative group">
+              <Link href="/developers/chen" className="block bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative group">
                 <div className="w-14 h-14 bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl flex items-center justify-center mb-6 shadow-lg" aria-hidden="true">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -242,7 +242,7 @@ export default function Home() {
 
             {/* Adrian Card */}
             <FadeIn delay={300}>
-              <Link href="/listings/adrian-ux-designer" className="block bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative group">
+              <Link href="/developers/adrian" className="block bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all h-full relative group">
                 <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center mb-6 shadow-lg" aria-hidden="true">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />

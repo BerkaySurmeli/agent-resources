@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
@@ -41,14 +42,7 @@ const statusColors: Record<string, string> = {
   payment_failed: 'bg-red-100 text-red-800',
 };
 
-const statusLabels: Record<string, string> = {
-  pending_payment: 'Payment Required',
-  pending_scan: 'Awaiting Scan',
-  scanning: 'Scanning...',
-  approved: 'Published',
-  rejected: 'Rejected',
-  payment_failed: 'Payment Failed',
-};
+
 
 const translationStatusColors: Record<string, string> = {
   pending: 'bg-gray-100 text-gray-600',
@@ -66,16 +60,50 @@ const translationStatusLabels: Record<string, string> = {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [listings, setListings] = useState<Listing[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [verificationMessage, setVerificationMessage] = useState('');
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchDashboardData();
     }
   }, [user]);
+
+  const handleResendVerification = async () => {
+    try {
+      setIsResending(true);
+      setVerificationMessage('');
+      const token = localStorage.getItem('ar-token');
+      if (!token) {
+        setVerificationMessage('Please sign in to resend verification email');
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        setVerificationMessage('Verification email sent');
+      } else {
+        const data = await response.json().catch(() => ({}));
+        setVerificationMessage(data.detail || 'Failed to send verification email');
+      }
+    } catch (err) {
+      setVerificationMessage('Failed to send verification email');
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -130,9 +158,9 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <p className="text-slate-600 mb-4">Please sign in to view your dashboard</p>
+          <p className="text-slate-600 mb-4">{t.dashboard.signInToView}</p>
           <Link href="/login" className="text-blue-600 hover:underline">
-            Sign in →
+            {t.dashboard.signIn} →
           </Link>
         </div>
       </div>
@@ -149,30 +177,38 @@ export default function Dashboard() {
         <div className="max-w-6xl mx-auto">
           {/* Email Verification Banner */}
           {user && !user.isVerified && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-8 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <div>
-                  <p className="font-medium text-yellow-800">Please verify your email</p>
-                  <p className="text-sm text-yellow-700">You must verify your email before creating listings or making purchases.</p>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-8">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <div>
+                    <p className="font-medium text-yellow-800">{t.dashboard.pleaseVerifyEmail}</p>
+                    <p className="text-sm text-yellow-700">{t.dashboard.verifyEmailDesc}</p>
+                  </div>
                 </div>
+                <button
+                  onClick={handleResendVerification}
+                  disabled={isResending}
+                  className="bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-yellow-700 transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isResending ? t.common.loading : t.dashboard.verifyEmail}
+                </button>
               </div>
-              <Link
-                href="/verify-email"
-                className="bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-yellow-700 transition-colors whitespace-nowrap"
-              >
-                Verify Email
-              </Link>
+              {verificationMessage && (
+                <p className={`mt-3 text-sm ${verificationMessage === 'Verification email sent' ? 'text-green-700' : 'text-red-700'}`}>
+                  {verificationMessage}
+                </p>
+              )}
             </div>
           )}
 
           {/* Header */}
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-semibold text-slate-900">Developer Dashboard</h1>
-              <p className="text-slate-600">Manage your listings and track sales</p>
+              <h1 className="text-3xl font-semibold text-slate-900">{t.dashboard.developerDashboard}</h1>
+              <p className="text-slate-600">{t.dashboard.manageListings}</p>
             </div>
             <Link
               href="/settings"
@@ -182,7 +218,7 @@ export default function Dashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              Settings
+              {t.dashboard.settings}
             </Link>
           </div>
 
@@ -190,19 +226,19 @@ export default function Dashboard() {
           {stats && (
             <div className="grid md:grid-cols-4 gap-4 mb-8">
               <div className="bg-slate-50 rounded-xl p-6">
-                <p className="text-sm text-slate-500 mb-1">Total Listings</p>
+                <p className="text-sm text-slate-500 mb-1">{t.dashboard.totalListings}</p>
                 <p className="text-3xl font-bold text-slate-900">{stats.total_listings}</p>
               </div>
               <div className="bg-slate-50 rounded-xl p-6">
-                <p className="text-sm text-slate-500 mb-1">Published</p>
+                <p className="text-sm text-slate-500 mb-1">{t.dashboard.published}</p>
                 <p className="text-3xl font-bold text-green-600">{stats.approved_listings}</p>
               </div>
               <div className="bg-slate-50 rounded-xl p-6">
-                <p className="text-sm text-slate-500 mb-1">Pending</p>
+                <p className="text-sm text-slate-500 mb-1">{t.dashboard.pending}</p>
                 <p className="text-3xl font-bold text-yellow-600">{stats.pending_listings}</p>
               </div>
               <div className="bg-slate-50 rounded-xl p-6">
-                <p className="text-sm text-slate-500 mb-1">Total Revenue</p>
+                <p className="text-sm text-slate-500 mb-1">{t.dashboard.totalRevenue}</p>
                 <p className="text-3xl font-bold text-slate-900">{formatPrice(stats.total_revenue_cents)}</p>
               </div>
             </div>
@@ -216,10 +252,9 @@ export default function Dashboard() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-slate-900 mb-2">Start Selling</h2>
+              <h2 className="text-xl font-semibold text-slate-900 mb-2">{t.dashboard.startSelling}</h2>
               <p className="text-slate-600 mb-6 max-w-md mx-auto">
-                Create your first listing and reach thousands of AI agent users. 
-                Start selling your AI agents today.
+                {t.dashboard.startSellingDesc}
               </p>
               <Link 
                 href="/sell" 
@@ -228,7 +263,7 @@ export default function Dashboard() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                Create Your First Listing
+                {t.dashboard.createFirstListing}
               </Link>
             </div>
           )}
@@ -237,21 +272,21 @@ export default function Dashboard() {
           {listings.length > 0 && (
             <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-900">Your Listings</h2>
+                <h2 className="text-lg font-semibold text-slate-900">{t.dashboard.yourListings}</h2>
                 <Link href="/sell" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                  + Add new
+                  {t.dashboard.addNew}
                 </Link>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-slate-50">
                     <tr>
-                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">Listing</th>
-                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">Price</th>
-                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">Status</th>
-                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">Files</th>
-                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">Created</th>
-                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">Actions</th>
+                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">{t.dashboard.listing}</th>
+                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">{t.dashboard.price}</th>
+                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">{t.dashboard.status}</th>
+                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">{t.dashboard.files}</th>
+                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">{t.dashboard.created}</th>
+                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">{t.dashboard.actions}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -269,7 +304,7 @@ export default function Dashboard() {
                         <td className="px-6 py-4">
                           <div className="space-y-1">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[listing.status] || 'bg-slate-100 text-slate-800'}`}>
-                              {statusLabels[listing.status] || listing.status}
+                              {(t.common as Record<string, string>)[`status${listing.status.replace(/_/g, '').replace(/\b\w/g, l => l.toUpperCase())}`] || listing.status}
                             </span>
                             {listing.status === 'approved' && listing.translation_status && (
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${translationStatusColors[listing.translation_status] || 'bg-gray-100 text-gray-600'}`}>
@@ -282,7 +317,7 @@ export default function Dashboard() {
                           )}
                         </td>
                         <td className="px-6 py-4 text-slate-600">
-                          {listing.file_count} files • {formatFileSize(listing.file_size_bytes)}
+                          {listing.file_count} {t.dashboard.files.toLowerCase()} • {formatFileSize(listing.file_size_bytes)}
                         </td>
                         <td className="px-6 py-4 text-slate-600">
                           {new Date(listing.created_at).toLocaleDateString()}
@@ -290,16 +325,19 @@ export default function Dashboard() {
                         <td className="px-6 py-4">
                           {listing.status === 'pending_payment' && (
                             <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                              Pay Fee
+                              {t.dashboard.payFee}
                             </button>
                           )}
-                          {['approved', 'pending_scan', 'scanning', 'rejected'].includes(listing.status) && (
+                          {['approved', 'scanning', 'rejected'].includes(listing.status) && (
                             <Link
                               href={`/dashboard/products/${listing.slug}`}
                               className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                             >
-                              Manage
+                              {t.dashboard.manage}
                             </Link>
+                          )}
+                          {listing.status === 'pending_scan' && (
+                            <span className="text-slate-400 text-sm">{t.common.statusPendingScan}</span>
                           )}
                         </td>
                       </tr>

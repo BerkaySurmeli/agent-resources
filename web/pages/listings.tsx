@@ -234,7 +234,7 @@ export default function Listings() {
                           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
-                          Verified
+                          {t.listings.verified}
                         </span>
                       )}
                     </div>
@@ -271,10 +271,10 @@ export default function Listings() {
                               : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                           }`}
                         >
-                          {isInCart(listing.slug) ? 'In Cart' : 'Add to Cart'}
+                          {isInCart(listing.slug) ? t.listings.inCart : t.listings.addToCart}
                         </button>
                         <span className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium group-hover:bg-blue-700 transition-colors">
-                          View
+                          {t.listings.view}
                         </span>
                       </div>
                     </div>
@@ -286,12 +286,12 @@ export default function Listings() {
 
           {!loading && filteredListings.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-slate-500">No listings found matching your search.</p>
+              <p className="text-slate-500">{t.listings.noListingsFound}</p>
               <button 
                 onClick={() => { setSelectedCategory('all'); setSearchQuery(''); }}
                 className="text-blue-600 hover:underline mt-2"
               >
-                Clear filters
+                {t.listings.clearFilters}
               </button>
             </div>
           )}

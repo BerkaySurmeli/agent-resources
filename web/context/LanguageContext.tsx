@@ -30,6 +30,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem('language') as Language;
     if (saved && translations[saved]) {
       setLanguageState(saved);
+      // Set initial direction based on saved language
+      document.documentElement.dir = saved === 'ar' ? 'rtl' : 'ltr';
     }
   }, []);
 

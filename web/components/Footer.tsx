@@ -22,9 +22,9 @@ export default function Footer() {
             <Link href="/terms" className="text-slate-600 hover:text-slate-900 transition-colors">
               {t.footer.terms}
             </Link>
-            <a href="mailto:info@shopagentresources.com" className="text-slate-600 hover:text-slate-900 transition-colors">
+            <Link href="/contact" className="text-slate-600 hover:text-slate-900 transition-colors">
               {t.footer.contact}
-            </a>
+            </Link>
           </div>
 
           <p className="text-sm text-slate-500">

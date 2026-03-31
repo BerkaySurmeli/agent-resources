@@ -2,8 +2,73 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+
+// Featured developers fallback data
+const featuredDevelopers: Record<string, { developer: Developer; listings: Listing[]; stats: DeveloperStats }> = {
+  claudia: {
+    developer: {
+      id: 'claudia',
+      name: 'Claudia',
+      avatar_url: '',
+      is_verified: true,
+    },
+    listings: [
+      { id: '1', slug: 'claudia-project-manager', name: 'AI Project Manager', category: 'persona', price_cents: 4900, is_verified: true },
+      { id: '2', slug: 'claudia-team-lead', name: 'AI Team Lead', category: 'persona', price_cents: 5900, is_verified: true },
+      { id: '3', slug: 'claudia-scrum-master', name: 'AI Scrum Master', category: 'skill', price_cents: 3900, is_verified: true },
+    ],
+    stats: {
+      total_listings: 3,
+      total_sales: 128,
+      average_rating: 5.0,
+      total_reviews: 47,
+    },
+  },
+  chen: {
+    developer: {
+      id: 'chen',
+      name: 'Chen',
+      avatar_url: '',
+      is_verified: true,
+    },
+    listings: [
+      { id: '4', slug: 'chen-developer', name: 'AI Developer', category: 'persona', price_cents: 5900, is_verified: true },
+      { id: '5', slug: 'chen-code-reviewer', name: 'AI Code Reviewer', category: 'skill', price_cents: 2900, is_verified: true },
+      { id: '6', slug: 'chen-architect', name: 'AI System Architect', category: 'persona', price_cents: 7900, is_verified: true },
+      { id: '7', slug: 'chen-debugger', name: 'AI Debugger Pro', category: 'skill', price_cents: 3900, is_verified: true },
+      { id: '8', slug: 'chen-devops', name: 'AI DevOps Engineer', category: 'persona', price_cents: 6900, is_verified: true },
+    ],
+    stats: {
+      total_listings: 5,
+      total_sales: 256,
+      average_rating: 4.9,
+      total_reviews: 89,
+    },
+  },
+  adrian: {
+    developer: {
+      id: 'adrian',
+      name: 'Adrian',
+      avatar_url: '',
+      is_verified: true,
+    },
+    listings: [
+      { id: '9', slug: 'adrian-ux-designer', name: 'AI UX Designer', category: 'persona', price_cents: 4900, is_verified: true },
+      { id: '10', slug: 'adrian-copywriter', name: 'AI Copywriter', category: 'skill', price_cents: 2900, is_verified: true },
+      { id: '11', slug: 'adrian-brand-designer', name: 'AI Brand Designer', category: 'persona', price_cents: 5900, is_verified: true },
+      { id: '12', slug: 'adrian-researcher', name: 'AI UX Researcher', category: 'skill', price_cents: 3900, is_verified: true },
+    ],
+    stats: {
+      total_listings: 4,
+      total_sales: 184,
+      average_rating: 5.0,
+      total_reviews: 62,
+    },
+  },
+};
 
 interface Developer {
   id: string;
@@ -31,6 +96,7 @@ interface DeveloperStats {
 export default function DeveloperProfile() {
   const router = useRouter();
   const { id } = router.query;
+  const { t } = useLanguage();
   const [developer, setDeveloper] = useState<Developer | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [stats, setStats] = useState<DeveloperStats | null>(null);
@@ -45,7 +111,19 @@ export default function DeveloperProfile() {
 
   const fetchDeveloperData = async () => {
     try {
-      // Fetch developer info
+      const developerId = id as string;
+      
+      // Check if it's a featured developer first
+      if (featuredDevelopers[developerId]) {
+        const featured = featuredDevelopers[developerId];
+        setDeveloper(featured.developer);
+        setListings(featured.listings);
+        setStats(featured.stats);
+        setLoading(false);
+        return;
+      }
+      
+      // Fetch developer info from API
       const devRes = await fetch(`${API_URL}/developers/${id}`);
       if (!devRes.ok) throw new Error('Developer not found');
       const devData = await devRes.json();
@@ -94,9 +172,9 @@ export default function DeveloperProfile() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Developer not found</h1>
-          <Link href="/listings" className="text-blue-600 hover:underline">
-            Browse listings
+          <h1 className="text-2xl font-bold mb-4">{t.developer.notFound || 'Developer not found'}</h1>
+          <Link href="/developers" className="text-blue-600 hover:underline">
+            {t.developer.browseDevelopers || 'Browse developers'}
           </Link>
         </div>
       </div>
@@ -125,8 +203,13 @@ export default function DeveloperProfile() {
                   className="w-24 h-24 rounded-2xl object-cover"
                 />
               ) : (
-                <div className="w-24 h-24 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-3xl font-bold">
-                  {developer.name.charAt(0).toUpperCase()}
+                <div className={`w-24 h-24 rounded-2xl flex items-center justify-center text-white text-3xl font-bold ${
+                  developer.id === 'claudia' ? 'bg-gradient-to-br from-blue-500 to-blue-700' :
+                  developer.id === 'chen' ? 'bg-gradient-to-br from-slate-700 to-slate-900' :
+                  developer.id === 'adrian' ? 'bg-gradient-to-br from-purple-500 to-purple-700' :
+                  'bg-blue-600'
+                }`}>
+                  {developer.id === 'chen' ? 'Ch' : developer.name.charAt(0).toUpperCase()}
                 </div>
               )}
               <div>
@@ -137,11 +220,16 @@ export default function DeveloperProfile() {
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
-                      Verified
+                      {t.listings.verified}
                     </span>
                   )}
                 </div>
-                <p className="text-slate-600">Developer</p>
+                <p className="text-slate-600">
+                  {developer.id === 'claudia' && 'AI Project Manager'}
+                  {developer.id === 'chen' && 'AI Developer'}
+                  {developer.id === 'adrian' && 'AI UX Designer'}
+                  {!['claudia', 'chen', 'adrian'].includes(developer.id) && 'Developer'}
+                </p>
               </div>
             </div>
 
@@ -149,15 +237,15 @@ export default function DeveloperProfile() {
             {stats && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
                 <div className="bg-white rounded-xl p-4">
-                  <p className="text-sm text-slate-500 mb-1">Listings</p>
+                  <p className="text-sm text-slate-500 mb-1">{t.developer.listings}</p>
                   <p className="text-2xl font-bold text-slate-900">{stats.total_listings}</p>
                 </div>
                 <div className="bg-white rounded-xl p-4">
-                  <p className="text-sm text-slate-500 mb-1">Sales</p>
+                  <p className="text-sm text-slate-500 mb-1">{t.developer.sales}</p>
                   <p className="text-2xl font-bold text-slate-900">{stats.total_sales}</p>
                 </div>
                 <div className="bg-white rounded-xl p-4">
-                  <p className="text-sm text-slate-500 mb-1">Rating</p>
+                  <p className="text-sm text-slate-500 mb-1">{t.developer.rating}</p>
                   <div className="flex items-center gap-1">
                     <p className="text-2xl font-bold text-slate-900">{stats.average_rating.toFixed(1)}</p>
                     <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
@@ -166,7 +254,7 @@ export default function DeveloperProfile() {
                   </div>
                 </div>
                 <div className="bg-white rounded-xl p-4">
-                  <p className="text-sm text-slate-500 mb-1">Reviews</p>
+                  <p className="text-sm text-slate-500 mb-1">{t.developer.reviews}</p>
                   <p className="text-2xl font-bold text-slate-900">{stats.total_reviews}</p>
                 </div>
               </div>
@@ -176,7 +264,7 @@ export default function DeveloperProfile() {
           {/* Personas Section */}
           {personas.length > 0 && (
             <div className="mb-12">
-              <h2 className="text-2xl font-bold text-slate-900 mb-6">AI Personas</h2>
+              <h2 className="text-2xl font-bold text-slate-900 mb-6">{t.developer.aiPersonas}</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {personas.map(persona => (
                   <Link
@@ -212,7 +300,7 @@ export default function DeveloperProfile() {
           {/* Skills Section */}
           {skills.length > 0 && (
             <div className="mb-12">
-              <h2 className="text-2xl font-bold text-slate-900 mb-6">Agent Skills</h2>
+              <h2 className="text-2xl font-bold text-slate-900 mb-6">{t.developer.agentSkills}</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {skills.map(skill => (
                   <Link
@@ -248,7 +336,7 @@ export default function DeveloperProfile() {
           {/* MCP Servers Section */}
           {mcps.length > 0 && (
             <div className="mb-12">
-              <h2 className="text-2xl font-bold text-slate-900 mb-6">MCP Servers</h2>
+              <h2 className="text-2xl font-bold text-slate-900 mb-6">{t.developer.mcpServers}</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {mcps.map(mcp => (
                   <Link
@@ -283,7 +371,7 @@ export default function DeveloperProfile() {
 
           {listings.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-slate-500">No listings yet.</p>
+              <p className="text-slate-500">{t.listings.noResults}</p>
             </div>
           )}
         </div>

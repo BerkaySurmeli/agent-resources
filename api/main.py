@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import create_engine
 from core.config import settings
 from models import SQLModel
-from routes import waitlist, payments, auth, listings, admin, products, developers, search
+from routes import waitlist, payments, auth, listings, admin, products, developers, search, contact
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,6 +40,7 @@ app.include_router(admin.router)
 app.include_router(products.router)
 app.include_router(developers.router)
 app.include_router(search.router)
+app.include_router(contact.router)
 
 @app.get("/health")
 async def health():

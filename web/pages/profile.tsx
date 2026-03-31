@@ -171,7 +171,7 @@ export default function Profile() {
                 href="/sell"
                 className="block w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors text-center"
               >
-                Sell a Listing
+                List an item
               </Link>
               <button
                 onClick={logout}

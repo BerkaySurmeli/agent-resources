@@ -348,33 +348,6 @@ def resend_verification(
 
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
-    # Mark as verified
-    user.is_verified = True
-    user.verification_token = None
-    session.commit()
-    
-    return {"message": "Email verified successfully", "email": user.email}
-
-@router.post("/resend-verification")
-def resend_verification(email: EmailStr, session = Depends(get_session)):
-    """Resend verification email"""
-    user = session.exec(select(User).where(User.email == email)).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    if user.is_verified:
-        raise HTTPException(status_code=400, detail="Email already verified")
-    
-    # Generate new token
-    import secrets
-    user.verification_token = secrets.token_urlsafe(32)
-    user.verification_sent_at = datetime.utcnow()
-    session.commit()
-    
-    # TODO: Send email
-    print(f"[EMAIL] Verification link: https://shopagentresources.com/verify-email?token={user.verification_token}")
-    
-    return {"message": "Verification email sent"}
 
 
 # Dependency to get current user from JWT token
