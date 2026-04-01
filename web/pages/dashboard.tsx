@@ -34,21 +34,21 @@ interface DashboardStats {
 }
 
 const statusColors: Record<string, string> = {
-  pending_payment: 'bg-yellow-100 text-yellow-800',
-  pending_scan: 'bg-blue-100 text-blue-800',
-  scanning: 'bg-purple-100 text-purple-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  payment_failed: 'bg-red-100 text-red-800',
+  pending_payment: 'bg-yellow-500/20 text-yellow-400',
+  pending_scan: 'bg-blue-500/20 text-blue-400',
+  scanning: 'bg-purple-500/20 text-purple-400',
+  approved: 'bg-green-500/20 text-green-400',
+  rejected: 'bg-red-500/20 text-red-400',
+  payment_failed: 'bg-red-500/20 text-red-400',
 };
 
 
 
 const translationStatusColors: Record<string, string> = {
-  pending: 'bg-gray-100 text-gray-600',
-  translating: 'bg-blue-100 text-blue-700 animate-pulse',
-  completed: 'bg-green-100 text-green-700',
-  failed: 'bg-red-100 text-red-700',
+  pending: 'bg-gray-500/20 text-gray-400',
+  translating: 'bg-blue-500/20 text-blue-400 animate-pulse',
+  completed: 'bg-green-500/20 text-green-400',
+  failed: 'bg-red-500/20 text-red-400',
 };
 
 const translationStatusLabels: Record<string, string> = {
@@ -156,10 +156,10 @@ export default function Dashboard() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-slate-600 mb-4">{t.dashboard.signInToView}</p>
-          <Link href="/login" className="text-blue-600 hover:underline">
+          <p className="text-gray-400 mb-4">{t.dashboard.signInToView}</p>
+          <Link href="/login" className="text-blue-400 hover:text-blue-300">
             {t.dashboard.signIn} →
           </Link>
         </div>
@@ -168,24 +168,24 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-6">
       <Head>
         <title>Your Dashboard | Agent Resources</title>
       </Head>
 
-      <main className="pt-24 pb-12 px-6">
+      <main className="pt-8 pb-12">
         <div className="max-w-6xl mx-auto">
           {/* Email Verification Banner */}
           {user && !user.isVerified && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-8">
-              <div className="flex items-center justify-between">
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-8">
+              <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-3">
-                  <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                   <div>
-                    <p className="font-medium text-yellow-800">{t.dashboard.pleaseVerifyEmail}</p>
-                    <p className="text-sm text-yellow-700">{t.dashboard.verifyEmailDesc}</p>
+                    <p className="font-medium text-yellow-400">{t.dashboard.pleaseVerifyEmail}</p>
+                    <p className="text-sm text-yellow-400/80">{t.dashboard.verifyEmailDesc}</p>
                   </div>
                 </div>
                 <button
@@ -197,7 +197,7 @@ export default function Dashboard() {
                 </button>
               </div>
               {verificationMessage && (
-                <p className={`mt-3 text-sm ${verificationMessage.includes('Verification email sent') ? 'text-green-700' : 'text-red-700'}`}>
+                <p className={`mt-3 text-sm ${verificationMessage.includes('Verification email sent') ? 'text-green-400' : 'text-red-400'}`}>
                   {verificationMessage}
                 </p>
               )}
@@ -207,53 +207,43 @@ export default function Dashboard() {
           {/* Header */}
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-semibold text-slate-900">{t.dashboard.developerDashboard}</h1>
-              <p className="text-slate-600">{t.dashboard.manageListings}</p>
+              <h1 className="text-3xl font-semibold text-white">{t.dashboard.developerDashboard}</h1>
+              <p className="text-gray-400">{t.dashboard.manageListings}</p>
             </div>
-            <Link
-              href="/settings"
-              className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              {t.dashboard.settings}
-            </Link>
           </div>
 
           {/* Stats Grid */}
           {stats && (
             <div className="grid md:grid-cols-4 gap-4 mb-8">
-              <div className="bg-slate-50 rounded-xl p-6">
-                <p className="text-sm text-slate-500 mb-1">{t.dashboard.totalListings}</p>
-                <p className="text-3xl font-bold text-slate-900">{stats.total_listings}</p>
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
+                <p className="text-sm text-gray-400 mb-1">{t.dashboard.totalListings}</p>
+                <p className="text-3xl font-bold text-white">{stats.total_listings}</p>
               </div>
-              <div className="bg-slate-50 rounded-xl p-6">
-                <p className="text-sm text-slate-500 mb-1">{t.dashboard.published}</p>
-                <p className="text-3xl font-bold text-green-600">{stats.approved_listings}</p>
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
+                <p className="text-sm text-gray-400 mb-1">{t.dashboard.published}</p>
+                <p className="text-3xl font-bold text-green-400">{stats.approved_listings}</p>
               </div>
-              <div className="bg-slate-50 rounded-xl p-6">
-                <p className="text-sm text-slate-500 mb-1">{t.dashboard.pending}</p>
-                <p className="text-3xl font-bold text-yellow-600">{stats.pending_listings}</p>
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
+                <p className="text-sm text-gray-400 mb-1">{t.dashboard.pending}</p>
+                <p className="text-3xl font-bold text-yellow-400">{stats.pending_listings}</p>
               </div>
-              <div className="bg-slate-50 rounded-xl p-6">
-                <p className="text-sm text-slate-500 mb-1">{t.dashboard.totalRevenue}</p>
-                <p className="text-3xl font-bold text-slate-900">{formatPrice(stats.total_revenue_cents)}</p>
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
+                <p className="text-sm text-gray-400 mb-1">{t.dashboard.totalRevenue}</p>
+                <p className="text-3xl font-bold text-white">{formatPrice(stats.total_revenue_cents)}</p>
               </div>
             </div>
           )}
 
           {/* Empty State */}
           {listings.length === 0 && !loading && (
-            <div className="bg-slate-50 rounded-2xl p-12 text-center mb-8">
-              <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-12 text-center mb-8">
+              <div className="w-16 h-16 bg-blue-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-slate-900 mb-2">{t.dashboard.startSelling}</h2>
-              <p className="text-slate-600 mb-6 max-w-md mx-auto">
+              <h2 className="text-xl font-semibold text-white mb-2">{t.dashboard.startSelling}</h2>
+              <p className="text-gray-400 mb-6 max-w-md mx-auto">
                 {t.dashboard.startSellingDesc}
               </p>
               <Link 
@@ -270,74 +260,74 @@ export default function Dashboard() {
 
           {/* Listings Table */}
           {listings.length > 0 && (
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-900">{t.dashboard.yourListings}</h2>
-                <Link href="/sell" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-700 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">{t.dashboard.yourListings}</h2>
+                <Link href="/sell" className="text-blue-400 hover:text-blue-300 text-sm font-medium">
                   {t.dashboard.addNew}
                 </Link>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-slate-50">
+                  <thead className="bg-gray-900/50">
                     <tr>
-                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">{t.dashboard.listing}</th>
-                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">{t.dashboard.price}</th>
-                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">{t.dashboard.status}</th>
-                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">{t.dashboard.files}</th>
-                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">{t.dashboard.created}</th>
-                      <th className="text-left text-xs font-medium text-slate-500 uppercase px-6 py-3">{t.dashboard.actions}</th>
+                      <th className="text-left text-xs font-medium text-gray-400 uppercase px-6 py-3">{t.dashboard.listing}</th>
+                      <th className="text-left text-xs font-medium text-gray-400 uppercase px-6 py-3">{t.dashboard.price}</th>
+                      <th className="text-left text-xs font-medium text-gray-400 uppercase px-6 py-3">{t.dashboard.status}</th>
+                      <th className="text-left text-xs font-medium text-gray-400 uppercase px-6 py-3">{t.dashboard.files}</th>
+                      <th className="text-left text-xs font-medium text-gray-400 uppercase px-6 py-3">{t.dashboard.created}</th>
+                      <th className="text-left text-xs font-medium text-gray-400 uppercase px-6 py-3">{t.dashboard.actions}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200">
+                  <tbody className="divide-y divide-gray-700">
                     {listings.map((listing) => (
-                      <tr key={listing.id} className="hover:bg-slate-50">
+                      <tr key={listing.id} className="hover:bg-gray-700/30">
                         <td className="px-6 py-4">
                           <div>
-                            <p className="font-medium text-slate-900">{listing.name}</p>
-                            <p className="text-sm text-slate-500 capitalize">{listing.category}</p>
+                            <p className="font-medium text-white">{listing.name}</p>
+                            <p className="text-sm text-gray-400 capitalize">{listing.category}</p>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-slate-600">
+                        <td className="px-6 py-4 text-gray-300">
                           {formatPrice(listing.price_cents)}
                         </td>
                         <td className="px-6 py-4">
                           <div className="space-y-1">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[listing.status] || 'bg-slate-100 text-slate-800'}`}>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[listing.status] || 'bg-gray-500/20 text-gray-400'}`}>
                               {(t.common as Record<string, string>)[`status${listing.status.replace(/_/g, '').replace(/\b\w/g, l => l.toUpperCase())}`] || listing.status}
                             </span>
                             {listing.status === 'approved' && listing.translation_status && (
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${translationStatusColors[listing.translation_status] || 'bg-gray-100 text-gray-600'}`}>
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${translationStatusColors[listing.translation_status] || 'bg-gray-500/20 text-gray-400'}`}>
                                 {translationStatusLabels[listing.translation_status] || listing.translation_status}
                               </span>
                             )}
                           </div>
                           {listing.status === 'rejected' && listing.rejection_reason && (
-                            <p className="text-xs text-red-600 mt-1">{listing.rejection_reason}</p>
+                            <p className="text-xs text-red-400 mt-1">{listing.rejection_reason}</p>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-slate-600">
+                        <td className="px-6 py-4 text-gray-300">
                           {listing.file_count} {t.dashboard.files.toLowerCase()} • {formatFileSize(listing.file_size_bytes)}
                         </td>
-                        <td className="px-6 py-4 text-slate-600">
+                        <td className="px-6 py-4 text-gray-300">
                           {new Date(listing.created_at).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4">
                           {listing.status === 'pending_payment' && (
-                            <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                            <button className="text-blue-400 hover:text-blue-300 text-sm font-medium">
                               {t.dashboard.payFee}
                             </button>
                           )}
                           {['approved', 'scanning', 'rejected'].includes(listing.status) && (
                             <Link
                               href={`/dashboard/products/${listing.slug}`}
-                              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                              className="text-blue-400 hover:text-blue-300 text-sm font-medium"
                             >
                               {t.dashboard.manage}
                             </Link>
                           )}
                           {listing.status === 'pending_scan' && (
-                            <span className="text-slate-400 text-sm">{t.common.statusPendingScan}</span>
+                            <span className="text-gray-500 text-sm">{t.common.statusPendingScan}</span>
                           )}
                         </td>
                       </tr>
@@ -357,8 +347,8 @@ export default function Dashboard() {
 
           {/* Error State */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-              <p className="text-red-700">{error}</p>
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-center">
+              <p className="text-red-400">{error}</p>
             </div>
           )}
         </div>

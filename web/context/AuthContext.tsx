@@ -140,34 +140,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signup = async (email: string, password: string, name: string) => {
-    const response = await fetch(`${API_URL}/auth/signup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, name }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Signup failed');
+    try {
+      const response = await fetch(`${API_URL}/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Signup failed');
+      }
+
+      const data = await response.json();
+
+      const userData = {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.name || name,
+        initials: getInitials(data.user.name || name),
+        isDeveloper: data.user.is_developer,
+        isVerified: data.user.is_verified,
+      };
+
+      // Save to localStorage
+      setLocalStorage('ar-token', data.access_token);
+      setLocalStorage('ar-user', JSON.stringify(userData));
+
+      // Update state
+      setUser(userData);
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timed out. Please try again.');
+      }
+      throw error;
     }
-
-    const data = await response.json();
-
-    const userData = {
-      id: data.user.id,
-      email: data.user.email,
-      name: data.user.name || name,
-      initials: getInitials(data.user.name || name),
-      isDeveloper: data.user.is_developer,
-      isVerified: data.user.is_verified,
-    };
-    
-    // Save to localStorage
-    setLocalStorage('ar-token', data.access_token);
-    setLocalStorage('ar-user', JSON.stringify(userData));
-    
-    // Update state
-    setUser(userData);
   };
 
   const logout = () => {

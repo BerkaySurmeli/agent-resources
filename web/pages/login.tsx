@@ -31,7 +31,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center px-6">
       <Head>
         <title>{t.auth.signIn} | Agent Resources</title>
       </Head>
@@ -43,20 +43,20 @@ export default function Login() {
               <span className="text-white font-bold text-xl">AR</span>
             </div>
           </Link>
-          <h1 className="text-2xl font-semibold text-slate-900">{t.login.title}</h1>
-          <p className="text-slate-600 mt-2">{t.login.subtitle}</p>
+          <h1 className="text-2xl font-semibold text-white">{t.login.title}</h1>
+          <p className="text-gray-400 mt-2">{t.login.subtitle}</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+        <div className="bg-gray-800 rounded-2xl border border-gray-700 p-8">
           {error && (
-            <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm">
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg mb-6 text-sm">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 {t.login.email}
               </label>
               <input
@@ -64,13 +64,13 @@ export default function Login() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full px-4 py-3 rounded-lg bg-gray-900 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 {t.login.password}
               </label>
               <input
@@ -78,7 +78,7 @@ export default function Login() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full px-4 py-3 rounded-lg bg-gray-900 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                 placeholder="••••••••"
               />
             </div>
@@ -93,9 +93,9 @@ export default function Login() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-slate-600">
+            <p className="text-gray-400">
               {t.login.noAccount}{' '}
-              <Link href="/signup" className="text-blue-600 hover:underline font-medium">
+              <Link href="/signup" className="text-blue-400 hover:text-blue-300 font-medium">
                 {t.login.signUp}
               </Link>
             </p>

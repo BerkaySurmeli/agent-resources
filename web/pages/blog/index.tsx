@@ -55,22 +55,10 @@ Follow along. We're building in public.
 
 export default function Blog() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
       <Head>
         <title>Blog | Agent Resources</title>
       </Head>
-
-      <nav className="border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <Link href="/" className="text-xl font-bold">Agent Resources</Link>
-            <div className="flex space-x-8">
-              <Link href="/blog" className="text-white">Blog</Link>
-              <a href="https://api.shopagentresources.com/health" className="text-gray-300 hover:text-white">API Status</a>
-            </div>
-          </div>
-        </div>
-      </nav>
 
       <main className="max-w-4xl mx-auto px-4 py-16">
         <h1 className="text-4xl font-bold mb-8">Building in Public</h1>
@@ -80,17 +68,17 @@ export default function Blog() {
 
         <div className="space-y-8">
           {posts.map((post) => (
-            <article key={post.slug} className="bg-gray-800 rounded-lg p-6">
+            <article key={post.slug} className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 hover:border-blue-500/30 transition-colors">
               <span className="text-sm text-gray-500">{post.date}</span>
               <h2 className="text-2xl font-semibold mt-2 mb-3">
-                <Link href={`/blog/${post.slug}`} className="hover:text-blue-400">
+                <Link href={`/blog/${post.slug}`} className="hover:text-blue-400 transition-colors">
                   {post.title}
                 </Link>
               </h2>
               <p className="text-gray-400">{post.excerpt}</p>
               <Link 
                 href={`/blog/${post.slug}`}
-                className="inline-block mt-4 text-blue-400 hover:text-blue-300"
+                className="inline-block mt-4 text-blue-400 hover:text-blue-300 transition-colors"
               >
                 Read more →
               </Link>
@@ -98,20 +86,6 @@ export default function Blog() {
           ))}
         </div>
       </main>
-
-      <footer className="border-t border-gray-800 py-12 px-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div>
-            <span className="font-bold">Agent Resources</span>
-            <p className="text-gray-500 text-sm">The marketplace for AI agents</p>
-          </div>
-          <div className="flex space-x-6 text-gray-400">
-            <Link href="/" className="hover:text-white">Home</Link>
-            <a href="https://twitter.com" className="hover:text-white">Twitter</a>
-            
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

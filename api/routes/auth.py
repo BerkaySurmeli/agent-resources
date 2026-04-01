@@ -99,12 +99,24 @@ The Agent Resources Team
     msg.attach(part2)
 
     # Send email
-    with smtplib.SMTP(ZOHO_SMTP_SERVER, ZOHO_SMTP_PORT) as server:
-        server.starttls()
-        server.login(ZOHO_EMAIL, ZOHO_PASSWORD)
-        server.send_message(msg)
-
-    print(f"[EMAIL] Verification email sent to {to_email}")
+    try:
+        with smtplib.SMTP(ZOHO_SMTP_SERVER, ZOHO_SMTP_PORT, timeout=30) as server:
+            server.starttls()
+            server.login(ZOHO_EMAIL, ZOHO_PASSWORD)
+            server.send_message(msg)
+        print(f"[EMAIL] Verification email sent to {to_email}")
+    except smtplib.SMTPAuthenticationError as e:
+        print(f"[EMAIL ERROR] SMTP Authentication failed: {e}")
+        print(f"[EMAIL] Verification link: {verification_url}")
+        raise Exception("Email service authentication failed. Please contact support.")
+    except smtplib.SMTPException as e:
+        print(f"[EMAIL ERROR] SMTP error: {e}")
+        print(f"[EMAIL] Verification link: {verification_url}")
+        raise Exception("Failed to send verification email. Please try again later.")
+    except Exception as e:
+        print(f"[EMAIL ERROR] Unexpected error: {e}")
+        print(f"[EMAIL] Verification link: {verification_url}")
+        raise Exception("Failed to send verification email. Please try again later.")
 
 # Security - use argon2 which doesn't have the 72-byte limit
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")

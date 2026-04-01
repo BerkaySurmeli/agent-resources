@@ -156,31 +156,31 @@ export default function ContactPage() {
         <meta name="description" content="Get in touch with Agent Resources support team" />
       </Head>
 
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-gray-900">
         {/* Main Content */}
         <main className="max-w-2xl mx-auto px-6 py-12">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-8">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">{t.contact.title}</h1>
-              <p className="text-slate-600">
+              <h1 className="text-3xl font-bold text-white mb-2">{t.contact.title}</h1>
+              <p className="text-gray-400">
                 {t.contact.subtitle}
               </p>
             </div>
 
             {status === 'success' ? (
               <div className="text-center py-8">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h2 className="text-xl font-semibold text-slate-900 mb-2">{t.contact.successTitle}</h2>
-                <p className="text-slate-600 mb-6">
+                <h2 className="text-xl font-semibold text-white mb-2">{t.contact.successTitle}</h2>
+                <p className="text-gray-400 mb-6">
                   {t.contact.successMessage}
                 </p>
                 <button
                   onClick={() => setStatus('idle')}
-                  className="text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-blue-400 hover:text-blue-300 font-medium"
                 >
                   {t.contact.sendAnother}
                 </button>
@@ -189,8 +189,8 @@ export default function ContactPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Name Field */}
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">
-                    {t.contact.name} <span className="text-red-500">*</span>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
+                    {t.contact.name} <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="text"
@@ -198,20 +198,20 @@ export default function ContactPage() {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${
-                      errors.name ? 'border-red-500' : 'border-slate-300'
+                    className={`w-full px-4 py-2 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-white placeholder-gray-500 ${
+                      errors.name ? 'border-red-500' : 'border-gray-700'
                     }`}
                     placeholder={t.contact.name}
                   />
                   {errors.name && (
-                    <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.name}</p>
                   )}
                 </div>
 
                 {/* Email Field */}
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
-                    {t.contact.email} <span className="text-red-500">*</span>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+                    {t.contact.email} <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="email"
@@ -219,46 +219,46 @@ export default function ContactPage() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${
-                      errors.email ? 'border-red-500' : 'border-slate-300'
+                    className={`w-full px-4 py-2 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-white placeholder-gray-500 ${
+                      errors.email ? 'border-red-500' : 'border-gray-700'
                     }`}
                     placeholder="your@email.com"
                   />
                   {errors.email && (
-                    <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.email}</p>
                   )}
                 </div>
 
                 {/* Category Field */}
                 <div>
-                  <label htmlFor="category" className="block text-sm font-medium text-slate-700 mb-1">
-                    {t.contact.category} <span className="text-red-500">*</span>
+                  <label htmlFor="category" className="block text-sm font-medium text-gray-300 mb-1">
+                    {t.contact.category} <span className="text-red-400">*</span>
                   </label>
                   <select
                     id="category"
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${
-                      errors.category ? 'border-red-500' : 'border-slate-300'
+                    className={`w-full px-4 py-2 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-white ${
+                      errors.category ? 'border-red-500' : 'border-gray-700'
                     }`}
                   >
-                    <option value="">{t.contact.selectCategory}</option>
+                    <option value="" className="bg-gray-900">{t.contact.selectCategory}</option>
                     {categories.map((category) => (
-                      <option key={category} value={category}>
+                      <option key={category} value={category} className="bg-gray-900">
                         {category}
                       </option>
                     ))}
                   </select>
                   {errors.category && (
-                    <p className="mt-1 text-sm text-red-600">{errors.category}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.category}</p>
                   )}
                 </div>
 
                 {/* Subject Field */}
                 <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-slate-700 mb-1">
-                    {t.contact.subject} <span className="text-red-500">*</span>
+                  <label htmlFor="subject" className="block text-sm font-medium text-gray-300 mb-1">
+                    {t.contact.subject} <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="text"
@@ -266,20 +266,20 @@ export default function ContactPage() {
                     name="subject"
                     value={formData.subject}
                     onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${
-                      errors.subject ? 'border-red-500' : 'border-slate-300'
+                    className={`w-full px-4 py-2 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-white placeholder-gray-500 ${
+                      errors.subject ? 'border-red-500' : 'border-gray-700'
                     }`}
                     placeholder={t.contact.subject}
                   />
                   {errors.subject && (
-                    <p className="mt-1 text-sm text-red-600">{errors.subject}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.subject}</p>
                   )}
                 </div>
 
                 {/* Message Field */}
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-slate-700 mb-1">
-                    {t.contact.message} <span className="text-red-500">*</span>
+                  <label htmlFor="message" className="block text-sm font-medium text-gray-300 mb-1">
+                    {t.contact.message} <span className="text-red-400">*</span>
                   </label>
                   <textarea
                     id="message"
@@ -287,25 +287,25 @@ export default function ContactPage() {
                     rows={5}
                     value={formData.message}
                     onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none ${
-                      errors.message ? 'border-red-500' : 'border-slate-300'
+                    className={`w-full px-4 py-2 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none text-white placeholder-gray-500 ${
+                      errors.message ? 'border-red-500' : 'border-gray-700'
                     }`}
                     placeholder={t.contact.message}
                   />
                   {errors.message && (
-                    <p className="mt-1 text-sm text-red-600">{errors.message}</p>
+                    <p className="mt-1 text-sm text-red-400">{errors.message}</p>
                   )}
                 </div>
 
                 {/* Error Message */}
                 {status === 'error' && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-                    <svg className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-start gap-3">
+                    <svg className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div>
-                      <h3 className="text-sm font-medium text-red-800">{t.contact.error}</h3>
-                      <p className="text-sm text-red-700 mt-1">{errorMessage}</p>
+                      <h3 className="text-sm font-medium text-red-400">{t.contact.error}</h3>
+                      <p className="text-sm text-red-300 mt-1">{errorMessage}</p>
                     </div>
                   </div>
                 )}
@@ -314,7 +314,7 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   disabled={status === 'submitting'}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 focus:ring-offset-gray-900"
                 >
                   {status === 'submitting' ? (
                     <>
@@ -329,7 +329,7 @@ export default function ContactPage() {
                   )}
                 </button>
 
-                <p className="text-center text-sm text-slate-500">
+                <p className="text-center text-sm text-gray-500">
                   {t.contact.responseTime}
                 </p>
               </form>

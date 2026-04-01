@@ -7,7 +7,7 @@ export default function UserMenu() {
   if (!user) {
     return (
       <div className="flex items-center gap-4">
-        <Link href="/login" className="text-slate-600 hover:text-slate-900">
+        <Link href="/login" className="text-gray-300 hover:text-white transition-colors">
           Sign In
         </Link>
         <Link 
@@ -25,7 +25,7 @@ export default function UserMenu() {
       {/* Developer features - shown to all users */}
       <Link
         href="/sell"
-        className="text-slate-600 hover:text-slate-900 text-sm font-medium"
+        className="text-gray-300 hover:text-white text-sm font-medium transition-colors"
       >
         List an Item
       </Link>
@@ -37,7 +37,7 @@ export default function UserMenu() {
             <img
               src={user.avatar}
               alt={user.name}
-              className="w-8 h-8 rounded-full object-cover"
+              className="w-8 h-8 rounded-full object-cover border border-gray-700"
             />
           ) : (
             <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
@@ -47,24 +47,24 @@ export default function UserMenu() {
         </button>
         
         {/* Dropdown */}
-        <div className="absolute end-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+        <div className="absolute end-0 top-full mt-2 w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
           <div className="py-2">
             <Link 
               href="/profile" 
-              className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+              className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
             >
               Profile
             </Link>
             <Link
               href="/dashboard"
-              className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+              className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
             >
               Developer Dashboard
             </Link>
-            <hr className="my-2 border-slate-100" />
+            <hr className="my-2 border-gray-700" />
             <button 
               onClick={logout}
-              className="block w-full text-start px-4 py-2 text-sm text-red-600 hover:bg-slate-50"
+              className="block w-full text-start px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors"
             >
               Sign Out
             </button>

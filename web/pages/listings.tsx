@@ -8,10 +8,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresourc
 
 const getCategoryColor = (category: string) => {
   switch (category) {
-    case 'persona': return 'bg-blue-100 text-blue-700';
-    case 'skill': return 'bg-purple-100 text-purple-700';
-    case 'mcp_server': return 'bg-green-100 text-green-700';
-    default: return 'bg-slate-100 text-slate-700';
+    case 'persona': return 'bg-blue-500/20 text-blue-400';
+    case 'skill': return 'bg-purple-500/20 text-purple-400';
+    case 'mcp_server': return 'bg-green-500/20 text-green-400';
+    default: return 'bg-gray-700 text-gray-300';
   }
 };
 
@@ -131,7 +131,7 @@ export default function Listings() {
   const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-900">
       <Head>
         <title>Browse Listings | Agent Resources</title>
         <meta name="description" content="Browse AI personas, skills, and MCP servers for your OpenClaw environment" />
@@ -141,13 +141,13 @@ export default function Listings() {
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-semibold text-slate-900 mb-2">{t.listings.title}</h1>
-            <p className="text-slate-600">{t.listings.subtitle}</p>
+            <h1 className="text-3xl font-semibold text-white mb-2">{t.listings.title}</h1>
+            <p className="text-gray-400">{t.listings.subtitle}</p>
           </div>
 
           {/* Search */}
           <div className="relative mb-6">
-            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
@@ -155,7 +155,7 @@ export default function Listings() {
               placeholder={t.listings.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-lg"
+              className="w-full pl-12 pr-4 py-4 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-lg"
             />
           </div>
 
@@ -170,7 +170,7 @@ export default function Listings() {
                   className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                     selectedCategory === cat.id 
                       ? 'bg-blue-600 text-white' 
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                   }`}
                 >
                   {cat.name}
@@ -182,7 +182,7 @@ export default function Listings() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-blue-500"
+              className="px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-300 text-sm focus:outline-none focus:border-blue-500"
             >
               {sortOptions.map(opt => (
                 <option key={opt.id} value={opt.id}>{opt.label}</option>
@@ -191,12 +191,12 @@ export default function Listings() {
           </div>
 
           {/* Results count */}
-          <p className="text-slate-500 mb-6">{filteredListings.length} {t.listings.listingsFound}</p>
+          <p className="text-gray-500 mb-6">{filteredListings.length} {t.listings.listingsFound}</p>
 
           {/* Loading */}
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             </div>
           )}
 
@@ -207,10 +207,10 @@ export default function Listings() {
                 <Link
                   key={listing.slug}
                   href={`/listings/${listing.slug}`}
-                  className="group block bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-blue-300 hover:shadow-xl transition-all duration-300"
+                  className="group block bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden hover:border-blue-500/50 hover:shadow-lg transition-all duration-300"
                 >
                   {/* Card Header with Avatar */}
-                  <div className="relative h-32 bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+                  <div className="relative h-32 bg-gradient-to-br from-gray-800 to-gray-900 p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-4">
                         {/* Persona Avatar */}
@@ -219,7 +219,7 @@ export default function Listings() {
                         </div>
                         <div>
                           {/* Persona Name */}
-                          <h3 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                          <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
                             {listing.seller?.name || 'Unknown'}
                           </h3>
                           {/* Category */}
@@ -230,7 +230,7 @@ export default function Listings() {
                         </div>
                       </div>
                       {listing.is_verified && (
-                        <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-blue-50 text-blue-600">
+                        <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-blue-500/20 text-blue-400">
                           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
@@ -243,19 +243,19 @@ export default function Listings() {
                   {/* Card Body */}
                   <div className="p-6">
                     {/* Description */}
-                    <p className="text-slate-600 text-sm mb-4 line-clamp-2">{listing.description}</p>
+                    <p className="text-gray-400 text-sm mb-4 line-clamp-2">{listing.description}</p>
 
                     {/* Developer Info */}
                     {listing.seller && (
                       <div className="flex items-center gap-2 mb-4 text-sm">
-                        <span className="text-slate-400">by</span>
-                        <span className="text-slate-600 font-medium">{listing.seller.name}</span>
+                        <span className="text-gray-500">by</span>
+                        <span className="text-gray-300 font-medium">{listing.seller.name}</span>
                       </div>
                     )}
 
                     {/* Price & Actions */}
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                      <span className="text-2xl font-bold text-slate-900">{formatPrice(listing.price_cents)}</span>
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-700">
+                      <span className="text-2xl font-bold text-white">{formatPrice(listing.price_cents)}</span>
                       <div className="flex items-center gap-2" onClick={(e) => e.preventDefault()}>
                         <button
                           onClick={() => addToCart({
@@ -267,8 +267,8 @@ export default function Listings() {
                           disabled={isInCart(listing.slug)}
                           className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                             isInCart(listing.slug)
-                              ? 'bg-green-100 text-green-700 cursor-default'
-                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                              ? 'bg-green-500/20 text-green-400 cursor-default'
+                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                           }`}
                         >
                           {isInCart(listing.slug) ? t.listings.inCart : t.listings.addToCart}
@@ -286,10 +286,10 @@ export default function Listings() {
 
           {!loading && filteredListings.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-slate-500">{t.listings.noListingsFound}</p>
+              <p className="text-gray-500">{t.listings.noListingsFound}</p>
               <button 
                 onClick={() => { setSelectedCategory('all'); setSearchQuery(''); }}
-                className="text-blue-600 hover:underline mt-2"
+                className="text-blue-400 hover:underline mt-2"
               >
                 {t.listings.clearFilters}
               </button>
