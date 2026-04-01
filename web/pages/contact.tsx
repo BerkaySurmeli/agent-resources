@@ -6,6 +6,15 @@ import { useLanguage } from '../context/LanguageContext';
 export default function ContactPage() {
   const { t } = useLanguage();
   
+  // Category mapping to ensure we always send English values to the backend
+  const categoryMap: Record<string, string> = {
+    [t.contact.productSupport]: 'Product Support',
+    [t.contact.purchaseIssues]: 'Purchase Issues',
+    [t.contact.generalInquiry]: 'General Inquiry',
+    [t.contact.reportProblem]: 'Report a Problem',
+    [t.contact.partnershipSales]: 'Partnership/Sales',
+  };
+
   const categories = [
     t.contact.productSupport,
     t.contact.purchaseIssues,
@@ -85,14 +94,20 @@ export default function ContactPage() {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+      // Map the category to English before sending
+      const submitData = {
+        ...formData,
+        category: categoryMap[formData.category] || formData.category,
+      };
 
       const response = await fetch(`${apiUrl}/contact/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submitData),
         signal: controller.signal,
       });
 

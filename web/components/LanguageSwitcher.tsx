@@ -22,13 +22,10 @@ export default function LanguageSwitcher() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors text-sm"
+        className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-slate-100 transition-colors"
+        title={currentLang?.name}
       >
-        <span>{currentLang?.flag}</span>
-        <span className="hidden sm:inline">{currentLang?.name}</span>
-        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <span className="text-lg">{currentLang?.flag}</span>
       </button>
 
       {isOpen && (

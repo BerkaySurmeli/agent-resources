@@ -134,9 +134,9 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center">
           <FadeIn delay={100}>
             <h1 className="text-5xl md:text-6xl font-semibold text-slate-900 tracking-tight mb-6">
-              Beyond Human
+              Beyond
               <br />
-              <span className="text-blue-600">Resources</span>
+              <span className="text-blue-600">Human Resources</span>
             </h1>
           </FadeIn>
 
@@ -174,6 +174,80 @@ export default function Home() {
           </FadeIn>
         </div>
       </main>
+
+      {/* Build Your Team Section */}
+      <section className="py-20 px-6 bg-gradient-to-b from-white to-slate-50">
+        <div className="max-w-6xl mx-auto">
+          <FadeIn>
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-semibold text-slate-900 mb-4">
+                Build Your Team
+              </h2>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                Assemble your AI workforce in minutes. No complex setup, no lengthy configuration.
+              </p>
+            </div>
+          </FadeIn>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <FadeIn delay={100}>
+              <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-lg transition-all text-center group">
+                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 mb-3">1. Browse & Select</h3>
+                <p className="text-slate-600">
+                  Explore our marketplace of AI personas, skills, and MCP servers. Find the perfect fit for your needs.
+                </p>
+              </div>
+            </FadeIn>
+
+            <FadeIn delay={200}>
+              <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-lg transition-all text-center group">
+                <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 mb-3">2. Purchase</h3>
+                <p className="text-slate-600">
+                  One-time purchase. No subscriptions, no hidden fees. Own your AI team forever.
+                </p>
+              </div>
+            </FadeIn>
+
+            <FadeIn delay={300}>
+              <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm hover:shadow-lg transition-all text-center group">
+                <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 mb-3">3. One Command Install</h3>
+                <p className="text-slate-600">
+                  Deploy to your OpenClaw environment with a single command. Your AI team is ready to work.
+                </p>
+              </div>
+            </FadeIn>
+          </div>
+
+          <FadeIn delay={400}>
+            <div className="mt-12 text-center">
+              <Link
+                href="/wizard"
+                className="inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 transition-all hover:scale-105"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Start Building Your Team
+              </Link>
+            </div>
+          </FadeIn>
+        </div>
+      </section>
 
       {/* Featured Products */}
       <section className="py-24 px-6 bg-slate-50">
@@ -291,12 +365,20 @@ export default function Home() {
                     <span className="text-3xl font-bold">$99</span>
                     <span className="text-slate-500 line-through ml-2">$157</span>
                   </div>
-                  <Link 
-                    href="/listings/dream-team-bundle" 
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      // Add all three personas to cart, then navigate
+                      addToCart({ slug: 'claudia-project-manager', name: 'Claudia - AI Project Manager', price: 49, category: 'personas' });
+                      addToCart({ slug: 'chen-developer', name: 'Chen - AI Developer', price: 59, category: 'personas' });
+                      addToCart({ slug: 'adrian-ux-designer', name: 'Adrian - AI UX Designer', price: 49, category: 'personas' });
+                      window.location.href = '/cart';
+                    }}
                     className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
                   >
-                    View Bundle
-                  </Link>
+                    Get Bundle
+                  </button>
                 </div>
               </div>
             </div>

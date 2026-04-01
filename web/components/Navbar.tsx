@@ -28,8 +28,8 @@ export default function Navbar() {
 
         {/* Main Navigation */}
         <div className="hidden md:flex items-center gap-6">
-          <Link href="/developers" className="text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap">
-            {t.nav.developers || 'Developers'}
+          <Link href="/listings" className="text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap">
+            {t.nav.listings || 'Listings'}
           </Link>
           <Link href="/wizard" className="text-blue-600 hover:text-blue-700 transition-colors font-medium whitespace-nowrap">
             {t.nav.buildTeam}
@@ -38,8 +38,6 @@ export default function Navbar() {
 
         {/* Right Side */}
         <div className="flex items-center gap-3">
-          <LanguageSwitcher />
-          
           {user ? (
             <UserMenu />
           ) : (
@@ -57,6 +55,7 @@ export default function Navbar() {
               </Link>
             </div>
           )}
+          <LanguageSwitcher />
         </div>
 
         {/* Mobile Menu - Simplified */}

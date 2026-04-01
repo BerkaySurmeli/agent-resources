@@ -90,12 +90,6 @@ export default function Settings() {
                 <p className="font-medium text-slate-900">{user.email}</p>
               </div>
               <div>
-                <label className="text-sm text-slate-500">Account Type</label>
-                <p className="font-medium text-slate-900">
-                  {user.isDeveloper ? 'Developer' : 'Buyer'}
-                </p>
-              </div>
-              <div>
                 <label className="text-sm text-slate-500">Email Verified</label>
                 <p className={`font-medium ${user.isVerified ? 'text-green-600' : 'text-yellow-600'}`}>
                   {user.isVerified ? 'Yes' : 'No'}
