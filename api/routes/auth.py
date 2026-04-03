@@ -14,7 +14,16 @@ from email.mime.multipart import MIMEMultipart
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 # Email configuration - prefer Railway Email if available
-if settings.RAILWAY_EMAIL_SMTP_SERVER and settings.RAILWAY_EMAIL_PASSWORD:
+if settings.EMAIL_HOST and settings.EMAIL_CLIENT_PASSWORD:
+    # New Railway Email service (vergissberlin/railwayapp-email)
+    SMTP_SERVER = settings.EMAIL_HOST
+    SMTP_PORT = 587  # Default port
+    EMAIL_USER = settings.EMAIL_CLIENT_USER
+    EMAIL_PASSWORD = settings.EMAIL_CLIENT_PASSWORD
+    FROM_EMAIL = settings.EMAIL_CLIENT_FROM or settings.EMAIL_CLIENT_USER
+    USING_RAILWAY = True
+elif settings.RAILWAY_EMAIL_SMTP_SERVER and settings.RAILWAY_EMAIL_PASSWORD:
+    # Legacy Railway Email variables
     SMTP_SERVER = settings.RAILWAY_EMAIL_SMTP_SERVER
     SMTP_PORT = settings.RAILWAY_EMAIL_SMTP_PORT
     EMAIL_USER = settings.RAILWAY_EMAIL_USER
@@ -22,6 +31,7 @@ if settings.RAILWAY_EMAIL_SMTP_SERVER and settings.RAILWAY_EMAIL_PASSWORD:
     FROM_EMAIL = settings.RAILWAY_EMAIL_FROM or settings.RAILWAY_EMAIL_USER
     USING_RAILWAY = True
 else:
+    # Fallback to Zoho
     SMTP_SERVER = settings.ZOHO_SMTP_SERVER
     SMTP_PORT = settings.ZOHO_SMTP_PORT
     EMAIL_USER = settings.ZOHO_EMAIL

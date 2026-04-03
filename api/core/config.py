@@ -9,7 +9,14 @@ class Settings(BaseSettings):
     STRIPE_PUBLISHABLE_KEY: str = "pk_test_..."  # Add your Stripe publishable key
     
     # Email configuration - supports Railway Email or Zoho
-    # Railway Email (recommended - uses internal network, not blocked)
+    # Railway Email (vergissberlin/railwayapp-email)
+    EMAIL_HOST: str = ""
+    EMAIL_CLIENT_USER: str = ""
+    EMAIL_CLIENT_PASSWORD: str = ""
+    EMAIL_CLIENT_FROM: str = ""
+    EMAIL_SERVICE_PROVIDER: str = ""
+    
+    # Legacy Railway Email variables (for backwards compatibility)
     RAILWAY_EMAIL_SMTP_SERVER: str = ""
     RAILWAY_EMAIL_SMTP_PORT: int = 587
     RAILWAY_EMAIL_USER: str = ""
@@ -36,9 +43,11 @@ class Settings(BaseSettings):
         if not self.ZOHO_SUPPORT_PASSWORD:
             self.ZOHO_SUPPORT_PASSWORD = self.ZOHO_PASSWORD
         
-        # If Railway email is configured, use it as primary
-        if self.RAILWAY_EMAIL_SMTP_SERVER and self.RAILWAY_EMAIL_PASSWORD:
-            print("[EMAIL CONFIG] Using Railway Email service")
+        # Check which email service is configured
+        if self.EMAIL_HOST and self.EMAIL_CLIENT_PASSWORD:
+            print(f"[EMAIL CONFIG] Using Railway Email service ({self.EMAIL_SERVICE_PROVIDER})")
+        elif self.RAILWAY_EMAIL_SMTP_SERVER and self.RAILWAY_EMAIL_PASSWORD:
+            print("[EMAIL CONFIG] Using Railway Email service (legacy)")
         else:
             print("[EMAIL CONFIG] Using Zoho SMTP (may be blocked)")
 
