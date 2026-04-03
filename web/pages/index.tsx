@@ -186,9 +186,9 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <FadeIn>
             <div className="text-center mb-16">
-              <p className="text-accent-400 font-medium mb-3 tracking-wider uppercase text-sm">Beyond Human Resources</p>
+              <p className="text-accent-400 font-medium mb-3 tracking-wider uppercase text-sm">Build Your Team</p>
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                Build Your Team
+                Beyond Human Resources
               </h2>
               <p className="text-lg text-dark-300 max-w-2xl mx-auto mb-8">
                 Assemble your AI workforce in minutes. No complex setup, no lengthy configuration.

@@ -37,9 +37,6 @@ export default function Navbar() {
           <Link href="/blog" className="btn-ghost">
             Blog
           </Link>
-          <Link href="/sell" className="btn-ghost">
-            List an Item
-          </Link>
         </div>
 
         {/* Right Side */}
