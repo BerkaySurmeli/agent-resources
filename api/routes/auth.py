@@ -120,7 +120,7 @@ The Agent Resources Team
 
 # Security - use argon2 which doesn't have the 72-byte limit
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
+SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
 
@@ -134,12 +134,14 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+from typing import Optional
+
 class UserResponse(BaseModel):
     id: str
     email: str
-    name: str | None
+    name: Optional[str]
     is_developer: bool
-    avatar_url: str | None
+    avatar_url: Optional[str]
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -157,7 +159,7 @@ def get_password_hash(password):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Hash error: {str(e)}")
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
