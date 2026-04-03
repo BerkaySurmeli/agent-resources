@@ -8,17 +8,21 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: str = "sk_test_..."  # Add your Stripe secret key
     STRIPE_PUBLISHABLE_KEY: str = "pk_test_..."  # Add your Stripe publishable key
     
-    # Email configuration - supports multiple Zoho accounts
+    # Email configuration - supports Railway Email or Zoho
+    # Railway Email (recommended - uses internal network, not blocked)
+    RAILWAY_EMAIL_SMTP_SERVER: str = ""
+    RAILWAY_EMAIL_SMTP_PORT: int = 587
+    RAILWAY_EMAIL_USER: str = ""
+    RAILWAY_EMAIL_PASSWORD: str = ""
+    RAILWAY_EMAIL_FROM: str = ""
+    
+    # Fallback: Zoho SMTP (may be blocked by Railway)
     ZOHO_SMTP_SERVER: str = "smtp.zoho.com"
     ZOHO_SMTP_PORT: int = 587
-    
-    # Primary sender email (for verification, notifications)
     ZOHO_EMAIL: str = "info@shopagentresources.com"
     ZOHO_PASSWORD: str = ""
-    
-    # Support email (for contact form - can be same or different account)
     ZOHO_SUPPORT_EMAIL: str = "support@shopagentresources.com"
-    ZOHO_SUPPORT_PASSWORD: str = ""  # Only needed if different from ZOHO_PASSWORD
+    ZOHO_SUPPORT_PASSWORD: str = ""
     
     class Config:
         env_file = ".env"
@@ -31,5 +35,11 @@ class Settings(BaseSettings):
         # If support password not set, use main password
         if not self.ZOHO_SUPPORT_PASSWORD:
             self.ZOHO_SUPPORT_PASSWORD = self.ZOHO_PASSWORD
+        
+        # If Railway email is configured, use it as primary
+        if self.RAILWAY_EMAIL_SMTP_SERVER and self.RAILWAY_EMAIL_PASSWORD:
+            print("[EMAIL CONFIG] Using Railway Email service")
+        else:
+            print("[EMAIL CONFIG] Using Zoho SMTP (may be blocked)")
 
 settings = Settings()

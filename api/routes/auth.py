@@ -13,22 +13,32 @@ from email.mime.multipart import MIMEMultipart
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-# Zoho Mail configuration from settings
-ZOHO_SMTP_SERVER = settings.ZOHO_SMTP_SERVER
-ZOHO_SMTP_PORT = settings.ZOHO_SMTP_PORT
-ZOHO_EMAIL = settings.ZOHO_EMAIL
-ZOHO_PASSWORD = settings.ZOHO_PASSWORD
+# Email configuration - prefer Railway Email if available
+if settings.RAILWAY_EMAIL_SMTP_SERVER and settings.RAILWAY_EMAIL_PASSWORD:
+    SMTP_SERVER = settings.RAILWAY_EMAIL_SMTP_SERVER
+    SMTP_PORT = settings.RAILWAY_EMAIL_SMTP_PORT
+    EMAIL_USER = settings.RAILWAY_EMAIL_USER
+    EMAIL_PASSWORD = settings.RAILWAY_EMAIL_PASSWORD
+    FROM_EMAIL = settings.RAILWAY_EMAIL_FROM or settings.RAILWAY_EMAIL_USER
+    USING_RAILWAY = True
+else:
+    SMTP_SERVER = settings.ZOHO_SMTP_SERVER
+    SMTP_PORT = settings.ZOHO_SMTP_PORT
+    EMAIL_USER = settings.ZOHO_EMAIL
+    EMAIL_PASSWORD = settings.ZOHO_PASSWORD
+    FROM_EMAIL = settings.ZOHO_EMAIL
+    USING_RAILWAY = False
 
 def send_verification_email(to_email: str, name: str, token: str):
-    """Send verification email via Zoho SMTP"""
-    if not ZOHO_PASSWORD:
-        print("[EMAIL] Zoho password not configured, cannot send email")
+    """Send verification email via SMTP (Railway or Zoho)"""
+    if not EMAIL_PASSWORD:
+        print("[EMAIL] Email password not configured, cannot send email")
         print(f"[EMAIL] Verification link: https://shopagentresources.com/verify-email?token={token}")
         raise Exception("Email service not configured. Please contact support.")
 
     msg = MIMEMultipart('alternative')
     msg['Subject'] = 'Welcome to Agent Resources - Verify Your Email'
-    msg['From'] = f"Agent Resources <{ZOHO_EMAIL}>"
+    msg['From'] = f"Agent Resources <{FROM_EMAIL}>"
     msg['To'] = to_email
 
     verification_url = f"https://shopagentresources.com/verify-email?token={token}"
@@ -100,16 +110,18 @@ The Agent Resources Team
 
     # Send email
     try:
-        print(f"[EMAIL DEBUG] Connecting to {ZOHO_SMTP_SERVER}:{ZOHO_SMTP_PORT}")
-        print(f"[EMAIL DEBUG] Using email: {ZOHO_EMAIL}")
-        print(f"[EMAIL DEBUG] Password length: {len(ZOHO_PASSWORD) if ZOHO_PASSWORD else 0}")
+        service_name = "Railway Email" if USING_RAILWAY else "Zoho"
+        print(f"[EMAIL DEBUG] Using {service_name}")
+        print(f"[EMAIL DEBUG] Connecting to {SMTP_SERVER}:{SMTP_PORT}")
+        print(f"[EMAIL DEBUG] Using email: {EMAIL_USER}")
+        print(f"[EMAIL DEBUG] From email: {FROM_EMAIL}")
 
         # Try SSL connection on port 465 first (more reliable)
         try:
             import smtplib
-            with smtplib.SMTP_SSL(ZOHO_SMTP_SERVER, 465, timeout=10) as server:
+            with smtplib.SMTP_SSL(SMTP_SERVER, 465, timeout=10) as server:
                 print("[EMAIL DEBUG] Connected via SSL on port 465")
-                server.login(ZOHO_EMAIL, ZOHO_PASSWORD)
+                server.login(EMAIL_USER, EMAIL_PASSWORD)
                 print("[EMAIL DEBUG] Login successful")
                 server.send_message(msg)
                 print(f"[EMAIL] Verification email sent to {to_email} via SSL")
@@ -119,11 +131,11 @@ The Agent Resources Team
 
         # Fallback to STARTTLS on port 587
         try:
-            with smtplib.SMTP(ZOHO_SMTP_SERVER, ZOHO_SMTP_PORT, timeout=10) as server:
+            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10) as server:
                 print("[EMAIL DEBUG] Connected via SMTP on port 587")
                 server.starttls()
                 print("[EMAIL DEBUG] STARTTLS successful")
-                server.login(ZOHO_EMAIL, ZOHO_PASSWORD)
+                server.login(EMAIL_USER, EMAIL_PASSWORD)
                 print("[EMAIL DEBUG] Login successful")
                 server.send_message(msg)
                 print(f"[EMAIL] Verification email sent to {to_email} via STARTTLS")

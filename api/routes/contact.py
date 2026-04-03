@@ -7,11 +7,21 @@ from email.mime.multipart import MIMEMultipart
 
 router = APIRouter(prefix="/contact", tags=["Contact"])
 
-# Zoho Mail configuration from settings
-ZOHO_SMTP_SERVER = settings.ZOHO_SMTP_SERVER
-ZOHO_SMTP_PORT = settings.ZOHO_SMTP_PORT
-ZOHO_EMAIL = settings.ZOHO_SUPPORT_EMAIL  # Use support email for contact form
-ZOHO_PASSWORD = settings.ZOHO_SUPPORT_PASSWORD
+# Email configuration - prefer Railway Email if available
+if settings.RAILWAY_EMAIL_SMTP_SERVER and settings.RAILWAY_EMAIL_PASSWORD:
+    SMTP_SERVER = settings.RAILWAY_EMAIL_SMTP_SERVER
+    SMTP_PORT = settings.RAILWAY_EMAIL_SMTP_PORT
+    EMAIL_USER = settings.RAILWAY_EMAIL_USER
+    EMAIL_PASSWORD = settings.RAILWAY_EMAIL_PASSWORD
+    FROM_EMAIL = settings.RAILWAY_EMAIL_FROM or settings.RAILWAY_EMAIL_USER
+    USING_RAILWAY = True
+else:
+    SMTP_SERVER = settings.ZOHO_SMTP_SERVER
+    SMTP_PORT = settings.ZOHO_SMTP_PORT
+    EMAIL_USER = settings.ZOHO_SUPPORT_EMAIL
+    EMAIL_PASSWORD = settings.ZOHO_SUPPORT_PASSWORD
+    FROM_EMAIL = settings.ZOHO_SUPPORT_EMAIL
+    USING_RAILWAY = False
 
 # Support email address (recipient)
 SUPPORT_EMAIL = settings.ZOHO_SUPPORT_EMAIL
@@ -127,17 +137,19 @@ This email was sent via the Agent Resources contact form.
         msg.attach(part1)
         msg.attach(part2)
 
-        # Send email via Zoho SMTP
-        print(f"[CONTACT DEBUG] Connecting to {ZOHO_SMTP_SERVER}:{ZOHO_SMTP_PORT}")
-        print(f"[CONTACT DEBUG] Using email: {ZOHO_EMAIL}")
+        # Send email via SMTP
+        service_name = "Railway Email" if USING_RAILWAY else "Zoho"
+        print(f"[CONTACT DEBUG] Using {service_name}")
+        print(f"[CONTACT DEBUG] Connecting to {SMTP_SERVER}:{SMTP_PORT}")
+        print(f"[CONTACT DEBUG] Using email: {EMAIL_USER}")
 
         email_sent = False
 
         # Try SSL connection on port 465 first
         try:
-            with smtplib.SMTP_SSL(ZOHO_SMTP_SERVER, 465, timeout=10) as server:
+            with smtplib.SMTP_SSL(SMTP_SERVER, 465, timeout=10) as server:
                 print("[CONTACT DEBUG] Connected via SSL on port 465")
-                server.login(ZOHO_EMAIL, ZOHO_PASSWORD)
+                server.login(EMAIL_USER, EMAIL_PASSWORD)
                 server.send_message(msg)
                 print(f"[CONTACT FORM] Email sent to {SUPPORT_EMAIL} from {form_data.email} via SSL")
                 email_sent = True
@@ -147,9 +159,9 @@ This email was sent via the Agent Resources contact form.
         # Fallback to STARTTLS
         if not email_sent:
             try:
-                with smtplib.SMTP(ZOHO_SMTP_SERVER, ZOHO_SMTP_PORT, timeout=10) as server:
+                with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10) as server:
                     server.starttls()
-                    server.login(ZOHO_EMAIL, ZOHO_PASSWORD)
+                    server.login(EMAIL_USER, EMAIL_PASSWORD)
                     server.send_message(msg)
                     print(f"[CONTACT FORM] Email sent to {SUPPORT_EMAIL} from {form_data.email} via STARTTLS")
                     email_sent = True
