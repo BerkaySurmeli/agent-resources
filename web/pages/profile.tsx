@@ -2,25 +2,14 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useRouter } from 'next/router';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
 export default function Profile() {
   const { user, updateProfile, logout } = useAuth();
-  const router = useRouter();
   const [name, setName] = useState(user?.name || '');
   const [avatar, setAvatar] = useState(user?.avatar || '');
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Account deletion state
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
-  const [deleteSuccess, setDeleteSuccess] = useState('');
 
   if (!user) {
     return (
@@ -50,41 +39,6 @@ export default function Profile() {
         setAvatar(reader.result as string);
       };
       reader.readAsDataURL(file);
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    if (deleteConfirmText !== 'DELETE') {
-      setDeleteError('Please type DELETE to confirm');
-      return;
-    }
-
-    setDeleting(true);
-    setDeleteError('');
-
-    try {
-      const token = localStorage.getItem('ar-token');
-      const res = await fetch(`${API_URL}/auth/account`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (res.ok) {
-        setDeleteSuccess('Account deleted successfully');
-        logout();
-        setTimeout(() => {
-          router.push('/');
-        }, 2000);
-      } else {
-        const data = await res.json();
-        setDeleteError(data.detail || 'Failed to delete account');
-      }
-    } catch (err: any) {
-      setDeleteError(err.message || 'Failed to delete account');
-    } finally {
-      setDeleting(false);
     }
   };
 
@@ -202,7 +156,7 @@ export default function Profile() {
                 href="/sell"
                 className="block w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors text-center"
               >
-                List an item
+                List an Item
               </Link>
               <button
                 onClick={logout}
@@ -213,101 +167,29 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Account Management Section */}
-          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
-            <h2 className="text-xl font-semibold text-white mb-6">Account Management</h2>
-            
-            {/* Account Info */}
-            <div className="space-y-4 mb-8">
-              <div>
-                <label className="text-sm text-gray-500">Name</label>
-                <p className="font-medium text-white">{user.name}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-500">Email</label>
-                <p className="font-medium text-white">{user.email}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-500">Email Verified</label>
-                <p className={`font-medium ${user.isVerified ? 'text-green-400' : 'text-yellow-400'}`}>
-                  {user.isVerified ? 'Yes' : 'No'}
-                </p>
-              </div>
-            </div>
-
-            {/* Danger Zone */}
-            <div className="border-t border-gray-700 pt-6">
-              <h3 className="text-lg font-semibold text-red-400 mb-4">Danger Zone</h3>
-              
-              {!showDeleteConfirm ? (
+          {/* Account Management Link */}
+          <Link
+            href="/account"
+            className="block bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 hover:border-blue-500/30 transition-all group"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gray-700/50 rounded-xl flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                  <svg className="w-6 h-6 text-gray-400 group-hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
                 <div>
-                  <p className="text-gray-400 mb-4">
-                    Once you delete your account, there is no going back. This will permanently delete:
-                  </p>
-                  <ul className="list-disc list-inside text-gray-400 mb-6 space-y-1">
-                    <li>Your profile and all personal data</li>
-                    <li>All your listings and products</li>
-                    <li>Your reviews and ratings</li>
-                    <li>Purchase history (anonymized for records)</li>
-                  </ul>
-                  <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors"
-                  >
-                    Delete Account
-                  </button>
+                  <h2 className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors">Account Management</h2>
+                  <p className="text-sm text-gray-400">Manage your account settings and security</p>
                 </div>
-              ) : (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-                  <h4 className="font-semibold text-red-400 mb-2">Confirm Account Deletion</h4>
-                  <p className="text-red-300 text-sm mb-4">
-                    This action cannot be undone. Type <strong>DELETE</strong> to confirm.
-                  </p>
-                  
-                  {deleteError && (
-                    <div className="bg-red-500/20 text-red-400 px-3 py-2 rounded mb-4 text-sm">
-                      {deleteError}
-                    </div>
-                  )}
-                  
-                  {deleteSuccess && (
-                    <div className="bg-green-500/20 text-green-400 px-3 py-2 rounded mb-4 text-sm">
-                      {deleteSuccess}
-                    </div>
-                  )}
-                  
-                  <input
-                    type="text"
-                    value={deleteConfirmText}
-                    onChange={(e) => setDeleteConfirmText(e.target.value)}
-                    placeholder="Type DELETE to confirm"
-                    className="w-full px-3 py-2 bg-gray-900/50 border border-red-500/30 rounded-lg mb-4 text-white placeholder-gray-500 focus:outline-none focus:border-red-500"
-                  />
-                  
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleDeleteAccount}
-                      disabled={deleting}
-                      className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
-                    >
-                      {deleting ? 'Deleting...' : 'Permanently Delete Account'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowDeleteConfirm(false);
-                        setDeleteConfirmText('');
-                        setDeleteError('');
-                      }}
-                      disabled={deleting}
-                      className="px-4 py-2 border border-gray-700 rounded-lg font-medium text-gray-300 hover:bg-gray-800 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
+              </div>
+              <svg className="w-5 h-5 text-gray-500 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </div>
-          </div>
+          </Link>
         </div>
       </main>
     </div>

@@ -5,19 +5,19 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from core.database import get_session
+from core.config import settings
 from models import User
-import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-# Zoho Mail configuration
-ZOHO_SMTP_SERVER = os.getenv("ZOHO_SMTP_SERVER", "smtp.zoho.com")
-ZOHO_SMTP_PORT = int(os.getenv("ZOHO_SMTP_PORT", "587"))
-ZOHO_EMAIL = os.getenv("ZOHO_EMAIL", "info@shopagentresources.com")
-ZOHO_PASSWORD = os.getenv("ZOHO_PASSWORD", "")
+# Zoho Mail configuration from settings
+ZOHO_SMTP_SERVER = settings.ZOHO_SMTP_SERVER
+ZOHO_SMTP_PORT = settings.ZOHO_SMTP_PORT
+ZOHO_EMAIL = settings.ZOHO_EMAIL
+ZOHO_PASSWORD = settings.ZOHO_PASSWORD
 
 def send_verification_email(to_email: str, name: str, token: str):
     """Send verification email via Zoho SMTP"""

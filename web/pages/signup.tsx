@@ -5,6 +5,64 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+
+// Resend verification component
+function ResendVerification({ email }: { email: string }) {
+  const [resending, setResending] = useState(false);
+  const [resendStatus, setResendStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [resendMessage, setResendMessage] = useState('');
+
+  const handleResend = async () => {
+    setResending(true);
+    setResendStatus('idle');
+
+    try {
+      const response = await fetch(`${API_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setResendStatus('success');
+        setResendMessage('Verification email resent! Check your inbox.');
+      } else {
+        setResendStatus('error');
+        setResendMessage(data.detail || 'Failed to resend. Please try again.');
+      }
+    } catch (err) {
+      setResendStatus('error');
+      setResendMessage('Network error. Please try again.');
+    } finally {
+      setResending(false);
+    }
+  };
+
+  return (
+    <div>
+      {resendStatus !== 'idle' && (
+        <div className={`mb-3 px-4 py-2 rounded-lg text-sm ${
+          resendStatus === 'success'
+            ? 'bg-green-500/10 border border-green-500/20 text-green-400'
+            : 'bg-red-500/10 border border-red-500/20 text-red-400'
+        }`}>
+          {resendMessage}
+        </div>
+      )}
+      <button
+        onClick={handleResend}
+        disabled={resending}
+        className="w-full bg-gray-800 text-gray-300 py-3 rounded-xl font-medium hover:bg-gray-700 transition-colors border border-gray-700 disabled:opacity-50"
+      >
+        {resending ? 'Resending...' : 'Resend Verification Email'}
+      </button>
+    </div>
+  );
+}
+
 export default function Signup() {
   const router = useRouter();
   const { t } = useLanguage();
@@ -88,6 +146,7 @@ export default function Signup() {
               >
                 {t.signup.goToLogin}
               </button>
+              <ResendVerification email={email} />
               <button
                 onClick={() => window.location.reload()}
                 className="w-full bg-gray-800 text-gray-300 py-3 rounded-xl font-medium hover:bg-gray-700 transition-colors border border-gray-700"

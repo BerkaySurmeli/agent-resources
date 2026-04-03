@@ -49,11 +49,17 @@ export default function UserMenu() {
         {/* Dropdown */}
         <div className="absolute end-0 top-full mt-2 w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
           <div className="py-2">
-            <Link 
-              href="/profile" 
+            <Link
+              href="/profile"
               className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
             >
               Profile
+            </Link>
+            <Link
+              href="/account"
+              className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+            >
+              Account
             </Link>
             <Link
               href="/dashboard"
@@ -62,7 +68,7 @@ export default function UserMenu() {
               Developer Dashboard
             </Link>
             <hr className="my-2 border-gray-700" />
-            <button 
+            <button
               onClick={logout}
               className="block w-full text-start px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors"
             >
