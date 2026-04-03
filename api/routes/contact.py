@@ -131,17 +131,33 @@ This email was sent via the Agent Resources contact form.
         msg.attach(part2)
 
         # Send email via Zoho SMTP
-        with smtplib.SMTP(ZOHO_SMTP_SERVER, ZOHO_SMTP_PORT) as server:
-            server.starttls()
-            server.login(ZOHO_EMAIL, ZOHO_PASSWORD)
-            server.send_message(msg)
+        try:
+            print(f"[CONTACT DEBUG] Connecting to {ZOHO_SMTP_SERVER}:{ZOHO_SMTP_PORT}")
+            print(f"[CONTACT DEBUG] Using email: {ZOHO_EMAIL}")
 
-        print(f"[CONTACT FORM] Email sent to {SUPPORT_EMAIL} from {form_data.email}")
-        return {"message": "Form submitted successfully"}
-        
-    except Exception as e:
-        print(f"[CONTACT FORM ERROR] Failed to send email: {e}")
-        raise HTTPException(status_code=500, detail="Failed to send message. Please try again later.")
+            # Try SSL connection on port 465 first
+            try:
+                with smtplib.SMTP_SSL(ZOHO_SMTP_SERVER, 465, timeout=30) as server:
+                    print("[CONTACT DEBUG] Connected via SSL on port 465")
+                    server.login(ZOHO_EMAIL, ZOHO_PASSWORD)
+                    server.send_message(msg)
+                    print(f"[CONTACT FORM] Email sent to {SUPPORT_EMAIL} from {form_data.email} via SSL")
+            except Exception as ssl_error:
+                print(f"[CONTACT DEBUG] SSL failed: {ssl_error}, trying STARTTLS...")
+                # Fallback to STARTTLS
+                with smtplib.SMTP(ZOHO_SMTP_SERVER, ZOHO_SMTP_PORT, timeout=30) as server:
+                    server.starttls()
+                    server.login(ZOHO_EMAIL, ZOHO_PASSWORD)
+                    server.send_message(msg)
+                    print(f"[CONTACT FORM] Email sent to {SUPPORT_EMAIL} from {form_data.email} via STARTTLS")
+
+            return {"message": "Form submitted successfully"}
+        except smtplib.SMTPAuthenticationError as e:
+            print(f"[CONTACT FORM ERROR] Authentication failed: {e}")
+            raise HTTPException(status_code=500, detail="Email authentication failed. Please contact support.")
+        except Exception as e:
+            print(f"[CONTACT FORM ERROR] Failed to send email: {type(e).__name__}: {e}")
+            raise HTTPException(status_code=500, detail="Failed to send message. Please try again later.")
 
 @router.get("/categories")
 def get_categories():

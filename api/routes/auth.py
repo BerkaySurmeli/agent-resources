@@ -100,11 +100,30 @@ The Agent Resources Team
 
     # Send email
     try:
-        with smtplib.SMTP(ZOHO_SMTP_SERVER, ZOHO_SMTP_PORT, timeout=30) as server:
-            server.starttls()
-            server.login(ZOHO_EMAIL, ZOHO_PASSWORD)
-            server.send_message(msg)
-        print(f"[EMAIL] Verification email sent to {to_email}")
+        print(f"[EMAIL DEBUG] Connecting to {ZOHO_SMTP_SERVER}:{ZOHO_SMTP_PORT}")
+        print(f"[EMAIL DEBUG] Using email: {ZOHO_EMAIL}")
+        print(f"[EMAIL DEBUG] Password length: {len(ZOHO_PASSWORD) if ZOHO_PASSWORD else 0}")
+
+        # Try SSL connection on port 465 first (more reliable)
+        try:
+            import smtplib
+            with smtplib.SMTP_SSL(ZOHO_SMTP_SERVER, 465, timeout=30) as server:
+                print("[EMAIL DEBUG] Connected via SSL on port 465")
+                server.login(ZOHO_EMAIL, ZOHO_PASSWORD)
+                print("[EMAIL DEBUG] Login successful")
+                server.send_message(msg)
+                print(f"[EMAIL] Verification email sent to {to_email} via SSL")
+        except Exception as ssl_error:
+            print(f"[EMAIL DEBUG] SSL failed: {ssl_error}, trying STARTTLS on 587...")
+            # Fallback to STARTTLS on port 587
+            with smtplib.SMTP(ZOHO_SMTP_SERVER, ZOHO_SMTP_PORT, timeout=30) as server:
+                print("[EMAIL DEBUG] Connected via SMTP on port 587")
+                server.starttls()
+                print("[EMAIL DEBUG] STARTTLS successful")
+                server.login(ZOHO_EMAIL, ZOHO_PASSWORD)
+                print("[EMAIL DEBUG] Login successful")
+                server.send_message(msg)
+                print(f"[EMAIL] Verification email sent to {to_email} via STARTTLS")
     except smtplib.SMTPAuthenticationError as e:
         print(f"[EMAIL ERROR] SMTP Authentication failed: {e}")
         print(f"[EMAIL] Verification link: {verification_url}")
@@ -114,7 +133,7 @@ The Agent Resources Team
         print(f"[EMAIL] Verification link: {verification_url}")
         raise Exception("Failed to send verification email. Please try again later.")
     except Exception as e:
-        print(f"[EMAIL ERROR] Unexpected error: {e}")
+        print(f"[EMAIL ERROR] Unexpected error: {type(e).__name__}: {e}")
         print(f"[EMAIL] Verification link: {verification_url}")
         raise Exception("Failed to send verification email. Please try again later.")
 
