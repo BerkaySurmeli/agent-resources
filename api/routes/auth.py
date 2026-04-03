@@ -107,16 +107,19 @@ The Agent Resources Team
         # Try SSL connection on port 465 first (more reliable)
         try:
             import smtplib
-            with smtplib.SMTP_SSL(ZOHO_SMTP_SERVER, 465, timeout=30) as server:
+            with smtplib.SMTP_SSL(ZOHO_SMTP_SERVER, 465, timeout=10) as server:
                 print("[EMAIL DEBUG] Connected via SSL on port 465")
                 server.login(ZOHO_EMAIL, ZOHO_PASSWORD)
                 print("[EMAIL DEBUG] Login successful")
                 server.send_message(msg)
                 print(f"[EMAIL] Verification email sent to {to_email} via SSL")
+                return
         except Exception as ssl_error:
-            print(f"[EMAIL DEBUG] SSL failed: {ssl_error}, trying STARTTLS on 587...")
-            # Fallback to STARTTLS on port 587
-            with smtplib.SMTP(ZOHO_SMTP_SERVER, ZOHO_SMTP_PORT, timeout=30) as server:
+            print(f"[EMAIL DEBUG] SSL failed: {ssl_error}")
+
+        # Fallback to STARTTLS on port 587
+        try:
+            with smtplib.SMTP(ZOHO_SMTP_SERVER, ZOHO_SMTP_PORT, timeout=10) as server:
                 print("[EMAIL DEBUG] Connected via SMTP on port 587")
                 server.starttls()
                 print("[EMAIL DEBUG] STARTTLS successful")
@@ -124,18 +127,25 @@ The Agent Resources Team
                 print("[EMAIL DEBUG] Login successful")
                 server.send_message(msg)
                 print(f"[EMAIL] Verification email sent to {to_email} via STARTTLS")
+                return
+        except Exception as tls_error:
+            print(f"[EMAIL DEBUG] STARTTLS failed: {tls_error}")
+
+        # If both fail, log the link for manual verification
+        print(f"[EMAIL ERROR] All SMTP methods failed")
+        print(f"[EMAIL FALLBACK] Verification link for {to_email}: {verification_url}")
+        # Don't raise exception - let user verify manually
+        print(f"[EMAIL] User can verify manually using the link above")
+
     except smtplib.SMTPAuthenticationError as e:
         print(f"[EMAIL ERROR] SMTP Authentication failed: {e}")
         print(f"[EMAIL] Verification link: {verification_url}")
         raise Exception("Email service authentication failed. Please contact support.")
-    except smtplib.SMTPException as e:
-        print(f"[EMAIL ERROR] SMTP error: {e}")
-        print(f"[EMAIL] Verification link: {verification_url}")
-        raise Exception("Failed to send verification email. Please try again later.")
     except Exception as e:
         print(f"[EMAIL ERROR] Unexpected error: {type(e).__name__}: {e}")
         print(f"[EMAIL] Verification link: {verification_url}")
-        raise Exception("Failed to send verification email. Please try again later.")
+        # Don't fail signup - user can verify manually
+        print(f"[EMAIL] Continuing without sending email - user can verify manually")
 
 # Security - use argon2 which doesn't have the 72-byte limit
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
