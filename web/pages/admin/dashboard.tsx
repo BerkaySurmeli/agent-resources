@@ -1,8 +1,13 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { useRouter } from 'next/router';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+
+// Admin email - only this user can access the dashboard
+const ADMIN_EMAIL = 'berkay@shopagentresources.com';
 
 // Mock data for now - will connect to API later
 const mockData = {
@@ -82,9 +87,34 @@ const mockData = {
 };
 
 export default function AdminDashboard() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [data, setData] = useState(mockData);
   const [loading, setLoading] = useState(false);
+
+  // Check if user is admin
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        router.push('/login');
+      } else if (user.email !== ADMIN_EMAIL) {
+        router.push('/');
+      }
+    }
+  }, [user, isLoading, router]);
+
+  // Show loading while checking auth
+  if (isLoading || !user || user.email !== ADMIN_EMAIL) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch real data from API
   useEffect(() => {

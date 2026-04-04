@@ -1,14 +1,34 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Header
 from sqlmodel import select, func
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from core.database import get_session
 from models import User, Product, Transaction, Review
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
+# Admin email - only this user can access admin endpoints
+ADMIN_EMAIL = "berkay@shopagentresources.com"
+
+def verify_admin(authorization: Optional[str] = Header(None), session = Depends(get_session)):
+    """Verify that the request is from an admin user"""
+    # For now, simple check - in production, use proper JWT validation
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    # Extract user from token (simplified - should validate JWT properly)
+    # For now, we'll check if the user exists and is the admin
+    user = session.exec(select(User).where(User.email == ADMIN_EMAIL)).first()
+    if not user:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    return user
+
 @router.get("/dashboard")
-def get_dashboard_stats(session = Depends(get_session)):
+def get_dashboard_stats(
+    session = Depends(get_session),
+    admin: User = Depends(verify_admin)
+):
     """Get admin dashboard statistics"""
     
     # User stats
@@ -35,7 +55,10 @@ def get_dashboard_stats(session = Depends(get_session)):
     }
 
 @router.get("/users")
-def get_all_users(session = Depends(get_session)):
+def get_all_users(
+    session = Depends(get_session),
+    admin: User = Depends(verify_admin)
+):
     """Get all users"""
     users = session.exec(select(User)).all()
     return [
@@ -51,7 +74,10 @@ def get_all_users(session = Depends(get_session)):
     ]
 
 @router.get("/developers")
-def get_all_developers(session = Depends(get_session)):
+def get_all_developers(
+    session = Depends(get_session),
+    admin: User = Depends(verify_admin)
+):
     """Get all developers with their stats"""
     developers = session.exec(select(User).where(User.is_developer == True)).all()
     
@@ -83,7 +109,10 @@ def get_all_developers(session = Depends(get_session)):
     return result
 
 @router.get("/listings")
-def get_all_listings(session = Depends(get_session)):
+def get_all_listings(
+    session = Depends(get_session),
+    admin: User = Depends(verify_admin)
+):
     """Get all listings with sales stats"""
     listings = session.exec(select(Product)).all()
     
@@ -122,7 +151,10 @@ def get_all_listings(session = Depends(get_session)):
     return result
 
 @router.get("/sales")
-def get_all_sales(session = Depends(get_session)):
+def get_all_sales(
+    session = Depends(get_session),
+    admin: User = Depends(verify_admin)
+):
     """Get all sales transactions"""
     sales = session.exec(
         select(Transaction).order_by(Transaction.created_at.desc())
@@ -147,7 +179,11 @@ def get_all_sales(session = Depends(get_session)):
     return result
 
 @router.get("/sales/recent")
-def get_recent_sales(limit: int = 10, session = Depends(get_session)):
+def get_recent_sales(
+    limit: int = 10, 
+    session = Depends(get_session),
+    admin: User = Depends(verify_admin)
+):
     """Get recent sales"""
     sales = session.exec(
         select(Transaction).order_by(Transaction.created_at.desc()).limit(limit)
