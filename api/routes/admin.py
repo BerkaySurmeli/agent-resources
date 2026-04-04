@@ -1,322 +1,170 @@
-from fastapi import APIRouter, HTTPException
-from sqlmodel import text, select
+from fastapi import APIRouter, HTTPException, Depends
+from sqlmodel import select, func
+from typing import List, Dict, Any
+from datetime import datetime, timedelta
 from core.database import get_session
-from models import User, Product
-from passlib.context import CryptContext
-import os
-from uuid import uuid4
-from datetime import datetime
+from models import User, Product, Transaction, Review
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+@router.get("/dashboard")
+def get_dashboard_stats(session = Depends(get_session)):
+    """Get admin dashboard statistics"""
+    
+    # User stats
+    total_users = session.exec(select(func.count(User.id))).one()
+    total_developers = session.exec(select(func.count(User.id)).where(User.is_developer == True)).one()
+    
+    # Listing stats
+    total_listings = session.exec(select(func.count(Product.id))).one()
+    
+    # Sales stats
+    total_sales = session.exec(select(func.count(Transaction.id))).one()
+    total_revenue = session.exec(select(func.sum(Transaction.amount))).one() or 0
+    platform_profit = session.exec(select(func.sum(Transaction.commission))).one() or 0
+    
+    return {
+        "stats": {
+            "totalUsers": total_users,
+            "totalDevelopers": total_developers,
+            "totalListings": total_listings,
+            "totalSales": total_sales,
+            "totalRevenue": float(total_revenue),
+            "platformProfit": float(platform_profit),
+        }
+    }
 
-@router.post("/run-migrations")
-async def run_migrations():
-    """Run pending database migrations"""
+@router.get("/users")
+def get_all_users(session = Depends(get_session)):
+    """Get all users"""
+    users = session.exec(select(User)).all()
+    return [
+        {
+            "id": str(user.id),
+            "email": user.email,
+            "name": user.name,
+            "isDeveloper": user.is_developer,
+            "isVerified": user.is_verified,
+            "createdAt": user.created_at.isoformat() if user.created_at else None,
+        }
+        for user in users
+    ]
+
+@router.get("/developers")
+def get_all_developers(session = Depends(get_session)):
+    """Get all developers with their stats"""
+    developers = session.exec(select(User).where(User.is_developer == True)).all()
     
-    migrations_dir = os.path.join(os.path.dirname(__file__), "..", "migrations")
-    
-    # Get list of migration files
-    migration_files = sorted([f for f in os.listdir(migrations_dir) if f.endswith('.sql')])
-    
-    results = []
-    
-    for session in get_session():
-        # Create migrations tracking table if it doesn't exist
-        session.execute(text("""
-            CREATE TABLE IF NOT EXISTS applied_migrations (
-                filename VARCHAR(255) PRIMARY KEY,
-                applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """))
-        session.commit()
+    result = []
+    for dev in developers:
+        # Get developer's listings
+        listings = session.exec(select(Product).where(Product.owner_id == dev.id)).all()
         
-        # Get already applied migrations
-        result = session.execute(text("SELECT filename FROM applied_migrations"))
-        applied = {row[0] for row in result}
+        # Calculate total sales and revenue
+        total_sales = 0
+        total_revenue = 0
+        for listing in listings:
+            sales = session.exec(
+                select(func.count(Transaction.id), func.sum(Transaction.amount))
+                .where(Transaction.product_id == listing.id)
+            ).one()
+            total_sales += sales[0] or 0
+            total_revenue += float(sales[1] or 0)
         
-        # Apply pending migrations
-        for migration_file in migration_files:
-            if migration_file not in applied:
-                try:
-                    with open(os.path.join(migrations_dir, migration_file), 'r') as f:
-                        sql = f.read()
-                    
-                    # Execute migration
-                    session.execute(text(sql))
-                    session.commit()
-                    
-                    # Record migration
-                    session.execute(
-                        text("INSERT INTO applied_migrations (filename) VALUES (:filename)"),
-                        {"filename": migration_file}
-                    )
-                    session.commit()
-                    
-                    results.append({"file": migration_file, "status": "applied"})
-                except Exception as e:
-                    session.rollback()
-                    results.append({"file": migration_file, "status": "error", "error": str(e)})
-            else:
-                results.append({"file": migration_file, "status": "skipped"})
+        result.append({
+            "id": str(dev.id),
+            "name": dev.name,
+            "email": dev.email,
+            "listings": len(listings),
+            "totalSales": total_sales,
+            "revenue": total_revenue,
+        })
     
-    return {"migrations": results}
+    return result
 
-
-@router.post("/fix-migrations")
-async def fix_migrations():
-    """Clear migration tracking and re-run only missing tables"""
+@router.get("/listings")
+def get_all_listings(session = Depends(get_session)):
+    """Get all listings with sales stats"""
+    listings = session.exec(select(Product)).all()
     
-    results = []
-    
-    for session in get_session():
-        # Drop and recreate applied_migrations to start fresh
-        session.execute(text("DROP TABLE IF EXISTS applied_migrations"))
-        session.execute(text("""
-            CREATE TABLE applied_migrations (
-                filename VARCHAR(255) PRIMARY KEY,
-                applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """))
+    result = []
+    for listing in listings:
+        # Get sales stats
+        sales_data = session.exec(
+            select(func.count(Transaction.id), func.sum(Transaction.amount))
+            .where(Transaction.product_id == listing.id)
+        ).one()
         
-        # Mark old migrations as applied (since tables exist)
-        old_migrations = ['001_initial_schema.sql', '002_add_waitlist.sql', 
-                         '003_add_auth_fields.sql', '004_add_email_verification.sql']
-        for m in old_migrations:
-            session.execute(
-                text("INSERT INTO applied_migrations (filename) VALUES (:filename)"),
-                {"filename": m}
-            )
+        sales_count = sales_data[0] or 0
+        revenue = float(sales_data[1] or 0)
+        profit = revenue * 0.15  # 15% commission
         
-        session.commit()
+        # Get reviews
+        reviews = session.exec(select(Review).where(Review.product_id == listing.id)).all()
+        avg_rating = sum(r.rating for r in reviews) / len(reviews) if reviews else 0
         
-        # Now run the listings migration
-        try:
-            migrations_dir = os.path.join(os.path.dirname(__file__), "..", "migrations")
-            with open(os.path.join(migrations_dir, "005_add_listings.sql"), 'r') as f:
-                sql = f.read()
-            
-            session.execute(text(sql))
-            session.commit()
-            
-            session.execute(
-                text("INSERT INTO applied_migrations (filename) VALUES ('005_add_listings.sql')")
-            )
-            session.commit()
-            
-            results.append({"file": "005_add_listings.sql", "status": "applied"})
-        except Exception as e:
-            session.rollback()
-            results.append({"file": "005_add_listings.sql", "status": "error", "error": str(e)})
-
-    return {"migrations": results}
-
-
-@router.post("/seed-claudia")
-async def seed_claudia():
-    """Seed Claudia developer and the 3 persona products"""
-
-    for session in get_session():
-        try:
-            # Check if Claudia already exists
-            claudia = session.exec(select(User).where(User.email == "claudia@agentresources.com")).first()
-
-            if not claudia:
-                print("Creating Claudia developer user...")
-                claudia = User(
-                    id=uuid4(),
-                    email="claudia@agentresources.com",
-                    password_hash=pwd_context.hash("claudia123"),
-                    name="Claudia",
-                    avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=Claudia&backgroundColor=b6e3f4",
-                    is_developer=True,
-                    is_verified=True,
-                    created_at=datetime.utcnow()
-                )
-                session.add(claudia)
-                session.commit()
-                session.refresh(claudia)
-            else:
-                # Ensure she's marked as developer
-                if not claudia.is_developer:
-                    claudia.is_developer = True
-                    session.commit()
-
-            # Define the 3 products
-            products_data = [
-                {
-                    "slug": "claudia-project-manager",
-                    "name": "AI Project Manager",
-                    "description": "Your AI project orchestrator. Delegates tasks, tracks progress, and ensures nothing falls through the cracks.",
-                    "category": "persona",
-                    "price_cents": 4900,
-                    "category_tags": ["project-management", "productivity", "team-leadership"]
-                },
-                {
-                    "slug": "chen-developer",
-                    "name": "AI Developer",
-                    "description": "Your AI software engineer. Writes clean, efficient code across any stack.",
-                    "category": "persona",
-                    "price_cents": 5900,
-                    "category_tags": ["coding", "software-engineering", "full-stack"]
-                },
-                {
-                    "slug": "adrian-ux-designer",
-                    "name": "AI UX Designer",
-                    "description": "Your AI design partner. Creates interfaces, writes copy, and crafts user experiences.",
-                    "category": "persona",
-                    "price_cents": 4900,
-                    "category_tags": ["design", "ux-ui", "creative"]
-                }
-            ]
-
-            created_products = []
-            for prod_data in products_data:
-                existing = session.exec(select(Product).where(Product.slug == prod_data["slug"])).first()
-
-                if not existing:
-                    product = Product(
-                        id=uuid4(),
-                        owner_id=claudia.id,
-                        name=prod_data["name"],
-                        slug=prod_data["slug"],
-                        description=prod_data["description"],
-                        category=prod_data["category"],
-                        category_tags=prod_data["category_tags"],
-                        price_cents=prod_data["price_cents"],
-                        is_active=True,
-                        is_verified=True,
-                        created_at=datetime.utcnow()
-                    )
-                    session.add(product)
-                    session.commit()
-                    created_products.append(prod_data["name"])
-                else:
-                    # Ensure it's owned by Claudia
-                    if existing.owner_id != claudia.id:
-                        existing.owner_id = claudia.id
-                        session.commit()
-
-            return {
-                "status": "success",
-                "claudia_id": str(claudia.id),
-                "claudia_email": claudia.email,
-                "products_created": created_products,
-                "message": "Seeding complete"
-            }
-
-        except Exception as e:
-            session.rollback()
-            raise HTTPException(status_code=500, detail=f"Seed error: {str(e)}")
-
-
-@router.post("/sync-products-to-listings")
-async def sync_products_to_listings():
-    """Create listings from existing products (for migration)"""
-    from models import Listing
-
-    for session in get_session():
-        try:
-            # Get all products without corresponding listings
-            products = session.exec(select(Product)).all()
-            created_listings = []
-
-            for product in products:
-                # Check if listing already exists for this product
-                existing = session.exec(select(Listing).where(Listing.product_id == product.id)).first()
-                if existing:
-                    continue
-
-                # Create listing from product
-                listing = Listing(
-                    id=uuid4(),
-                    owner_id=product.owner_id,
-                    name=product.name,
-                    slug=product.slug,
-                    description=product.description or "",
-                    category=product.category,
-                    category_tags=product.category_tags or [],
-                    price_cents=product.price_cents,
-                    file_path="/tmp/migrated",
-                    file_size_bytes=0,
-                    file_count=0,
-                    status='approved',
-                    scan_results={"virustotal": {"status": "clean"}, "openclaw_analysis": {"status": "passed"}},
-                    product_id=product.id
-                )
-                session.add(listing)
-                created_listings.append(product.name)
-
-            session.commit()
-
-            return {
-                "status": "success",
-                "listings_created": created_listings,
-                "count": len(created_listings)
-            }
-
-        except Exception as e:
-            session.rollback()
-            raise HTTPException(status_code=500, detail=f"Sync error: {str(e)}")
-
-
-@router.post("/fix-migration-009")
-async def fix_migration_009():
-    """Fix migration 009 - add missing listing translation columns"""
+        # Get developer name
+        developer = session.get(User, listing.owner_id)
+        
+        result.append({
+            "id": str(listing.id),
+            "name": listing.name,
+            "developer": developer.name if developer else "Unknown",
+            "price": listing.price,
+            "sales": sales_count,
+            "revenue": revenue,
+            "profit": profit,
+            "reviews": len(reviews),
+            "rating": round(avg_rating, 1),
+            "status": listing.status,
+        })
     
-    for session in get_session():
-        try:
-            # Delete the migration record if it exists (so we can re-run)
-            session.execute(
-                text("DELETE FROM applied_migrations WHERE filename = '009_add_listing_translation_fields.sql'")
-            )
-            session.commit()
-            
-            # Add the columns directly
-            session.execute(text("""
-                ALTER TABLE listings 
-                ADD COLUMN IF NOT EXISTS original_language VARCHAR(10) DEFAULT 'en',
-                ADD COLUMN IF NOT EXISTS translation_status VARCHAR(50) DEFAULT 'pending'
-            """))
-            
-            # Create indexes
-            session.execute(text("""
-                CREATE INDEX IF NOT EXISTS idx_listings_original_language ON listings(original_language)
-            """))
-            session.execute(text("""
-                CREATE INDEX IF NOT EXISTS idx_listings_translation_status ON listings(translation_status)
-            """))
-            
-            # Create listing_translations table
-            session.execute(text("""
-                CREATE TABLE IF NOT EXISTS listing_translations (
-                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    listing_id UUID NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
-                    language VARCHAR(10) NOT NULL,
-                    name VARCHAR(255) NOT NULL,
-                    description TEXT NOT NULL,
-                    translated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE(listing_id, language)
-                )
-            """))
-            
-            # Create indexes for translations
-            session.execute(text("""
-                CREATE INDEX IF NOT EXISTS idx_listing_translations_listing ON listing_translations(listing_id)
-            """))
-            session.execute(text("""
-                CREATE INDEX IF NOT EXISTS idx_listing_translations_language ON listing_translations(language)
-            """))
-            
-            # Mark migration as applied
-            session.execute(
-                text("INSERT INTO applied_migrations (filename) VALUES ('009_add_listing_translation_fields.sql')")
-            )
-            session.commit()
-            
-            return {"status": "success", "message": "Migration 009 applied successfully"}
-            
-        except Exception as e:
-            session.rollback()
-            raise HTTPException(status_code=500, detail=f"Migration error: {str(e)}")
+    return result
+
+@router.get("/sales")
+def get_all_sales(session = Depends(get_session)):
+    """Get all sales transactions"""
+    sales = session.exec(
+        select(Transaction).order_by(Transaction.created_at.desc())
+    ).all()
+    
+    result = []
+    for sale in sales:
+        # Get product name
+        product = session.get(Product, sale.product_id)
+        # Get buyer email
+        buyer = session.get(User, sale.buyer_id)
+        
+        result.append({
+            "id": str(sale.id),
+            "item": product.name if product else "Unknown",
+            "buyer": buyer.email if buyer else "Unknown",
+            "amount": float(sale.amount),
+            "commission": float(sale.commission),
+            "date": sale.created_at.isoformat() if sale.created_at else None,
+        })
+    
+    return result
+
+@router.get("/sales/recent")
+def get_recent_sales(limit: int = 10, session = Depends(get_session)):
+    """Get recent sales"""
+    sales = session.exec(
+        select(Transaction).order_by(Transaction.created_at.desc()).limit(limit)
+    ).all()
+    
+    result = []
+    for sale in sales:
+        product = session.get(Product, sale.product_id)
+        buyer = session.get(User, sale.buyer_id)
+        
+        result.append({
+            "id": str(sale.id),
+            "item": product.name if product else "Unknown",
+            "buyer": buyer.email if buyer else "Unknown",
+            "amount": float(sale.amount),
+            "commission": float(sale.commission),
+            "date": sale.created_at.strftime("%Y-%m-%d") if sale.created_at else None,
+        })
+    
+    return result
