@@ -46,7 +46,13 @@ export default function AdminDashboard() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
-  const [data, setData] = useState(mockData);
+  const [data, setData] = useState({
+    stats: { totalUsers: 0, totalDevelopers: 0, totalListings: 0, totalSales: 0, totalRevenue: 0, platformProfit: 0 },
+    recentUsers: [],
+    listings: [],
+    developers: [],
+    recentSales: [],
+  });
   const [loading, setLoading] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
@@ -67,10 +73,39 @@ export default function AdminDashboard() {
       const fetchData = async () => {
         setLoading(true);
         try {
-          const response = await fetch(`${API_URL}/admin/dashboard`);
-          if (response.ok) {
-            const dashboardData = await response.json();
-            setData(prev => ({ ...prev, stats: dashboardData.stats || prev.stats }));
+          // Fetch dashboard stats
+          const statsRes = await fetch(`${API_URL}/admin/dashboard`);
+          if (statsRes.ok) {
+            const statsData = await statsRes.json();
+            setData(prev => ({ ...prev, stats: statsData.stats }));
+          }
+          
+          // Fetch users
+          const usersRes = await fetch(`${API_URL}/admin/users`);
+          if (usersRes.ok) {
+            const usersData = await usersRes.json();
+            setData(prev => ({ ...prev, recentUsers: usersData.slice(0, 10) }));
+          }
+          
+          // Fetch listings
+          const listingsRes = await fetch(`${API_URL}/admin/listings`);
+          if (listingsRes.ok) {
+            const listingsData = await listingsRes.json();
+            setData(prev => ({ ...prev, listings: listingsData }));
+          }
+          
+          // Fetch developers
+          const devsRes = await fetch(`${API_URL}/admin/developers`);
+          if (devsRes.ok) {
+            const devsData = await devsRes.json();
+            setData(prev => ({ ...prev, developers: devsData }));
+          }
+          
+          // Fetch sales
+          const salesRes = await fetch(`${API_URL}/admin/sales/recent?limit=20`);
+          if (salesRes.ok) {
+            const salesData = await salesRes.json();
+            setData(prev => ({ ...prev, recentSales: salesData }));
           }
         } catch (err) {
           console.error('Failed to fetch dashboard data:', err);

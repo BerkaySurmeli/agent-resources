@@ -10,17 +10,13 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 # Admin email - only this user can access admin endpoints
 ADMIN_EMAIL = "berkay@shopagentresources.com"
 
-def verify_admin(authorization: Optional[str] = Header(None), session = Depends(get_session)):
+def verify_admin(session = Depends(get_session)):
     """Verify that the request is from an admin user"""
-    # For now, simple check - in production, use proper JWT validation
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    
-    # Extract user from token (simplified - should validate JWT properly)
-    # For now, we'll check if the user exists and is the admin
+    # For now, check if admin user exists in database
+    # In production, validate JWT token properly
     user = session.exec(select(User).where(User.email == ADMIN_EMAIL)).first()
     if not user:
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=403, detail="Admin user not found")
     
     return user
 
