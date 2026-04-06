@@ -20,20 +20,15 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await login(email, password);
+      const user = await login(email, password);
       
       // Check if user is master admin - redirect to admin dashboard
-      // Note: We need to get the user from localStorage since login doesn't return it directly
-      const userStr = localStorage.getItem('ar-user');
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        if (user.isMasterAdmin) {
-          router.push('/admin/dashboard');
-          return;
-        }
+      if (user.isMasterAdmin) {
+        router.push('/admin/dashboard');
+        return;
       }
       
-      // Use Next.js router for client-side navigation
+      // Regular user - go to home
       router.push('/');
     } catch (err: any) {
       setError(err.message || t.login.invalidCredentials);
@@ -117,3 +112,4 @@ export default function Login() {
     </div>
   );
 }
+// Build Mon Apr  6 11:35:53 PDT 2026

@@ -17,7 +17,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
   updateProfile: (data: Partial<User>) => Promise<void>;
@@ -110,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, isClient]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -124,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const data = await response.json();
     
-    const userData = {
+    const userData: User = {
       id: data.user.id,
       email: data.user.email,
       name: data.user.name || email.split('@')[0],
@@ -141,6 +141,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Update state
     setUser(userData);
+    
+    // Return user data for immediate use
+    return userData;
   };
 
   const signup = async (email: string, password: string, name: string) => {
