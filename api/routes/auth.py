@@ -7,167 +7,9 @@ from passlib.context import CryptContext
 from core.database import get_session
 from core.config import settings
 from models import User, AdminUser
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+from services.email import send_verification_email, EmailService
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
-
-# Email configuration - prefer Railway Email if available
-if settings.EMAIL_HOST and settings.EMAIL_CLIENT_PASSWORD:
-    # New Railway Email service (vergissberlin/railwayapp-email)
-    SMTP_SERVER = settings.EMAIL_HOST
-    SMTP_PORT = 587  # Default port
-    EMAIL_USER = settings.EMAIL_CLIENT_USER
-    EMAIL_PASSWORD = settings.EMAIL_CLIENT_PASSWORD
-    FROM_EMAIL = settings.EMAIL_CLIENT_FROM or settings.EMAIL_CLIENT_USER
-    USING_RAILWAY = True
-elif settings.RAILWAY_EMAIL_SMTP_SERVER and settings.RAILWAY_EMAIL_PASSWORD:
-    # Legacy Railway Email variables
-    SMTP_SERVER = settings.RAILWAY_EMAIL_SMTP_SERVER
-    SMTP_PORT = settings.RAILWAY_EMAIL_SMTP_PORT
-    EMAIL_USER = settings.RAILWAY_EMAIL_USER
-    EMAIL_PASSWORD = settings.RAILWAY_EMAIL_PASSWORD
-    FROM_EMAIL = settings.RAILWAY_EMAIL_FROM or settings.RAILWAY_EMAIL_USER
-    USING_RAILWAY = True
-else:
-    # Fallback to Zoho
-    SMTP_SERVER = settings.ZOHO_SMTP_SERVER
-    SMTP_PORT = settings.ZOHO_SMTP_PORT
-    EMAIL_USER = settings.ZOHO_EMAIL
-    EMAIL_PASSWORD = settings.ZOHO_PASSWORD
-    FROM_EMAIL = settings.ZOHO_EMAIL
-    USING_RAILWAY = False
-
-def send_verification_email(to_email: str, name: str, token: str):
-    """Send verification email via SMTP (Railway or Zoho)"""
-    if not EMAIL_PASSWORD:
-        print("[EMAIL] Email password not configured, cannot send email")
-        print(f"[EMAIL] Verification link: https://shopagentresources.com/verify-email?token={token}")
-        raise Exception("Email service not configured. Please contact support.")
-
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = 'Welcome to Agent Resources - Verify Your Email'
-    msg['From'] = f"Agent Resources <{FROM_EMAIL}>"
-    msg['To'] = to_email
-
-    verification_url = f"https://shopagentresources.com/verify-email?token={token}"
-
-    # Plain text version
-    text_body = f"""
-Hi {name},
-
-Welcome to Agent Resources! Please verify your email address to start buying and selling AI agents.
-
-Click the link below to verify your email:
-{verification_url}
-
-This link will expire in 24 hours.
-
-If you didn't create an account, you can safely ignore this email.
-
-Best regards,
-The Agent Resources Team
-"""
-
-    # HTML version
-    html_body = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Your Email</title>
-</head>
-<body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <div style="width: 60px; height: 60px; background: #2563eb; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-            <span style="color: white; font-weight: bold; font-size: 24px;">AR</span>
-        </div>
-        <h1 style="color: #0f172a; margin: 0;">Welcome to Agent Resources</h1>
-    </div>
-
-    <div style="background: #f8fafc; border-radius: 12px; padding: 30px; margin-bottom: 20px;">
-        <p style="margin-top: 0;">Hi {name},</p>
-        <p>Welcome to Agent Resources! Please verify your email address to start buying and selling AI agents.</p>
-
-        <div style="text-align: center; margin: 30px 0;">
-            <a href="{verification_url}" style="display: inline-block; background: #2563eb; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 500;">
-                Verify Email Address
-            </a>
-        </div>
-
-        <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">
-            This link will expire in 24 hours. If you didn't create an account, you can safely ignore this email.
-        </p>
-    </div>
-
-    <div style="text-align: center; font-size: 14px; color: #64748b;">
-        <p>Best regards,<br>The Agent Resources Team</p>
-        <p style="margin-top: 20px;">
-            <a href="https://shopagentresources.com" style="color: #2563eb;">shopagentresources.com</a>
-        </p>
-    </div>
-</body>
-</html>
-"""
-
-    part1 = MIMEText(text_body, 'plain')
-    part2 = MIMEText(html_body, 'html')
-
-    msg.attach(part1)
-    msg.attach(part2)
-
-    # Send email
-    try:
-        service_name = "Railway Email" if USING_RAILWAY else "Zoho"
-        print(f"[EMAIL DEBUG] Using {service_name}")
-        print(f"[EMAIL DEBUG] Connecting to {SMTP_SERVER}:{SMTP_PORT}")
-        print(f"[EMAIL DEBUG] Using email: {EMAIL_USER}")
-        print(f"[EMAIL DEBUG] From email: {FROM_EMAIL}")
-
-        # Try SSL connection on port 465 first (more reliable)
-        try:
-            import smtplib
-            with smtplib.SMTP_SSL(SMTP_SERVER, 465, timeout=10) as server:
-                print("[EMAIL DEBUG] Connected via SSL on port 465")
-                server.login(EMAIL_USER, EMAIL_PASSWORD)
-                print("[EMAIL DEBUG] Login successful")
-                server.send_message(msg)
-                print(f"[EMAIL] Verification email sent to {to_email} via SSL")
-                return
-        except Exception as ssl_error:
-            print(f"[EMAIL DEBUG] SSL failed: {ssl_error}")
-
-        # Fallback to STARTTLS on port 587
-        try:
-            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10) as server:
-                print("[EMAIL DEBUG] Connected via SMTP on port 587")
-                server.starttls()
-                print("[EMAIL DEBUG] STARTTLS successful")
-                server.login(EMAIL_USER, EMAIL_PASSWORD)
-                print("[EMAIL DEBUG] Login successful")
-                server.send_message(msg)
-                print(f"[EMAIL] Verification email sent to {to_email} via STARTTLS")
-                return
-        except Exception as tls_error:
-            print(f"[EMAIL DEBUG] STARTTLS failed: {tls_error}")
-
-        # If both fail, log the link for manual verification
-        print(f"[EMAIL ERROR] All SMTP methods failed")
-        print(f"[EMAIL FALLBACK] Verification link for {to_email}: {verification_url}")
-        # Don't raise exception - let user verify manually
-        print(f"[EMAIL] User can verify manually using the link above")
-
-    except smtplib.SMTPAuthenticationError as e:
-        print(f"[EMAIL ERROR] SMTP Authentication failed: {e}")
-        print(f"[EMAIL] Verification link: {verification_url}")
-        raise Exception("Email service authentication failed. Please contact support.")
-    except Exception as e:
-        print(f"[EMAIL ERROR] Unexpected error: {type(e).__name__}: {e}")
-        print(f"[EMAIL] Verification link: {verification_url}")
-        # Don't fail signup - user can verify manually
-        print(f"[EMAIL] Continuing without sending email - user can verify manually")
 
 # Security - use argon2 which doesn't have the 72-byte limit
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -261,7 +103,7 @@ def signup(user_data: UserSignup, session = Depends(get_session)):
         session.commit()
         session.refresh(user)
         
-        # Send verification email via Zoho
+        # Send verification email via Resend
         try:
             send_verification_email(user_data.email, user_data.name, verification_token)
         except Exception as e:
