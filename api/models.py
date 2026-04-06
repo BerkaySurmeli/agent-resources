@@ -35,9 +35,6 @@ class User(SQLModel, table=True):
     stripe_status: str = Field(default="pending")
     stripe_charges_enabled: bool = Field(default=False)
     stripe_payouts_enabled: bool = Field(default=False)
-    # Admin fields
-    is_admin: bool = Field(default=False)
-    is_master_admin: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Relationships
@@ -45,6 +42,19 @@ class User(SQLModel, table=True):
     purchases: List["Transaction"] = Relationship(back_populates="buyer", sa_relationship_kwargs={"foreign_keys": "Transaction.buyer_id"})
     sales: List["Transaction"] = Relationship(back_populates="seller", sa_relationship_kwargs={"foreign_keys": "Transaction.seller_id"})
     reviews: List["Review"] = Relationship(back_populates="user")
+
+
+# 1b. ADMIN USER (separate table for admin authentication)
+class AdminUser(SQLModel, table=True):
+    __tablename__ = "admin_users"
+    
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    email: str = Field(unique=True, index=True)
+    password_hash: str = Field()
+    name: Optional[str] = Field(default=None)
+    is_master_admin: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_login: Optional[datetime] = Field(default=None)
 
 # 2. PRODUCT
 class Product(SQLModel, table=True):

@@ -3,47 +3,190 @@ from sqlmodel import select, func
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from core.database import get_session
-from models import User, Product, Transaction, Review
+from models import User, Product, Transaction, Review, AdminUser
+from passlib.context import CryptContext
+from jose import JWTError, jwt
+from fastapi import Request
+from pydantic import BaseModel, EmailStr
+from core.config import settings
 import httpx
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
-# Admin email - only this user can access admin endpoints
-ADMIN_EMAIL = "berkay@shopagentresources.com"
+# Password hashing
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = "HS256"
+ADMIN_TOKEN_EXPIRE_DAYS = 7
 
 # Cloudflare configuration
 CLOUDFLARE_API_TOKEN = "cfat_fmsXtYHYyechjVhJam4pz4OwQmPCn7havumRcjfX3cf28199"
 CLOUDFLARE_ZONE_ID = "8f1c9a67b107c9659104f8376997ba9f"
 
-def verify_admin(session = Depends(get_session)):
-    """Verify that the request is from an admin user"""
-    # For now, check if admin user exists in database
-    # In production, validate JWT token properly
-    user = session.exec(select(User).where(User.email == ADMIN_EMAIL)).first()
-    if not user:
-        raise HTTPException(status_code=403, detail="Admin user not found")
-    
-    return user
+# Pydantic models
+class AdminLoginRequest(BaseModel):
+    email: EmailStr
+    password: str
 
-def verify_master_admin(session = Depends(get_session)):
+class AdminUserResponse(BaseModel):
+    id: str
+    email: str
+    name: Optional[str]
+    is_master_admin: bool
+
+class AdminLoginResponse(BaseModel):
+    access_token: str
+    token_type: str
+    user: AdminUserResponse
+
+# Helper functions
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def create_admin_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(days=ADMIN_TOKEN_EXPIRE_DAYS)
+    to_encode.update({"exp": expire, "type": "admin"})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def get_current_admin_from_token(
+    request: Request,
+    session = Depends(get_session)
+) -> AdminUser:
+    """Extract and validate admin JWT token from Authorization header"""
+    auth_header = request.headers.get("Authorization")
+    
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
+    
+    token = auth_header.split(" ")[1]
+    
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        
+        # Check if this is an admin token
+        token_type = payload.get("type")
+        if token_type != "admin":
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        admin_id = payload.get("sub")
+        if not admin_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        admin = session.exec(select(AdminUser).where(AdminUser.id == admin_id)).first()
+        
+        if not admin:
+            raise HTTPException(status_code=401, detail="Admin user not found")
+        
+        return admin
+        
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+def verify_master_admin(
+    current_admin: AdminUser = Depends(get_current_admin_from_token)
+):
     """Verify that the request is from a master admin user"""
-    user = session.exec(select(User).where(User.email == ADMIN_EMAIL, User.is_master_admin == True)).first()
-    if not user:
+    if not current_admin.is_master_admin:
         raise HTTPException(status_code=403, detail="Master admin access required")
     
-    return user
+    return current_admin
 
+# Admin Authentication Routes
+@router.post("/login", response_model=AdminLoginResponse)
+def admin_login(
+    login_data: AdminLoginRequest,
+    session = Depends(get_session)
+):
+    """Login for admin users only - uses admin_users table"""
+    # Find admin user
+    admin = session.exec(
+        select(AdminUser).where(AdminUser.email == login_data.email)
+    ).first()
+    
+    if not admin:
+        raise HTTPException(status_code=400, detail="Invalid email or password")
+    
+    # Verify password
+    if not verify_password(login_data.password, admin.password_hash):
+        raise HTTPException(status_code=400, detail="Invalid email or password")
+    
+    # Update last login
+    admin.last_login = datetime.utcnow()
+    session.commit()
+    
+    # Create admin token
+    access_token = create_admin_access_token({"sub": str(admin.id)})
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": str(admin.id),
+            "email": admin.email,
+            "name": admin.name,
+            "is_master_admin": admin.is_master_admin
+        }
+    }
+
+@router.get("/validate")
+def validate_admin_token(
+    request: Request,
+    session = Depends(get_session)
+):
+    """Validate admin JWT token and return admin info"""
+    auth_header = request.headers.get("Authorization")
+    
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
+    
+    token = auth_header.split(" ")[1]
+    
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        
+        # Check if this is an admin token
+        token_type = payload.get("type")
+        if token_type != "admin":
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        admin_id = payload.get("sub")
+        if not admin_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        admin = session.exec(select(AdminUser).where(AdminUser.id == admin_id)).first()
+        
+        if not admin:
+            raise HTTPException(status_code=401, detail="Admin user not found")
+        
+        return {
+            "id": str(admin.id),
+            "email": admin.email,
+            "name": admin.name,
+            "is_master_admin": admin.is_master_admin
+        }
+        
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+# Admin Dashboard Routes
 @router.get("/dashboard")
 def get_dashboard_stats(
     session = Depends(get_session),
-    admin: User = Depends(verify_admin)
+    admin: AdminUser = Depends(get_current_admin_from_token)
 ):
     """Get admin dashboard statistics"""
     
     # User stats
     total_users = session.exec(select(func.count(User.id))).one()
     total_developers = session.exec(select(func.count(User.id)).where(User.is_developer == True)).one()
-    total_admins = session.exec(select(func.count(User.id)).where(User.is_admin == True)).one()
+    
+    # Admin stats (from admin_users table)
+    total_admins = session.exec(select(func.count(AdminUser.id))).one()
     
     # Listing stats
     total_listings = session.exec(select(func.count(Product.id))).one()
@@ -68,14 +211,10 @@ def get_dashboard_stats(
 @router.get("/users")
 def get_all_users(
     session = Depends(get_session),
-    admin: User = Depends(verify_admin)
+    admin: AdminUser = Depends(get_current_admin_from_token)
 ):
-    """Get all users separated by type"""
-    # Regular users (not admins)
-    regular_users = session.exec(select(User).where(User.is_admin == False)).all()
-    
-    # Admin users
-    admin_users = session.exec(select(User).where(User.is_admin == True)).all()
+    """Get all regular users (not admins)"""
+    users = session.exec(select(User)).all()
     
     def format_user(user):
         return {
@@ -84,23 +223,41 @@ def get_all_users(
             "name": user.name,
             "isDeveloper": user.is_developer,
             "isVerified": user.is_verified,
-            "isAdmin": user.is_admin,
-            "isMasterAdmin": user.is_master_admin,
             "createdAt": user.created_at.isoformat() if user.created_at else None,
         }
     
     return {
-        "regularUsers": [format_user(u) for u in regular_users],
-        "adminUsers": [format_user(u) for u in admin_users],
+        "users": [format_user(u) for u in users],
+    }
+
+@router.get("/admins")
+def get_all_admins(
+    session = Depends(get_session),
+    admin: AdminUser = Depends(get_current_admin_from_token)
+):
+    """Get all admin users"""
+    admins = session.exec(select(AdminUser)).all()
+    
+    return {
+        "admins": [
+            {
+                "id": str(a.id),
+                "email": a.email,
+                "name": a.name,
+                "isMasterAdmin": a.is_master_admin,
+                "createdAt": a.created_at.isoformat() if a.created_at else None,
+            }
+            for a in admins
+        ]
     }
 
 @router.delete("/users/{user_id}")
 def delete_user(
     user_id: str,
     session = Depends(get_session),
-    admin: User = Depends(verify_admin)
+    admin: AdminUser = Depends(get_current_admin_from_token)
 ):
-    """Delete a user (master admin cannot be deleted)"""
+    """Delete a regular user"""
     from uuid import UUID
     
     try:
@@ -112,24 +269,51 @@ def delete_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Prevent deletion of master admin
-    if user.is_master_admin:
-        raise HTTPException(status_code=403, detail="Cannot delete master admin user")
-    
-    # Prevent admins from deleting other admins (only master admin can)
-    if user.is_admin and not admin.is_master_admin:
-        raise HTTPException(status_code=403, detail="Only master admin can delete admin users")
-    
     # Delete the user
     session.delete(user)
     session.commit()
     
     return {"message": "User deleted successfully"}
 
+@router.delete("/admins/{admin_id}")
+def delete_admin(
+    admin_id: str,
+    session = Depends(get_session),
+    current_admin: AdminUser = Depends(verify_master_admin)
+):
+    """Delete an admin user (master admin only, cannot delete self)"""
+    from uuid import UUID
+    
+    try:
+        admin_uuid = UUID(admin_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid admin ID")
+    
+    # Prevent deleting self
+    if str(current_admin.id) == admin_id:
+        raise HTTPException(status_code=403, detail="Cannot delete your own account")
+    
+    admin = session.get(AdminUser, admin_uuid)
+    if not admin:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    
+    # Prevent deleting the last master admin
+    if admin.is_master_admin:
+        master_admin_count = session.exec(
+            select(func.count(AdminUser.id)).where(AdminUser.is_master_admin == True)
+        ).one()
+        if master_admin_count <= 1:
+            raise HTTPException(status_code=403, detail="Cannot delete the last master admin")
+    
+    session.delete(admin)
+    session.commit()
+    
+    return {"message": "Admin deleted successfully"}
+
 @router.get("/developers")
 def get_all_developers(
     session = Depends(get_session),
-    admin: User = Depends(verify_admin)
+    admin: AdminUser = Depends(get_current_admin_from_token)
 ):
     """Get all developers with their stats"""
     developers = session.exec(select(User).where(User.is_developer == True)).all()
@@ -164,7 +348,7 @@ def get_all_developers(
 @router.get("/listings")
 def get_all_listings(
     session = Depends(get_session),
-    admin: User = Depends(verify_admin)
+    admin: AdminUser = Depends(get_current_admin_from_token)
 ):
     """Get all listings with sales stats"""
     listings = session.exec(select(Product)).all()
@@ -206,7 +390,7 @@ def get_all_listings(
 @router.get("/sales")
 def get_all_sales(
     session = Depends(get_session),
-    admin: User = Depends(verify_admin)
+    admin: AdminUser = Depends(get_current_admin_from_token)
 ):
     """Get all sales transactions"""
     sales = session.exec(
@@ -235,7 +419,7 @@ def get_all_sales(
 def get_recent_sales(
     limit: int = 10, 
     session = Depends(get_session),
-    admin: User = Depends(verify_admin)
+    admin: AdminUser = Depends(get_current_admin_from_token)
 ):
     """Get recent sales"""
     sales = session.exec(
@@ -261,7 +445,7 @@ def get_recent_sales(
 @router.get("/metrics/cloudflare")
 async def get_cloudflare_metrics(
     session = Depends(get_session),
-    admin: User = Depends(verify_admin)
+    admin: AdminUser = Depends(get_current_admin_from_token)
 ):
     """Get Cloudflare analytics metrics"""
     try:
@@ -315,25 +499,3 @@ async def get_cloudflare_metrics(
         raise HTTPException(status_code=500, detail=f"Failed to fetch Cloudflare metrics: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching metrics: {str(e)}")
-
-@router.post("/restore-admin")
-def restore_admin_user(
-    session = Depends(get_session),
-    master_admin: User = Depends(verify_master_admin)
-):
-    """Restore the master admin user if deleted"""
-    # Check if admin user exists
-    admin_user = session.exec(select(User).where(User.email == ADMIN_EMAIL)).first()
-    
-    if admin_user:
-        # Ensure it's marked as master admin
-        if not admin_user.is_master_admin:
-            admin_user.is_master_admin = True
-            admin_user.is_admin = True
-            session.commit()
-            return {"message": "Admin user restored to master admin status"}
-        return {"message": "Admin user already exists and is master admin"}
-    
-    # Create new master admin user (would need password setup)
-    # This is a placeholder - in production you'd want a secure way to set the password
-    raise HTTPException(status_code=404, detail="Admin user not found. Please create the admin user manually.")

@@ -1,13 +1,10 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAdminAuth } from '../../context/AdminAuthContext';
 import { useRouter } from 'next/router';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
-
-// Admin email - only this user can access the dashboard
-const ADMIN_EMAIL = 'berkay@shopagentresources.com';
 
 interface CloudflareMetrics {
   requests: number;
@@ -35,7 +32,13 @@ interface UserData {
   name: string;
   isDeveloper: boolean;
   isVerified: boolean;
-  isAdmin: boolean;
+  createdAt: string;
+}
+
+interface AdminData {
+  id: string;
+  email: string;
+  name: string | null;
   isMasterAdmin: boolean;
   createdAt: string;
 }
@@ -72,7 +75,7 @@ interface SaleData {
 }
 
 export default function AdminDashboard() {
-  const { user, isLoading } = useAuth();
+  const { admin, isLoading: authLoading, logout } = useAdminAuth();
   const router = useRouter();
   const [activeSection, setActiveSection] = useState('overview');
   const [stats, setStats] = useState<DashboardStats>({
@@ -84,66 +87,86 @@ export default function AdminDashboard() {
     totalRevenue: 0,
     platformProfit: 0,
   });
-  const [regularUsers, setRegularUsers] = useState<UserData[]>([]);
-  const [adminUsers, setAdminUsers] = useState<UserData[]>([]);
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [admins, setAdmins] = useState<AdminData[]>([]);
   const [listings, setListings] = useState<ListingData[]>([]);
   const [developers, setDevelopers] = useState<DeveloperData[]>([]);
   const [sales, setSales] = useState<SaleData[]>([]);
   const [metrics, setMetrics] = useState<CloudflareMetrics | null>(null);
   const [loading, setLoading] = useState(false);
-  const [isAuthorized, setIsAuthorized] = useState(false);
   const [metricsLoading, setMetricsLoading] = useState(false);
+
+  // Get admin token from localStorage
+  const getAdminToken = () => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('ar-admin-token');
+  };
 
   // Check auth and fetch data
   useEffect(() => {
-    if (!isLoading) {
-      if (!user) {
-        router.push('/login');
+    if (!authLoading) {
+      if (!admin) {
+        router.push('/admin/login');
         return;
       }
-      if (user.email !== ADMIN_EMAIL) {
-        router.push('/');
-        return;
-      }
-      setIsAuthorized(true);
       fetchAllData();
     }
-  }, [user, isLoading, router]);
+  }, [admin, authLoading, router]);
 
   const fetchAllData = async () => {
     setLoading(true);
+    const token = getAdminToken();
+    
     try {
       // Fetch dashboard stats
-      const statsRes = await fetch(`${API_URL}/admin/dashboard`);
+      const statsRes = await fetch(`${API_URL}/admin/dashboard`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (statsRes.ok) {
         const statsData = await statsRes.json();
         setStats(statsData.stats);
       }
       
       // Fetch users
-      const usersRes = await fetch(`${API_URL}/admin/users`);
+      const usersRes = await fetch(`${API_URL}/admin/users`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (usersRes.ok) {
         const usersData = await usersRes.json();
-        setRegularUsers(usersData.regularUsers || []);
-        setAdminUsers(usersData.adminUsers || []);
+        setUsers(usersData.users || []);
+      }
+      
+      // Fetch admins
+      const adminsRes = await fetch(`${API_URL}/admin/admins`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (adminsRes.ok) {
+        const adminsData = await adminsRes.json();
+        setAdmins(adminsData.admins || []);
       }
       
       // Fetch listings
-      const listingsRes = await fetch(`${API_URL}/admin/listings`);
+      const listingsRes = await fetch(`${API_URL}/admin/listings`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (listingsRes.ok) {
         const listingsData = await listingsRes.json();
         setListings(listingsData);
       }
       
       // Fetch developers
-      const devsRes = await fetch(`${API_URL}/admin/developers`);
+      const devsRes = await fetch(`${API_URL}/admin/developers`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (devsRes.ok) {
         const devsData = await devsRes.json();
         setDevelopers(devsData);
       }
       
       // Fetch sales
-      const salesRes = await fetch(`${API_URL}/admin/sales`);
+      const salesRes = await fetch(`${API_URL}/admin/sales`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (salesRes.ok) {
         const salesData = await salesRes.json();
         setSales(salesData);
@@ -160,8 +183,12 @@ export default function AdminDashboard() {
 
   const fetchCloudflareMetrics = async () => {
     setMetricsLoading(true);
+    const token = getAdminToken();
+    
     try {
-      const res = await fetch(`${API_URL}/admin/metrics/cloudflare`);
+      const res = await fetch(`${API_URL}/admin/metrics/cloudflare`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (res.ok) {
         const data = await res.json();
         setMetrics(data);
@@ -173,29 +200,26 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteUser = async (userId: string, isAdmin: boolean) => {
-    if (isAdmin) {
-      if (!confirm('Are you sure you want to delete this admin user? This action cannot be undone.')) {
-        return;
-      }
-    } else {
-      if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-        return;
-      }
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
     }
 
+    const token = getAdminToken();
     try {
       const res = await fetch(`${API_URL}/admin/users/${userId}`, {
         method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (res.ok) {
         // Refresh users list
-        const usersRes = await fetch(`${API_URL}/admin/users`);
+        const usersRes = await fetch(`${API_URL}/admin/users`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         if (usersRes.ok) {
           const usersData = await usersRes.json();
-          setRegularUsers(usersData.regularUsers || []);
-          setAdminUsers(usersData.adminUsers || []);
+          setUsers(usersData.users || []);
         }
       } else {
         const error = await res.json();
@@ -205,6 +229,42 @@ export default function AdminDashboard() {
       console.error('Failed to delete user:', err);
       alert('Failed to delete user');
     }
+  };
+
+  const handleDeleteAdmin = async (adminId: string) => {
+    if (!confirm('Are you sure you want to delete this admin? This action cannot be undone.')) {
+      return;
+    }
+
+    const token = getAdminToken();
+    try {
+      const res = await fetch(`${API_URL}/admin/admins/${adminId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        // Refresh admins list
+        const adminsRes = await fetch(`${API_URL}/admin/admins`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (adminsRes.ok) {
+          const adminsData = await adminsRes.json();
+          setAdmins(adminsData.admins || []);
+        }
+      } else {
+        const error = await res.json();
+        alert(error.detail || 'Failed to delete admin');
+      }
+    } catch (err) {
+      console.error('Failed to delete admin:', err);
+      alert('Failed to delete admin');
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    router.push('/admin/login');
   };
 
   const formatCurrency = (amount: number) => {
@@ -224,7 +284,7 @@ export default function AdminDashboard() {
   };
 
   // Show loading while checking auth
-  if (isLoading || !isAuthorized) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
@@ -233,6 +293,11 @@ export default function AdminDashboard() {
         </div>
       </div>
     );
+  }
+
+  // Redirect if not authenticated
+  if (!admin) {
+    return null;
   }
 
   const menuItems = [
@@ -264,7 +329,14 @@ export default function AdminDashboard() {
               </Link>
             </div>
             <div className="flex items-center gap-4">
+              <span className="text-slate-600">{admin.email}</span>
               <Link href="/" className="text-slate-600 hover:text-slate-900">Back to Site</Link>
+              <button
+                onClick={handleLogout}
+                className="text-red-600 hover:text-red-800 font-medium"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>
@@ -372,10 +444,10 @@ export default function AdminDashboard() {
             {/* Users Section */}
             {activeSection === 'users' && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-slate-900">Regular Users ({regularUsers.length})</h2>
+                <h2 className="text-2xl font-bold text-slate-900">Regular Users ({users.length})</h2>
                 <DataTable
                   headers={['Name', 'Email', 'Type', 'Verified', 'Joined', 'Actions']}
-                  rows={regularUsers.map(u => [
+                  rows={users.map(u => [
                     u.name,
                     u.email,
                     u.isDeveloper ? 'Developer' : 'Buyer',
@@ -383,7 +455,7 @@ export default function AdminDashboard() {
                     new Date(u.createdAt).toLocaleDateString(),
                     <button
                       key={u.id}
-                      onClick={() => handleDeleteUser(u.id, false)}
+                      onClick={() => handleDeleteUser(u.id)}
                       className="text-red-600 hover:text-red-800 text-sm font-medium"
                     >
                       Delete
@@ -396,20 +468,20 @@ export default function AdminDashboard() {
             {/* Admins Section */}
             {activeSection === 'admins' && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-slate-900">Admin Users ({adminUsers.length})</h2>
+                <h2 className="text-2xl font-bold text-slate-900">Admin Users ({admins.length})</h2>
                 <DataTable
                   headers={['Name', 'Email', 'Master Admin', 'Joined', 'Actions']}
-                  rows={adminUsers.map(u => [
-                    u.name,
-                    u.email,
-                    u.isMasterAdmin ? '⭐ Yes' : 'No',
-                    new Date(u.createdAt).toLocaleDateString(),
-                    u.isMasterAdmin ? (
+                  rows={admins.map(a => [
+                    a.name || '-',
+                    a.email,
+                    a.isMasterAdmin ? '⭐ Yes' : 'No',
+                    new Date(a.createdAt).toLocaleDateString(),
+                    a.isMasterAdmin ? (
                       <span className="text-slate-400 text-sm">Protected</span>
                     ) : (
                       <button
-                        key={u.id}
-                        onClick={() => handleDeleteUser(u.id, true)}
+                        key={a.id}
+                        onClick={() => handleDeleteAdmin(a.id)}
                         className="text-red-600 hover:text-red-800 text-sm font-medium"
                       >
                         Delete
