@@ -267,27 +267,6 @@ def resend_verification(
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
-@router.post("/change-password")
-def change_password(
-    request: ChangePasswordRequest,
-    session = Depends(get_session),
-    current_user: User = Depends(get_current_user_from_token)
-):
-    """Change user password - requires current password verification"""
-    # Verify current password
-    if not verify_password(request.current_password, current_user.password_hash):
-        raise HTTPException(status_code=400, detail="Current password is incorrect")
-    
-    # Hash new password
-    new_password_hash = pwd_context.hash(request.new_password)
-    
-    # Update password
-    current_user.password_hash = new_password_hash
-    session.commit()
-    
-    return {"message": "Password updated successfully"}
-
-
 # Dependency to get current user from JWT token
 def get_current_user_from_token(
     request: Request,
@@ -317,6 +296,27 @@ def get_current_user_from_token(
         
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+
+@router.post("/change-password")
+def change_password(
+    request: ChangePasswordRequest,
+    session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Change user password - requires current password verification"""
+    # Verify current password
+    if not verify_password(request.current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    
+    # Hash new password
+    new_password_hash = pwd_context.hash(request.new_password)
+    
+    # Update password
+    current_user.password_hash = new_password_hash
+    session.commit()
+    
+    return {"message": "Password updated successfully"}
 
 
 @router.delete("/account")
