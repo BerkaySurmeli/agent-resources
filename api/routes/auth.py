@@ -193,6 +193,9 @@ class UserResponse(BaseModel):
     name: Optional[str]
     is_developer: bool
     avatar_url: Optional[str]
+    is_verified: bool
+    is_admin: bool
+    is_master_admin: bool
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -282,7 +285,9 @@ def signup(user_data: UserSignup, session = Depends(get_session)):
             "name": user.name,
             "is_developer": user.is_developer,
             "avatar_url": user.avatar_url,
-            "is_verified": user.is_verified
+            "is_verified": user.is_verified,
+            "is_admin": user.is_admin,
+            "is_master_admin": user.is_master_admin
         }
     }
 
@@ -309,7 +314,9 @@ def login(user_data: UserLogin, session = Depends(get_session)):
             "name": user.name,
             "is_developer": user.is_developer,
             "avatar_url": user.avatar_url,
-            "is_verified": user.is_verified
+            "is_verified": user.is_verified,
+            "is_admin": user.is_admin,
+            "is_master_admin": user.is_master_admin
         }
     }
 
@@ -344,7 +351,9 @@ def validate_token(
             "name": user.name,
             "is_developer": user.is_developer,
             "avatar_url": user.avatar_url,
-            "is_verified": user.is_verified
+            "is_verified": user.is_verified,
+            "is_admin": user.is_admin,
+            "is_master_admin": user.is_master_admin
         }
         
     except JWTError:

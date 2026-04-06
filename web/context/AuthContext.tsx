@@ -10,6 +10,8 @@ export interface User {
   initials: string;
   isDeveloper: boolean;
   isVerified?: boolean;
+  isAdmin?: boolean;
+  isMasterAdmin?: boolean;
 }
 
 interface AuthContextType {
@@ -129,6 +131,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       initials: getInitials(data.user.name || email.split('@')[0]),
       isDeveloper: data.user.is_developer,
       isVerified: data.user.is_verified,
+      isAdmin: data.user.is_admin,
+      isMasterAdmin: data.user.is_master_admin,
     };
     
     // Save to localStorage
@@ -167,6 +171,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         initials: getInitials(data.user.name || name),
         isDeveloper: data.user.is_developer,
         isVerified: data.user.is_verified,
+        isAdmin: data.user.is_admin,
+        isMasterAdmin: data.user.is_master_admin,
       };
 
       // Save to localStorage

@@ -105,20 +105,19 @@ export default function Account() {
                   {user.isVerified ? 'Verified' : 'Unverified'}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-3">
-                <div>
-                  <label className="text-sm text-gray-500">Account Type</label>
-                  <p className="font-medium text-white">
-                    {user.isDeveloper ? 'Developer' : 'Buyer'}
-                  </p>
-                </div>
-                {!user.isDeveloper && (
-                  <Link href="/sell" className="text-blue-400 hover:text-blue-300 text-sm">
-                    Become a Developer
-                  </Link>
-                )}
-              </div>
             </div>
+          </div>
+
+          {/* List an Item Button */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 mb-6 text-center">
+            <h2 className="text-lg font-semibold text-white mb-2">Ready to Sell?</h2>
+            <p className="text-blue-100 mb-4">List your AI agent or tool on our marketplace</p>
+            <Link
+              href="/sell"
+              className="inline-block bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+            >
+              List an Item
+            </Link>
           </div>
 
           {/* Security Card */}

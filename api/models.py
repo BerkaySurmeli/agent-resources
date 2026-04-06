@@ -35,6 +35,9 @@ class User(SQLModel, table=True):
     stripe_status: str = Field(default="pending")
     stripe_charges_enabled: bool = Field(default=False)
     stripe_payouts_enabled: bool = Field(default=False)
+    # Admin fields
+    is_admin: bool = Field(default=False)
+    is_master_admin: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Relationships

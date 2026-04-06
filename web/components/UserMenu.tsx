@@ -56,12 +56,6 @@ export default function UserMenu() {
               Profile
             </Link>
             <Link
-              href="/account"
-              className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
-            >
-              Account
-            </Link>
-            <Link
               href="/dashboard"
               className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
             >

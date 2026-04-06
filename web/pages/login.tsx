@@ -21,6 +21,18 @@ export default function Login() {
 
     try {
       await login(email, password);
+      
+      // Check if user is master admin - redirect to admin dashboard
+      // Note: We need to get the user from localStorage since login doesn't return it directly
+      const userStr = localStorage.getItem('ar-user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.isMasterAdmin) {
+          router.push('/admin/dashboard');
+          return;
+        }
+      }
+      
       // Use Next.js router for client-side navigation
       router.push('/');
     } catch (err: any) {

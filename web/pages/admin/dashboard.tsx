@@ -9,52 +9,90 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresourc
 // Admin email - only this user can access the dashboard
 const ADMIN_EMAIL = 'berkay@shopagentresources.com';
 
-// Mock data for now - will connect to API later
-const mockData = {
-  stats: {
-    totalUsers: 45,
-    totalDevelopers: 12,
-    totalListings: 28,
-    totalSales: 156,
-    totalRevenue: 7842.50,
-    platformProfit: 1176.38,
-  },
-  recentUsers: [
-    { id: '1', email: 'user1@example.com', name: 'John Doe', isDeveloper: true, createdAt: '2026-04-01' },
-    { id: '2', email: 'user2@example.com', name: 'Jane Smith', isDeveloper: false, createdAt: '2026-04-02' },
-    { id: '3', email: 'user3@example.com', name: 'Bob Wilson', isDeveloper: true, createdAt: '2026-04-03' },
-  ],
-  listings: [
-    { id: '1', name: 'AI Project Manager', developer: 'Claudia', price: 49, sales: 23, revenue: 1127, profit: 169.05, reviews: 8, rating: 4.8, status: 'active' },
-    { id: '2', name: 'AI Developer', developer: 'Chen', price: 59, sales: 19, revenue: 1121, profit: 168.15, reviews: 6, rating: 4.9, status: 'active' },
-    { id: '3', name: 'AI UX Designer', developer: 'Adrian', price: 49, sales: 31, revenue: 1519, profit: 227.85, reviews: 12, rating: 4.7, status: 'active' },
-    { id: '4', name: 'Dream Team Bundle', developer: 'Agent Resources', price: 99, sales: 45, revenue: 4455, profit: 668.25, reviews: 15, rating: 4.9, status: 'active' },
-  ],
-  developers: [
-    { id: '1', name: 'Claudia', email: 'claudia@shopagentresources.com', listings: 1, totalSales: 23, revenue: 1127 },
-    { id: '2', name: 'Chen', email: 'chen@shopagentresources.com', listings: 1, totalSales: 19, revenue: 1121 },
-    { id: '3', name: 'Adrian', email: 'adrian@shopagentresources.com', listings: 1, totalSales: 31, revenue: 1519 },
-  ],
-  recentSales: [
-    { id: '1', item: 'AI Project Manager', buyer: 'user1@example.com', amount: 49, date: '2026-04-03', commission: 7.35 },
-    { id: '2', item: 'Dream Team Bundle', buyer: 'user2@example.com', amount: 99, date: '2026-04-03', commission: 14.85 },
-    { id: '3', item: 'AI Developer', buyer: 'user3@example.com', amount: 59, date: '2026-04-02', commission: 8.85 },
-  ],
-};
+interface CloudflareMetrics {
+  requests: number;
+  bandwidth: number;
+  pageviews: number;
+  threats: number;
+  uniqueVisitors: number;
+  period: string;
+  lastUpdated: string;
+}
+
+interface DashboardStats {
+  totalUsers: number;
+  totalDevelopers: number;
+  totalAdmins: number;
+  totalListings: number;
+  totalSales: number;
+  totalRevenue: number;
+  platformProfit: number;
+}
+
+interface UserData {
+  id: string;
+  email: string;
+  name: string;
+  isDeveloper: boolean;
+  isVerified: boolean;
+  isAdmin: boolean;
+  isMasterAdmin: boolean;
+  createdAt: string;
+}
+
+interface ListingData {
+  id: string;
+  name: string;
+  developer: string;
+  price: number;
+  sales: number;
+  revenue: number;
+  profit: number;
+  reviews: number;
+  rating: number;
+  status: string;
+}
+
+interface DeveloperData {
+  id: string;
+  name: string;
+  email: string;
+  listings: number;
+  totalSales: number;
+  revenue: number;
+}
+
+interface SaleData {
+  id: string;
+  item: string;
+  buyer: string;
+  amount: number;
+  commission: number;
+  date: string;
+}
 
 export default function AdminDashboard() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('overview');
-  const [data, setData] = useState({
-    stats: { totalUsers: 0, totalDevelopers: 0, totalListings: 0, totalSales: 0, totalRevenue: 0, platformProfit: 0 },
-    recentUsers: [],
-    listings: [],
-    developers: [],
-    recentSales: [],
+  const [activeSection, setActiveSection] = useState('overview');
+  const [stats, setStats] = useState<DashboardStats>({
+    totalUsers: 0,
+    totalDevelopers: 0,
+    totalAdmins: 0,
+    totalListings: 0,
+    totalSales: 0,
+    totalRevenue: 0,
+    platformProfit: 0,
   });
+  const [regularUsers, setRegularUsers] = useState<UserData[]>([]);
+  const [adminUsers, setAdminUsers] = useState<UserData[]>([]);
+  const [listings, setListings] = useState<ListingData[]>([]);
+  const [developers, setDevelopers] = useState<DeveloperData[]>([]);
+  const [sales, setSales] = useState<SaleData[]>([]);
+  const [metrics, setMetrics] = useState<CloudflareMetrics | null>(null);
   const [loading, setLoading] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [metricsLoading, setMetricsLoading] = useState(false);
 
   // Check auth and fetch data
   useEffect(() => {
@@ -68,54 +106,122 @@ export default function AdminDashboard() {
         return;
       }
       setIsAuthorized(true);
-      
-      // Fetch real data
-      const fetchData = async () => {
-        setLoading(true);
-        try {
-          // Fetch dashboard stats
-          const statsRes = await fetch(`${API_URL}/admin/dashboard`);
-          if (statsRes.ok) {
-            const statsData = await statsRes.json();
-            setData(prev => ({ ...prev, stats: statsData.stats }));
-          }
-          
-          // Fetch users
-          const usersRes = await fetch(`${API_URL}/admin/users`);
-          if (usersRes.ok) {
-            const usersData = await usersRes.json();
-            setData(prev => ({ ...prev, recentUsers: usersData.slice(0, 10) }));
-          }
-          
-          // Fetch listings
-          const listingsRes = await fetch(`${API_URL}/admin/listings`);
-          if (listingsRes.ok) {
-            const listingsData = await listingsRes.json();
-            setData(prev => ({ ...prev, listings: listingsData }));
-          }
-          
-          // Fetch developers
-          const devsRes = await fetch(`${API_URL}/admin/developers`);
-          if (devsRes.ok) {
-            const devsData = await devsRes.json();
-            setData(prev => ({ ...prev, developers: devsData }));
-          }
-          
-          // Fetch sales
-          const salesRes = await fetch(`${API_URL}/admin/sales/recent?limit=20`);
-          if (salesRes.ok) {
-            const salesData = await salesRes.json();
-            setData(prev => ({ ...prev, recentSales: salesData }));
-          }
-        } catch (err) {
-          console.error('Failed to fetch dashboard data:', err);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchData();
+      fetchAllData();
     }
   }, [user, isLoading, router]);
+
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      // Fetch dashboard stats
+      const statsRes = await fetch(`${API_URL}/admin/dashboard`);
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setStats(statsData.stats);
+      }
+      
+      // Fetch users
+      const usersRes = await fetch(`${API_URL}/admin/users`);
+      if (usersRes.ok) {
+        const usersData = await usersRes.json();
+        setRegularUsers(usersData.regularUsers || []);
+        setAdminUsers(usersData.adminUsers || []);
+      }
+      
+      // Fetch listings
+      const listingsRes = await fetch(`${API_URL}/admin/listings`);
+      if (listingsRes.ok) {
+        const listingsData = await listingsRes.json();
+        setListings(listingsData);
+      }
+      
+      // Fetch developers
+      const devsRes = await fetch(`${API_URL}/admin/developers`);
+      if (devsRes.ok) {
+        const devsData = await devsRes.json();
+        setDevelopers(devsData);
+      }
+      
+      // Fetch sales
+      const salesRes = await fetch(`${API_URL}/admin/sales`);
+      if (salesRes.ok) {
+        const salesData = await salesRes.json();
+        setSales(salesData);
+      }
+
+      // Fetch Cloudflare metrics
+      await fetchCloudflareMetrics();
+    } catch (err) {
+      console.error('Failed to fetch dashboard data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCloudflareMetrics = async () => {
+    setMetricsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/metrics/cloudflare`);
+      if (res.ok) {
+        const data = await res.json();
+        setMetrics(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch Cloudflare metrics:', err);
+    } finally {
+      setMetricsLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, isAdmin: boolean) => {
+    if (isAdmin) {
+      if (!confirm('Are you sure you want to delete this admin user? This action cannot be undone.')) {
+        return;
+      }
+    } else {
+      if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        return;
+      }
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/admin/users/${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        // Refresh users list
+        const usersRes = await fetch(`${API_URL}/admin/users`);
+        if (usersRes.ok) {
+          const usersData = await usersRes.json();
+          setRegularUsers(usersData.regularUsers || []);
+          setAdminUsers(usersData.adminUsers || []);
+        }
+      } else {
+        const error = await res.json();
+        alert(error.detail || 'Failed to delete user');
+      }
+    } catch (err) {
+      console.error('Failed to delete user:', err);
+      alert('Failed to delete user');
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('en-US').format(num);
+  };
 
   // Show loading while checking auth
   if (isLoading || !isAuthorized) {
@@ -129,9 +235,15 @@ export default function AdminDashboard() {
     );
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-  };
+  const menuItems = [
+    { id: 'overview', label: 'Overview', icon: '📊' },
+    { id: 'users', label: 'Users', icon: '👥' },
+    { id: 'admins', label: 'Admins', icon: '🔐' },
+    { id: 'developers', label: 'Developers', icon: '💻' },
+    { id: 'listings', label: 'Listings', icon: '📋' },
+    { id: 'sales', label: 'Sales', icon: '💰' },
+    { id: 'metrics', label: 'Website Metrics', icon: '📈' },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -139,6 +251,7 @@ export default function AdminDashboard() {
         <title>Admin Dashboard | Agent Resources</title>
       </Head>
 
+      {/* Top Navigation */}
       <nav className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -158,109 +271,261 @@ export default function AdminDashboard() {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Tabs */}
-        <div className="flex space-x-1 rounded-xl bg-slate-200 p-1 mb-8">
-          {['overview', 'users', 'developers', 'listings', 'sales'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`w-full rounded-lg py-2.5 text-sm font-medium leading-5 transition-colors ${
-                activeTab === tab ? 'bg-white text-blue-600 shadow' : 'text-slate-600 hover:bg-white/[0.5] hover:text-slate-800'
-              }`}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        {/* Overview Tab */}
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <StatCard title="Total Users" value={data.stats.totalUsers} icon="users" color="blue" />
-              <StatCard title="Developers" value={data.stats.totalDevelopers} icon="code" color="green" />
-              <StatCard title="Active Listings" value={data.stats.totalListings} icon="listings" color="purple" />
-              <StatCard title="Total Sales" value={data.stats.totalSales} icon="sales" color="yellow" />
-              <StatCard title="Total Revenue" value={formatCurrency(data.stats.totalRevenue)} icon="revenue" color="emerald" />
-              <StatCard title="Platform Profit (15%)" value={formatCurrency(data.stats.platformProfit)} icon="profit" color="emerald" isProfit />
-            </div>
-
-            {/* Recent Sales */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-6 py-4 border-b border-slate-200">
-                <h3 className="text-lg font-semibold text-slate-900">Recent Sales</h3>
+        <div className="flex gap-8">
+          {/* Side Menu */}
+          <div className="w-64 flex-shrink-0">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="p-4 border-b border-slate-200">
+                <h2 className="font-semibold text-slate-900">Menu</h2>
               </div>
-              <table className="w-full">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Item</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Buyer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Amount</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Commission</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {data.recentSales.map((sale) => (
-                    <tr key={sale.id}>
-                      <td className="px-6 py-4 text-slate-900">{sale.item}</td>
-                      <td className="px-6 py-4 text-slate-600">{sale.buyer}</td>
-                      <td className="px-6 py-4 text-slate-900">{formatCurrency(sale.amount)}</td>
-                      <td className="px-6 py-4 text-emerald-600">{formatCurrency(sale.commission)}</td>
-                      <td className="px-6 py-4 text-slate-600">{sale.date}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <nav className="p-2">
+                {menuItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveSection(item.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                      activeSection === item.id
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span>{item.icon}</span>
+                    <span className="font-medium">{item.label}</span>
+                  </button>
+                ))}
+              </nav>
             </div>
+
+            {/* Refresh Button */}
+            <button
+              onClick={fetchAllData}
+              disabled={loading}
+              className="w-full mt-4 bg-white border border-slate-200 text-slate-700 px-4 py-3 rounded-xl font-medium hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                  Refreshing...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Refresh Data
+                </>
+              )}
+            </button>
           </div>
-        )}
 
-        {/* Users Tab */}
-        {activeTab === 'users' && (
-          <DataTable 
-            title="All Users" 
-            count={data.stats.totalUsers}
-            headers={['Name', 'Email', 'Type', 'Joined']}
-            rows={data.recentUsers.map(u => [u.name, u.email, u.isDeveloper ? 'Developer' : 'Buyer', u.createdAt])}
-          />
-        )}
+          {/* Main Content */}
+          <div className="flex-1">
+            {/* Overview Section */}
+            {activeSection === 'overview' && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-slate-900">Overview</h2>
+                
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <StatCard title="Total Users" value={stats.totalUsers} icon="👥" color="blue" />
+                  <StatCard title="Developers" value={stats.totalDevelopers} icon="💻" color="green" />
+                  <StatCard title="Admins" value={stats.totalAdmins} icon="🔐" color="purple" />
+                  <StatCard title="Active Listings" value={stats.totalListings} icon="📋" color="purple" />
+                  <StatCard title="Total Sales" value={stats.totalSales} icon="🛒" color="yellow" />
+                  <StatCard title="Total Revenue" value={formatCurrency(stats.totalRevenue)} icon="💰" color="emerald" />
+                  <StatCard title="Platform Profit (15%)" value={formatCurrency(stats.platformProfit)} icon="📈" color="emerald" isProfit />
+                </div>
 
-        {/* Listings Tab */}
-        {activeTab === 'listings' && (
-          <DataTable 
-            title="All Listings" 
-            count={data.stats.totalListings}
-            headers={['Name', 'Developer', 'Price', 'Sales', 'Revenue', 'Profit', 'Reviews', 'Rating']}
-            rows={data.listings.map(l => [
-              l.name, l.developer, formatCurrency(l.price), l.sales, 
-              formatCurrency(l.revenue), formatCurrency(l.profit), 
-              l.reviews, `${l.rating} ★`
-            ])}
-          />
-        )}
+                {/* Recent Sales Table */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+                  <div className="px-6 py-4 border-b border-slate-200">
+                    <h3 className="text-lg font-semibold text-slate-900">Recent Sales</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-slate-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Item</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Buyer</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Amount</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Commission</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {sales.slice(0, 10).map((sale) => (
+                          <tr key={sale.id}>
+                            <td className="px-6 py-4 text-slate-900">{sale.item}</td>
+                            <td className="px-6 py-4 text-slate-600">{sale.buyer}</td>
+                            <td className="px-6 py-4 text-slate-900">{formatCurrency(sale.amount)}</td>
+                            <td className="px-6 py-4 text-emerald-600">{formatCurrency(sale.commission)}</td>
+                            <td className="px-6 py-4 text-slate-600">{sale.date}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
 
-        {/* Developers Tab */}
-        {activeTab === 'developers' && (
-          <DataTable 
-            title="Developers" 
-            count={data.stats.totalDevelopers}
-            headers={['Name', 'Email', 'Listings', 'Total Sales', 'Revenue']}
-            rows={data.developers.map(d => [d.name, d.email, d.listings, d.totalSales, formatCurrency(d.revenue)])}
-          />
-        )}
+            {/* Users Section */}
+            {activeSection === 'users' && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-slate-900">Regular Users ({regularUsers.length})</h2>
+                <DataTable
+                  headers={['Name', 'Email', 'Type', 'Verified', 'Joined', 'Actions']}
+                  rows={regularUsers.map(u => [
+                    u.name,
+                    u.email,
+                    u.isDeveloper ? 'Developer' : 'Buyer',
+                    u.isVerified ? '✅' : '❌',
+                    new Date(u.createdAt).toLocaleDateString(),
+                    <button
+                      key={u.id}
+                      onClick={() => handleDeleteUser(u.id, false)}
+                      className="text-red-600 hover:text-red-800 text-sm font-medium"
+                    >
+                      Delete
+                    </button>
+                  ])}
+                />
+              </div>
+            )}
 
-        {/* Sales Tab */}
-        {activeTab === 'sales' && (
-          <DataTable 
-            title="All Sales" 
-            count={data.stats.totalSales}
-            headers={['Item', 'Buyer', 'Amount', 'Commission', 'Date']}
-            rows={data.recentSales.map(s => [
-              s.item, s.buyer, formatCurrency(s.amount), formatCurrency(s.commission), s.date
-            ])}
-          />
-        )}
+            {/* Admins Section */}
+            {activeSection === 'admins' && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-slate-900">Admin Users ({adminUsers.length})</h2>
+                <DataTable
+                  headers={['Name', 'Email', 'Master Admin', 'Joined', 'Actions']}
+                  rows={adminUsers.map(u => [
+                    u.name,
+                    u.email,
+                    u.isMasterAdmin ? '⭐ Yes' : 'No',
+                    new Date(u.createdAt).toLocaleDateString(),
+                    u.isMasterAdmin ? (
+                      <span className="text-slate-400 text-sm">Protected</span>
+                    ) : (
+                      <button
+                        key={u.id}
+                        onClick={() => handleDeleteUser(u.id, true)}
+                        className="text-red-600 hover:text-red-800 text-sm font-medium"
+                      >
+                        Delete
+                      </button>
+                    )
+                  ])}
+                />
+              </div>
+            )}
+
+            {/* Developers Section */}
+            {activeSection === 'developers' && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-slate-900">Developers ({developers.length})</h2>
+                <DataTable
+                  headers={['Name', 'Email', 'Listings', 'Total Sales', 'Revenue']}
+                  rows={developers.map(d => [
+                    d.name,
+                    d.email,
+                    d.listings,
+                    d.totalSales,
+                    formatCurrency(d.revenue)
+                  ])}
+                />
+              </div>
+            )}
+
+            {/* Listings Section */}
+            {activeSection === 'listings' && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-slate-900">Listings ({listings.length})</h2>
+                <DataTable
+                  headers={['Name', 'Developer', 'Price', 'Sales', 'Revenue', 'Profit', 'Reviews', 'Rating', 'Status']}
+                  rows={listings.map(l => [
+                    l.name,
+                    l.developer,
+                    formatCurrency(l.price),
+                    l.sales,
+                    formatCurrency(l.revenue),
+                    formatCurrency(l.profit),
+                    l.reviews,
+                    `${l.rating} ★`,
+                    <span key={l.id} className={`px-2 py-1 rounded-full text-xs ${l.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                      {l.status}
+                    </span>
+                  ])}
+                />
+              </div>
+            )}
+
+            {/* Sales Section */}
+            {activeSection === 'sales' && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-slate-900">All Sales ({sales.length})</h2>
+                <DataTable
+                  headers={['Item', 'Buyer', 'Amount', 'Commission', 'Date']}
+                  rows={sales.map(s => [
+                    s.item,
+                    s.buyer,
+                    formatCurrency(s.amount),
+                    formatCurrency(s.commission),
+                    s.date
+                  ])}
+                />
+              </div>
+            )}
+
+            {/* Metrics Section */}
+            {activeSection === 'metrics' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-slate-900">Website Metrics (Cloudflare)</h2>
+                  <button
+                    onClick={fetchCloudflareMetrics}
+                    disabled={metricsLoading}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {metricsLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Refreshing...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Refresh Metrics
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {metrics ? (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <StatCard title="Total Requests" value={formatNumber(metrics.requests)} icon="🌐" color="blue" />
+                      <StatCard title="Page Views" value={formatNumber(metrics.pageviews)} icon="👁️" color="green" />
+                      <StatCard title="Unique Visitors" value={formatNumber(metrics.uniqueVisitors)} icon="🎯" color="purple" />
+                      <StatCard title="Bandwidth Used" value={formatBytes(metrics.bandwidth)} icon="📊" color="yellow" />
+                      <StatCard title="Threats Blocked" value={formatNumber(metrics.threats)} icon="🛡️" color="red" />
+                      <StatCard title="Period" value={metrics.period} icon="📅" color="emerald" />
+                    </div>
+                    <p className="text-sm text-slate-500">
+                      Last updated: {new Date(metrics.lastUpdated).toLocaleString()}
+                    </p>
+                  </>
+                ) : (
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+                    <p className="text-slate-500">No metrics available. Click refresh to fetch data.</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -280,6 +545,7 @@ function StatCard({ title, value, icon, color, isProfit = false }: {
     purple: 'bg-purple-100 text-purple-600',
     yellow: 'bg-yellow-100 text-yellow-600',
     emerald: 'bg-emerald-100 text-emerald-600',
+    red: 'bg-red-100 text-red-600',
   };
 
   return (
@@ -290,7 +556,7 @@ function StatCard({ title, value, icon, color, isProfit = false }: {
           <p className={`text-3xl font-bold ${isProfit ? 'text-emerald-600' : 'text-slate-900'}`}>{value}</p>
         </div>
         <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colors[color]}`}>
-          <span className="text-xl">{icon === 'users' ? '👥' : icon === 'code' ? '💻' : icon === 'listings' ? '📋' : icon === 'sales' ? '🛒' : icon === 'revenue' ? '💰' : '📈'}</span>
+          <span className="text-xl">{icon}</span>
         </div>
       </div>
     </div>
@@ -298,32 +564,30 @@ function StatCard({ title, value, icon, color, isProfit = false }: {
 }
 
 // Data Table Component
-function DataTable({ title, count, headers, rows }: { 
-  title: string; 
-  count: number; 
+function DataTable({ headers, rows }: { 
   headers: string[]; 
-  rows: (string | number)[][];
+  rows: (string | number | JSX.Element)[][];
 }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-      <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-        <span className="text-sm text-slate-500">{count} total</span>
-      </div>
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-slate-50">
             <tr>
               {headers.map((h, i) => (
-                <th key={i} className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">{h}</th>
+                <th key={i} className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  {h}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
             {rows.map((row, i) => (
-              <tr key={i}>
+              <tr key={i} className="hover:bg-slate-50">
                 {row.map((cell, j) => (
-                  <td key={j} className={`px-6 py-4 ${j === 0 ? 'text-slate-900' : 'text-slate-600'}`}>{cell}</td>
+                  <td key={j} className={`px-6 py-4 whitespace-nowrap ${j === 0 ? 'text-slate-900 font-medium' : 'text-slate-600'}`}>
+                    {cell}
+                  </td>
                 ))}
               </tr>
             ))}
