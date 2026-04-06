@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { useRouter } from 'next/router';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
@@ -7,6 +8,18 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
+  const router = useRouter();
+  const isAdminRoute = router.pathname.startsWith('/admin');
+
+  // Admin routes have their own layout - don't show main navbar/footer
+  if (isAdminRoute) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen text-white flex flex-col relative overflow-hidden">
       {/* Background gradient overlay */}

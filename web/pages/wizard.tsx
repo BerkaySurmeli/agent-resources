@@ -91,12 +91,15 @@ export default function Wizard() {
       addToCart({
         slug: item.slug,
         name: item.name,
-        price: item.price,
+        price: Number(item.price.toFixed(2)),
         category: 'persona'
       });
     });
     window.location.href = '/cart';
   };
+
+  // Helper function to format prices with 2 decimal places
+  const formatPrice = (price: number) => `$${price.toFixed(2)}`;
 
   return (
     <div className="min-h-screen bg-white">
@@ -166,7 +169,7 @@ export default function Wizard() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
                       </div>
-                      <span className="text-2xl font-bold text-slate-900">${orch.price}</span>
+                      <span className="text-2xl font-bold text-slate-900">{formatPrice(orch.price)}</span>
                     </div>
                     <h3 className="text-lg font-semibold text-slate-900 mb-1">{orch.name}</h3>
                     <p className="text-blue-600 text-sm mb-2">{orch.role}</p>
@@ -211,7 +214,7 @@ export default function Wizard() {
                           <p className="text-slate-600 text-sm mt-1">{member.description}</p>
                         </div>
                         <div className="text-right">
-                          <span className="font-semibold text-slate-900">${member.price}</span>
+                          <span className="font-semibold text-slate-900">{formatPrice(member.price)}</span>
                           {selectedTeam.includes(member.slug) && (
                             <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mt-2 ml-auto">
                               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -252,7 +255,7 @@ export default function Wizard() {
                           <p className="text-slate-600 text-sm mt-1">{mcp.description}</p>
                         </div>
                         <div className="text-right ml-2">
-                          <span className="font-semibold text-slate-900">${mcp.price}</span>
+                          <span className="font-semibold text-slate-900">{formatPrice(mcp.price)}</span>
                           {selectedMCPs.includes(mcp.slug) && (
                             <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center mt-2 ml-auto">
                               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -292,7 +295,7 @@ export default function Wizard() {
                       {orchestrators.filter(o => o.slug === selectedOrchestrator).map(o => (
                         <div key={o.slug} className="flex items-center justify-between py-2">
                           <span className="font-medium text-slate-900">{o.name} ({o.role})</span>
-                          <span className="font-semibold">${o.price}</span>
+                          <span className="font-semibold">{formatPrice(o.price)}</span>
                         </div>
                       ))}
                     </div>
@@ -305,7 +308,7 @@ export default function Wizard() {
                       {teamMembers.filter(t => selectedTeam.includes(t.slug)).map(t => (
                         <div key={t.slug} className="flex items-center justify-between py-2">
                           <span className="font-medium text-slate-900">{t.name} ({t.role})</span>
-                          <span className="font-semibold">${t.price}</span>
+                          <span className="font-semibold">{formatPrice(t.price)}</span>
                         </div>
                       ))}
                     </div>
@@ -318,7 +321,7 @@ export default function Wizard() {
                       {mcpServers.filter(m => selectedMCPs.includes(m.slug)).map(m => (
                         <div key={m.slug} className="flex items-center justify-between py-2">
                           <span className="font-medium text-slate-900">{m.name}</span>
-                          <span className="font-semibold">${m.price}</span>
+                          <span className="font-semibold">{formatPrice(m.price)}</span>
                         </div>
                       ))}
                     </div>
@@ -328,17 +331,17 @@ export default function Wizard() {
                   <div className="mt-6 pt-4 border-t border-slate-200">
                     <div className="flex justify-between text-slate-600 mb-2">
                       <span>Subtotal</span>
-                      <span>${total}</span>
+                      <span>{formatPrice(total)}</span>
                     </div>
                     {bundleDiscount > 0 && (
                       <div className="flex justify-between text-green-600 mb-2">
                         <span>Bundle Discount (15%)</span>
-                        <span>-${bundleDiscount}</span>
+                        <span>-{formatPrice(bundleDiscount)}</span>
                       </div>
                     )}
                     <div className="flex justify-between font-semibold text-slate-900 text-lg pt-2 border-t border-slate-200">
                       <span>Total</span>
-                      <span>${finalTotal}</span>
+                      <span>{formatPrice(finalTotal)}</span>
                     </div>
                     {selectedItems.length >= 3 && (
                       <p className="text-sm text-green-600 mt-2">🎉 Bundle discount applied!</p>

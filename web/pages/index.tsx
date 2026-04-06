@@ -186,14 +186,10 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <FadeIn>
             <div className="text-center mb-16">
-              <p className="text-accent-400 font-medium mb-3 tracking-wider uppercase text-sm">Build Your Team</p>
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
                 Beyond Human Resources
               </h2>
-              <p className="text-lg text-dark-300 max-w-2xl mx-auto mb-8">
-                Assemble your AI workforce in minutes. No complex setup, no lengthy configuration.
-              </p>
-              <div className="mt-8">
+              <div className="mt-8 flex justify-center">
                 <Link
                   href="/wizard"
                   className="btn-primary text-lg px-8 py-4 inline-flex items-center justify-center gap-2"

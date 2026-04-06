@@ -6,7 +6,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from core.database import get_session
 from core.config import settings
-from models import User
+from models import User, AdminUser
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -185,6 +185,10 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
 from typing import Optional
 
 class UserResponse(BaseModel):
@@ -289,7 +293,12 @@ def signup(user_data: UserSignup, session = Depends(get_session)):
 
 @router.post("/login", response_model=TokenResponse)
 def login(user_data: UserLogin, session = Depends(get_session)):
-    # Find user
+    # First check if this email belongs to an admin - admins cannot use regular login
+    admin_user = session.exec(select(AdminUser).where(AdminUser.email == user_data.email)).first()
+    if admin_user:
+        raise HTTPException(status_code=400, detail="Admin users must use the admin login page")
+    
+    # Find regular user
     user = session.exec(select(User).where(User.email == user_data.email)).first()
     if not user:
         raise HTTPException(status_code=400, detail="Invalid email or password")
@@ -414,6 +423,27 @@ def resend_verification(
 
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+
+@router.post("/change-password")
+def change_password(
+    request: ChangePasswordRequest,
+    session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Change user password - requires current password verification"""
+    # Verify current password
+    if not verify_password(request.current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    
+    # Hash new password
+    new_password_hash = pwd_context.hash(request.new_password)
+    
+    # Update password
+    current_user.password_hash = new_password_hash
+    session.commit()
+    
+    return {"message": "Password updated successfully"}
 
 
 # Dependency to get current user from JWT token

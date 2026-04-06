@@ -447,20 +447,28 @@ export default function AdminDashboard() {
                 <h2 className="text-2xl font-bold text-slate-900">Regular Users ({users.length})</h2>
                 <DataTable
                   headers={['Name', 'Email', 'Type', 'Verified', 'Joined', 'Actions']}
-                  rows={users.map(u => [
-                    u.name,
-                    u.email,
-                    u.isDeveloper ? 'Developer' : 'Buyer',
-                    u.isVerified ? '✅' : '❌',
-                    new Date(u.createdAt).toLocaleDateString(),
-                    <button
-                      key={u.id}
-                      onClick={() => handleDeleteUser(u.id)}
-                      className="text-red-600 hover:text-red-800 text-sm font-medium"
-                    >
-                      Delete
-                    </button>
-                  ])}
+                  rows={users.map(u => {
+                    // Check if this user is also an admin
+                    const isAdmin = admins.some(a => a.email === u.email);
+                    return [
+                      u.name,
+                      u.email,
+                      isAdmin ? '👑 Admin' : (u.isDeveloper ? 'Developer' : 'Buyer'),
+                      u.isVerified ? '✅' : '❌',
+                      new Date(u.createdAt).toLocaleDateString(),
+                      isAdmin ? (
+                        <span key={u.id} className="text-slate-400 text-sm">Protected</span>
+                      ) : (
+                        <button
+                          key={u.id}
+                          onClick={() => handleDeleteUser(u.id)}
+                          className="text-red-600 hover:text-red-800 text-sm font-medium"
+                        >
+                          Delete
+                        </button>
+                      )
+                    ];
+                  })}
                 />
               </div>
             )}
