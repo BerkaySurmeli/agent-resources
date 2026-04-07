@@ -20,11 +20,22 @@ const defaultTranslations = {
 };
 
 export default function LandingPage() {
+  // Hardcoded languages with flags
+  const languages = [
+    { code: 'en', name: 'English', flag: '🇺🇸' },
+    { code: 'es', name: 'Español', flag: '🇪🇸' },
+    { code: 'zh', name: '中文', flag: '🇨🇳' },
+    { code: 'ar', name: 'العربية', flag: '🇸🇦' },
+    { code: 'ja', name: '日本語', flag: '🇯🇵' },
+    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+    { code: 'ko', name: '한국어', flag: '🇰🇷' },
+    { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
+  ];
+  
   // Try to use language context, fallback to defaults
   let t = defaultTranslations;
   let language = 'en';
   let setLanguage = (lang: string) => {};
-  let languages: {code: string, name: string, flag: string}[] = [];
   
   try {
     const langContext = require('../context/LanguageContext');
@@ -33,7 +44,6 @@ export default function LandingPage() {
       t = ctx.t || defaultTranslations;
       language = ctx.language || 'en';
       setLanguage = ctx.setLanguage || ((lang: string) => {});
-      languages = ctx.languages || [];
     }
   } catch (e) {
     // Context not available, use defaults
@@ -127,6 +137,7 @@ export default function LandingPage() {
               </div>
               <div className="flex items-center gap-6">
                 <a href="/blog" className="text-sm text-slate-400 hover:text-white transition-colors">Blog</a>
+                <span className="text-sm text-slate-400">Coming Soon</span>
                 {/* Language Selector */}
                 <select
                   value={language}
@@ -139,7 +150,6 @@ export default function LandingPage() {
                     </option>
                   ))}
                 </select>
-                <span className="text-sm text-slate-400">Coming Soon</span>
               </div>
             </div>
           </div>
