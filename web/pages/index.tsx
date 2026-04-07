@@ -59,7 +59,7 @@ export default function LandingPage() {
     spotsRemaining: 'spots remaining',
     spotsClaimed: 'All spots claimed! Join the waitlist for early access.',
     emailPlaceholder: 'Enter your email',
-    getAccess: 'Get Early Access',
+    getAccess: 'Secure Your Spot',
     joining: 'Joining...',
     successMessage: 'Thanks! Check your email for your developer code.',
     errorMessage: 'Something went wrong. Please try again.',
@@ -112,50 +112,45 @@ export default function LandingPage() {
         </nav>
 
         {/* Hero Section */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
-          <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
+          <div className="text-center">
+            <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
               {lt.title}
               <br />
               <span className="text-blue-400">{lt.titleHighlight}</span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl text-slate-300 mb-8 max-w-xl mx-auto">
               {lt.subtitle}
             </p>
 
             {/* Developer Incentive */}
-            <div className="mb-6">
-              <p className="text-lg text-amber-400 font-medium">
+            <div className="mb-8">
+              <p className="text-lg text-amber-400 font-medium mb-2">
                 {lt.incentive}
               </p>
               {spotsRemaining !== null && spotsRemaining > 0 && (
-                <p className="text-2xl font-bold text-white mt-2">
+                <p className="text-xl font-bold text-white">
                   {spotsRemaining}/50 {lt.spotsRemaining}
-                </p>
-              )}
-              {spotsRemaining === 0 && (
-                <p className="text-lg text-slate-400 mt-2">
-                  {lt.spotsClaimed}
                 </p>
               )}
             </div>
 
             {/* Email Signup */}
-            <div className="max-w-md mx-auto mb-16">
+            <div className="max-w-md mx-auto">
               <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={lt.emailPlaceholder}
-                  className="flex-1 px-5 py-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-5 py-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={status === 'loading'}
                 />
                 <button
                   type="submit"
                   disabled={status === 'loading'}
-                  className="px-8 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors"
+                  className="px-8 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors whitespace-nowrap"
                 >
                   {status === 'loading' ? lt.joining : lt.getAccess}
                 </button>
@@ -167,39 +162,6 @@ export default function LandingPage() {
               {status === 'error' && (
                 <p className="mt-4 text-red-400 text-sm">{message}</p>
               )}
-            </div>
-
-            {/* Features Grid */}
-            <div className="grid md:grid-cols-3 gap-8 text-left">
-              <div className="p-6 rounded-xl bg-white/5 border border-white/10">
-                <div className="w-12 h-12 bg-blue-600/20 rounded-lg flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{lt.features.personas.title}</h3>
-                <p className="text-slate-400">{lt.features.personas.description}</p>
-              </div>
-
-              <div className="p-6 rounded-xl bg-white/5 border border-white/10">
-                <div className="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{lt.features.skills.title}</h3>
-                <p className="text-slate-400">{lt.features.skills.description}</p>
-              </div>
-
-              <div className="p-6 rounded-xl bg-white/5 border border-white/10">
-                <div className="w-12 h-12 bg-green-600/20 rounded-lg flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{lt.features.mcp.title}</h3>
-                <p className="text-slate-400">{lt.features.mcp.description}</p>
-              </div>
             </div>
           </div>
         </main>
