@@ -56,6 +56,8 @@ export default function LandingPage() {
       <Head>
         <title>Agent Resources - Marketplace for AI Agents</title>
         <meta name="description" content="The marketplace for AI agents, skills, and MCP servers. Buy, sell, and discover tools for autonomous agents." />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="alternate icon" href="/favicon.ico" />
       </Head>
 
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
@@ -69,7 +71,10 @@ export default function LandingPage() {
                 </div>
                 <span className="font-semibold text-white">Agent Resources</span>
               </div>
-              <div className="text-sm text-slate-400">Coming Soon</div>
+              <div className="flex items-center gap-6">
+                <a href="/blog" className="text-sm text-slate-400 hover:text-white transition-colors">Blog</a>
+                <span className="text-sm text-slate-400">Coming Soon</span>
+              </div>
             </div>
           </div>
         </nav>
@@ -85,7 +90,7 @@ export default function LandingPage() {
             
             <p className="text-xl md:text-2xl text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
               Buy, sell, and discover AI personas, skills, and MCP servers. 
-              The infrastructure for autonomous agents.
+              Reimagining Human Resources.
             </p>
 
             {/* Developer Incentive */}
