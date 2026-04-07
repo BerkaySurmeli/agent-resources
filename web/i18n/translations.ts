@@ -9,7 +9,7 @@ export const translations = {
       spotsRemaining: 'spots remaining',
       spotsClaimed: 'All spots claimed! Join the waitlist for early access.',
       emailPlaceholder: 'Enter your email',
-      getAccess: 'Get Early Access',
+      getAccess: 'Secure Your Spot',
       joining: 'Joining...',
       successMessage: 'Thanks! Check your email for your developer code.',
       errorMessage: 'Something went wrong. Please try again.',
