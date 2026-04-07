@@ -46,8 +46,6 @@ def send_welcome_email(email: str, code: str):
                 <p>As one of our first 50 developers, you're eligible for:</p>
                 <ul>
                     <li>$20 bonus after your first sale</li>
-                    <li>Early access to the platform</li>
-                    <li>Priority support</li>
                 </ul>
                 
                 <p>Stay tuned for updates!</p>
