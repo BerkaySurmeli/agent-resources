@@ -1,14 +1,15 @@
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function LandingPage() {
+  const { t, language, setLanguage, languages } = useLanguage();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [spotsRemaining, setSpotsRemaining] = useState<number | null>(null);
 
   useEffect(() => {
-    // Fetch waitlist count
     fetch('https://api.shopagentresources.com/waitlist/count/')
       .then(res => res.json())
       .then(data => {
@@ -22,7 +23,7 @@ export default function LandingPage() {
     e.preventDefault();
     if (!email || !email.includes('@')) {
       setStatus('error');
-      setMessage('Please enter a valid email address');
+      setMessage(t.landing?.errorMessage || 'Please enter a valid email address');
       return;
     }
 
@@ -36,9 +37,8 @@ export default function LandingPage() {
 
       if (response.ok) {
         setStatus('success');
-        setMessage('Thanks! Check your email for your developer code.');
+        setMessage(t.landing?.successMessage || 'Thanks! Check your email for your developer code.');
         setEmail('');
-        // Refresh spots remaining
         const countRes = await fetch('https://api.shopagentresources.com/waitlist/count/');
         const data = await countRes.json();
         setSpotsRemaining(Math.max(0, 50 - data.count));
@@ -47,8 +47,28 @@ export default function LandingPage() {
       }
     } catch (error) {
       setStatus('error');
-      setMessage('Something went wrong. Please try again.');
+      setMessage(t.landing?.errorMessage || 'Something went wrong. Please try again.');
     }
+  };
+
+  const lt = t.landing || {
+    title: 'The Marketplace for',
+    titleHighlight: 'AI Agents',
+    subtitle: 'Buy, sell, and discover AI personas, skills, and MCP servers. Reimagining Human Resources.',
+    incentive: '🎉 First 50 developers get $20 when they make their first sale!',
+    spotsRemaining: 'spots remaining',
+    spotsClaimed: 'All spots claimed! Join the waitlist for early access.',
+    emailPlaceholder: 'Enter your email',
+    getAccess: 'Get Early Access',
+    joining: 'Joining...',
+    successMessage: 'Thanks! Check your email for your developer code.',
+    errorMessage: 'Something went wrong. Please try again.',
+    features: {
+      personas: { title: 'AI Personas', description: 'Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.' },
+      skills: { title: 'Skills', description: 'Reusable capabilities for agents — from web scraping to API integrations.' },
+      mcp: { title: 'MCP Servers', description: 'Model Context Protocol servers for extending agent capabilities.' }
+    },
+    footer: '© 2026 Agent Resources. Built for the agent economy.'
   };
 
   return (
@@ -73,6 +93,18 @@ export default function LandingPage() {
               </div>
               <div className="flex items-center gap-6">
                 <a href="/blog" className="text-sm text-slate-400 hover:text-white transition-colors">Blog</a>
+                {/* Language Selector */}
+                <select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value as any)}
+                  className="bg-slate-800 border border-slate-700 text-white text-sm rounded px-2 py-1"
+                >
+                  {languages.map(lang => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.flag} {lang.name}
+                    </option>
+                  ))}
+                </select>
                 <span className="text-sm text-slate-400">Coming Soon</span>
               </div>
             </div>
@@ -83,29 +115,28 @@ export default function LandingPage() {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8">
-              The Marketplace for
+              {lt.title}
               <br />
-              <span className="text-blue-400">AI Agents</span>
+              <span className="text-blue-400">{lt.titleHighlight}</span>
             </h1>
             
             <p className="text-xl md:text-2xl text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Buy, sell, and discover AI personas, skills, and MCP servers. 
-              Reimagining Human Resources.
+              {lt.subtitle}
             </p>
 
             {/* Developer Incentive */}
             <div className="mb-6">
               <p className="text-lg text-amber-400 font-medium">
-                🎉 First 50 developers get $20 when they make their first sale!
+                {lt.incentive}
               </p>
               {spotsRemaining !== null && spotsRemaining > 0 && (
                 <p className="text-2xl font-bold text-white mt-2">
-                  {spotsRemaining}/50 spots remaining
+                  {spotsRemaining}/50 {lt.spotsRemaining}
                 </p>
               )}
               {spotsRemaining === 0 && (
                 <p className="text-lg text-slate-400 mt-2">
-                  All spots claimed! Join the waitlist for early access.
+                  {lt.spotsClaimed}
                 </p>
               )}
             </div>
@@ -117,7 +148,7 @@ export default function LandingPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
+                  placeholder={lt.emailPlaceholder}
                   className="flex-1 px-5 py-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   disabled={status === 'loading'}
                 />
@@ -126,7 +157,7 @@ export default function LandingPage() {
                   disabled={status === 'loading'}
                   className="px-8 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors"
                 >
-                  {status === 'loading' ? 'Joining...' : 'Get Early Access'}
+                  {status === 'loading' ? lt.joining : lt.getAccess}
                 </button>
               </form>
               
@@ -146,8 +177,8 @@ export default function LandingPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">AI Personas</h3>
-                <p className="text-slate-400">Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.</p>
+                <h3 className="text-lg font-semibold mb-2">{lt.features.personas.title}</h3>
+                <p className="text-slate-400">{lt.features.personas.description}</p>
               </div>
 
               <div className="p-6 rounded-xl bg-white/5 border border-white/10">
@@ -156,8 +187,8 @@ export default function LandingPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">Skills</h3>
-                <p className="text-slate-400">Reusable capabilities for agents — from web scraping to API integrations.</p>
+                <h3 className="text-lg font-semibold mb-2">{lt.features.skills.title}</h3>
+                <p className="text-slate-400">{lt.features.skills.description}</p>
               </div>
 
               <div className="p-6 rounded-xl bg-white/5 border border-white/10">
@@ -166,8 +197,8 @@ export default function LandingPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">MCP Servers</h3>
-                <p className="text-slate-400">Model Context Protocol servers for extending agent capabilities.</p>
+                <h3 className="text-lg font-semibold mb-2">{lt.features.mcp.title}</h3>
+                <p className="text-slate-400">{lt.features.mcp.description}</p>
               </div>
             </div>
           </div>
@@ -176,7 +207,7 @@ export default function LandingPage() {
         {/* Footer */}
         <footer className="border-t border-white/10 py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-slate-400 text-sm">
-            <p>© 2026 Agent Resources. Built for the agent economy.</p>
+            <p>{lt.footer}</p>
           </div>
         </footer>
       </div>

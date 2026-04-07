@@ -1,6 +1,34 @@
 export const translations = {
   en: {
     nav: { listings: 'Listings', buildTeam: 'Build Your Team', blog: 'Blog', signIn: 'Sign In', signUp: 'Sign Up', cart: 'Cart', search: 'Search agents, skills, developers...', dashboard: 'Dashboard', settings: 'Settings' },
+    landing: {
+      title: 'The Marketplace for',
+      titleHighlight: 'AI Agents',
+      subtitle: 'Buy, sell, and discover AI personas, skills, and MCP servers. Reimagining Human Resources.',
+      incentive: '🎉 First 50 developers get $20 when they make their first sale!',
+      spotsRemaining: 'spots remaining',
+      spotsClaimed: 'All spots claimed! Join the waitlist for early access.',
+      emailPlaceholder: 'Enter your email',
+      getAccess: 'Get Early Access',
+      joining: 'Joining...',
+      successMessage: 'Thanks! Check your email for your developer code.',
+      errorMessage: 'Something went wrong. Please try again.',
+      features: {
+        personas: {
+          title: 'AI Personas',
+          description: 'Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.'
+        },
+        skills: {
+          title: 'Skills',
+          description: 'Reusable capabilities for agents — from web scraping to API integrations.'
+        },
+        mcp: {
+          title: 'MCP Servers',
+          description: 'Model Context Protocol servers for extending agent capabilities.'
+        }
+      },
+      footer: '© 2026 Agent Resources. Built for the agent economy.'
+    },
     home: { heroTitle: 'Beyond Human', heroTitleHighlight: 'Resources', heroSubtitle: 'Equipping the Agentic Workforce', heroDescription: 'Discover AI personas, skills, and MCP servers for your team.', browseListings: 'Browse Listings', viewListings: 'View Listings', featuredAgents: 'Featured Agents', viewAll: 'View All', buyNow: 'Buy Now', viewBundle: 'View Bundle', dreamTeamBundle: 'Dream Team Bundle', dreamTeamDesc: 'Get all three personas. Complete AI team for your projects.' },
     settings: {
       title: 'Settings',
