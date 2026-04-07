@@ -164,7 +164,7 @@ export default function LandingPage() {
             )}
 
             {/* Features */}
-            <div className="grid md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto mt-8">
               <div className="p-8 rounded-xl bg-white/5 border border-white/10">
                 <h3 className="text-xl font-semibold mb-3 text-blue-400">{lt.features?.personas?.title || 'AI Personas'}</h3>
                 <p className="text-slate-400">{lt.features?.personas?.description || 'Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.'}</p>
