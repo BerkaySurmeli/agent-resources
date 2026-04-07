@@ -198,6 +198,7 @@ class Listing(SQLModel, table=True):
     
     # Security scan
     status: str = Field(default='pending_payment')
+    virus_scan_status: str = Field(default='pending')  # pending, scanning, clean, infected, failed
     scan_started_at: Optional[datetime] = Field(default=None)
     scan_completed_at: Optional[datetime] = Field(default=None)
     scan_results: Dict = Field(default={}, sa_column=Column(JSON))

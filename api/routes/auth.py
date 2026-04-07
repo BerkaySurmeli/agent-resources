@@ -380,3 +380,125 @@ def delete_account(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to delete account: {error_msg}")
+
+
+# User Purchases
+@router.get("/purchases")
+def get_user_purchases(
+    session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Get current user's purchase history"""
+    from models import Transaction, Product, User
+    
+    transactions = session.exec(
+        select(Transaction, Product, User)
+        .join(Product, Transaction.product_id == Product.id)
+        .join(User, Transaction.seller_id == User.id, isouter=True)
+        .where(Transaction.buyer_id == current_user.id)
+        .order_by(Transaction.created_at.desc())
+    ).all()
+    
+    return [
+        {
+            "id": str(t.id),
+            "product_name": p.name,
+            "product_slug": p.slug,
+            "amount_cents": t.amount_cents,
+            "status": t.status,
+            "created_at": t.created_at.isoformat(),
+            "seller_name": s.name if s else "Unknown"
+        }
+        for t, p, s in transactions
+    ]
+
+
+# User Reviews
+@router.get("/reviews")
+def get_user_reviews(
+    session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Get current user's reviews"""
+    from models import Review, Product
+    
+    reviews = session.exec(
+        select(Review, Product)
+        .join(Product, Review.product_id == Product.id)
+        .where(Review.user_id == current_user.id)
+        .order_by(Review.created_at.desc())
+    ).all()
+    
+    return [
+        {
+            "id": str(r.id),
+            "product_name": p.name,
+            "product_slug": p.slug,
+            "rating": r.rating,
+            "comment": r.comment,
+            "created_at": r.created_at.isoformat()
+        }
+        for r, p in reviews
+    ]
+
+
+@router.delete("/reviews/{review_id}")
+def delete_user_review(
+    review_id: str,
+    session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Delete a review owned by the current user"""
+    from models import Review
+    from uuid import UUID
+    
+    review = session.exec(
+        select(Review).where(
+            Review.id == UUID(review_id),
+            Review.user_id == current_user.id
+        )
+    ).first()
+    
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found")
+    
+    session.delete(review)
+    session.commit()
+    
+    return {"message": "Review deleted successfully"}
+
+
+# Notification Preferences
+class NotificationPreferences(BaseModel):
+    email_marketing: bool = True
+    email_purchases: bool = True
+    email_reviews: bool = True
+    email_listings: bool = True
+    email_security: bool = True
+
+
+@router.get("/notification-preferences")
+def get_notification_preferences(
+    session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Get user's notification preferences"""
+    # For now, return defaults. In production, store in database
+    return {
+        "email_marketing": True,
+        "email_purchases": True,
+        "email_reviews": True,
+        "email_listings": True,
+        "email_security": True
+    }
+
+
+@router.put("/notification-preferences")
+def update_notification_preferences(
+    prefs: NotificationPreferences,
+    session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Update user's notification preferences"""
+    # For now, just return success. In production, store in database
+    return prefs

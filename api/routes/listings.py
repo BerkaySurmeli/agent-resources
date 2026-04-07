@@ -55,6 +55,94 @@ class RateLimiter:
 # Global rate limiter: 4 calls per 60 seconds
 vt_rate_limiter = RateLimiter(VIRUSTOTAL_RATE_LIMIT, 60.0)
 
+# Translation queue for rate limiting
+class TranslationQueue:
+    def __init__(self):
+        self.queue = []
+        self.processing = False
+        self.lock = asyncio.Lock()
+    
+    async def add(self, listing_id: uuid.UUID, name: str, description: str, source_lang: str):
+        async with self.lock:
+            self.queue.append({
+                'listing_id': listing_id,
+                'name': name,
+                'description': description,
+                'source_lang': source_lang
+            })
+            if not self.processing:
+                asyncio.create_task(self._process_queue())
+    
+    async def _process_queue(self):
+        async with self.lock:
+            self.processing = True
+        
+        try:
+            while True:
+                async with self.lock:
+                    if not self.queue:
+                        self.processing = False
+                        break
+                    task = self.queue.pop(0)
+                
+                # Process one translation at a time with delay to respect rate limits
+                await self._process_translation(task)
+                await asyncio.sleep(2)  # 2 second delay between translations
+        except Exception as e:
+            print(f"[TRANSLATION QUEUE] Error: {e}")
+            async with self.lock:
+                self.processing = False
+    
+    async def _process_translation(self, task: Dict):
+        from core.database import get_session
+        session = next(get_session())
+        try:
+            listing_id = task['listing_id']
+            name = task['name']
+            description = task['description']
+            source_lang = task['source_lang']
+            
+            # Update status to translating
+            listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
+            if listing:
+                listing.translation_status = 'translating'
+                session.commit()
+            
+            print(f"[TRANSLATION] Starting translation for listing {listing_id}")
+            translations = translate_listing(name, description, source_lang)
+            
+            for lang, content in translations.items():
+                translation = ListingTranslation(
+                    listing_id=listing_id,
+                    language=lang,
+                    name=content['name'],
+                    description=content['description']
+                )
+                session.add(translation)
+            
+            # Update status to completed
+            if listing:
+                listing.translation_status = 'completed'
+                session.commit()
+            
+            session.commit()
+            print(f"[TRANSLATION] Completed translations for listing {listing_id}: {list(translations.keys())}")
+        except Exception as e:
+            print(f"[TRANSLATION] Error generating translations: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Update status to failed
+            listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
+            if listing:
+                listing.translation_status = 'failed'
+                session.commit()
+        finally:
+            session.close()
+
+# Global translation queue
+translation_queue = TranslationQueue()
+
 
 async def scan_with_virustotal(file_path: str) -> Dict[str, Any]:
     """
@@ -219,6 +307,7 @@ class ListingResponse(BaseModel):
     rejection_reason: Optional[str]
     product_id: Optional[str]
     translation_status: Optional[str]
+    virus_scan_status: Optional[str]
 
 
 class DashboardStats(BaseModel):
@@ -357,7 +446,8 @@ async def create_listing(
         file_size_bytes=total_size,
         original_language=original_language,
         listing_fee_cents=LISTING_FEE_CENTS,
-        status='pending_payment' if LISTING_FEE_CENTS > 0 else 'pending_scan'
+        status='pending_payment' if LISTING_FEE_CENTS > 0 else 'pending_scan',
+        virus_scan_status='pending'
     )
     
     session.add(listing)
@@ -368,6 +458,7 @@ async def create_listing(
     if LISTING_FEE_CENTS == 0:
         # Start scanning
         listing.status = 'scanning'
+        listing.virus_scan_status = 'scanning'
         listing.scan_started_at = datetime.utcnow()
         session.commit()
         
@@ -383,6 +474,7 @@ async def create_listing(
             if analysis["is_safe"]:
                 # Approve listing
                 listing.status = 'approved'
+                listing.virus_scan_status = 'clean'
                 listing.scan_completed_at = datetime.utcnow()
                 listing.scan_results = {
                     "virustotal": {
@@ -409,8 +501,8 @@ async def create_listing(
                 session.add(product)
                 session.commit()
                 
-                # Trigger translations in background
-                asyncio.create_task(generate_translations(listing.id, name, description, original_language, session))
+                # Trigger translations in background using queue
+                await translation_queue.add(listing.id, name, description, original_language)
                 session.refresh(product)
                 
                 listing.product_id = product.id
@@ -420,11 +512,14 @@ async def create_listing(
                     "id": str(listing.id),
                     "slug": listing.slug,
                     "status": listing.status,
+                    "virus_scan_status": listing.virus_scan_status,
+                    "translation_status": listing.translation_status,
                     "message": "Listing created and approved after security scan"
                 }
             else:
                 # Reject listing
                 listing.status = 'rejected'
+                listing.virus_scan_status = 'infected'
                 listing.scan_completed_at = datetime.utcnow()
                 listing.scan_results = {
                     "virustotal": {
@@ -442,6 +537,7 @@ async def create_listing(
                     "id": str(listing.id),
                     "slug": listing.slug,
                     "status": listing.status,
+                    "virus_scan_status": listing.virus_scan_status,
                     "message": f"Listing rejected: {analysis.get('reason')}"
                 }
                 
@@ -451,6 +547,7 @@ async def create_listing(
                 "id": str(listing.id),
                 "slug": listing.slug,
                 "status": "scanning",
+                "virus_scan_status": "scanning",
                 "message": "Security scan in progress. Check back in a few minutes."
             }
         except Exception as e:
@@ -459,6 +556,7 @@ async def create_listing(
             print(f"[VIRUSTOTAL ERROR] {str(e)}\n{error_details}")
             
             listing.status = 'pending_scan'
+            listing.virus_scan_status = 'failed'
             listing.scan_results = {
                 "virustotal": {"status": "error", "error": str(e), "trace": error_details[:500]}
             }
@@ -468,6 +566,7 @@ async def create_listing(
                 "id": str(listing.id),
                 "slug": listing.slug,
                 "status": listing.status,
+                "virus_scan_status": listing.virus_scan_status,
                 "message": f"Listing created but security scan failed: {str(e)[:100]}"
             }
     
@@ -475,59 +574,9 @@ async def create_listing(
         "id": str(listing.id),
         "slug": listing.slug,
         "status": listing.status,
+        "virus_scan_status": listing.virus_scan_status,
         "message": "Listing created successfully. Please complete payment to proceed."
     }
-
-
-async def generate_translations(listing_id: uuid.UUID, name: str, description: str, source_lang: str, session):
-    """Generate translations for a listing in the background"""
-    try:
-        # Update status to translating
-        listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
-        if listing:
-            listing.translation_status = 'translating'
-            session.commit()
-        
-        print(f"[TRANSLATION] Starting translation for listing {listing_id}")
-        translations = translate_listing(name, description, source_lang)
-        
-        for lang, content in translations.items():
-            translation = ListingTranslation(
-                listing_id=listing_id,
-                language=lang,
-                name=content['name'],
-                description=content['description']
-            )
-            session.add(translation)
-        
-        # Update status to completed
-        if listing:
-            listing.translation_status = 'completed'
-            session.commit()
-        
-        session.commit()
-        print(f"[TRANSLATION] Completed translations for listing {listing_id}: {list(translations.keys())}")
-    except Exception as e:
-        print(f"[TRANSLATION] Error generating translations: {e}")
-        import traceback
-        traceback.print_exc()
-        
-        # Update status to failed
-        listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
-        if listing:
-            listing.translation_status = 'failed'
-            session.commit()
-
-
-# Background task wrapper for translations
-async def generate_translations_bg(listing_id: uuid.UUID, name: str, description: str, source_lang: str):
-    """Background task wrapper for translations"""
-    from core.database import get_session
-    session = next(get_session())
-    try:
-        await generate_translations(listing_id, name, description, source_lang, session)
-    finally:
-        session.close()
 
 
 @router.get("/my-listings", response_model=List[ListingResponse])
@@ -557,7 +606,8 @@ async def get_my_listings(
             scan_results=l.scan_results,
             rejection_reason=l.rejection_reason,
             product_id=str(l.product_id) if l.product_id else None,
-            translation_status=l.translation_status
+            translation_status=l.translation_status,
+            virus_scan_status=l.virus_scan_status
         )
         for l in listings
     ]
@@ -642,6 +692,8 @@ async def get_public_listings(
             "file_count": listing.file_count,
             "file_size_bytes": listing.file_size_bytes,
             "scan_results": listing.scan_results,
+            "virus_scan_status": listing.virus_scan_status,
+            "translation_status": listing.translation_status,
             "created_at": listing.created_at,
             "seller": {
                 "id": str(user.id),
@@ -671,6 +723,8 @@ async def get_public_listings(
             "category": l.category,
             "price_cents": l.price_cents,
             "tags": l.category_tags,
+            "virus_scan_status": l.virus_scan_status,
+            "translation_status": l.translation_status,
             "created_at": l.created_at,
             "seller": {
                 "id": str(u.id),
@@ -715,6 +769,8 @@ async def get_listing_detail(
         "file_count": listing.file_count,
         "file_size_bytes": listing.file_size_bytes,
         "scan_results": listing.scan_results,
+        "virus_scan_status": listing.virus_scan_status,
+        "translation_status": listing.translation_status,
         "created_at": listing.created_at,
         "seller": {
             "id": str(user.id),
@@ -862,6 +918,7 @@ async def process_pending_scans(
         try:
             if not listing.file_path or not os.path.exists(listing.file_path):
                 listing.status = 'rejected'
+                listing.virus_scan_status = 'failed'
                 listing.rejection_reason = "File not found for scan"
                 session.commit()
                 results.append({"id": str(listing.id), "status": "rejected", "reason": "file_not_found"})
@@ -874,6 +931,7 @@ async def process_pending_scans(
             if analysis["is_safe"]:
                 # Approve listing
                 listing.status = 'approved'
+                listing.virus_scan_status = 'clean'
                 listing.scan_completed_at = datetime.utcnow()
                 listing.scan_results = {
                     "virustotal": {
@@ -904,10 +962,14 @@ async def process_pending_scans(
                 listing.product_id = product.id
                 session.commit()
                 
+                # Trigger translations
+                await translation_queue.add(listing.id, listing.name, listing.description, listing.original_language)
+                
                 results.append({"id": str(listing.id), "status": "approved", "product_id": str(product.id)})
             else:
                 # Reject listing
                 listing.status = 'rejected'
+                listing.virus_scan_status = 'infected'
                 listing.scan_completed_at = datetime.utcnow()
                 listing.scan_results = {
                     "virustotal": {
@@ -921,7 +983,7 @@ async def process_pending_scans(
                 listing.rejection_reason = f"Security scan failed: {analysis.get('reason')}"
                 session.commit()
                 
-                results.append({"id": str(listing.id), "status": "rejected", "reason": analysis.get("reason")})
+                results.append({"id": str(listing                results.append({"id": str(listing.id), "status": "rejected", "reason": analysis.get("reason")})
                 
         except Exception as e:
             import traceback

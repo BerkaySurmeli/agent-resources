@@ -1,204 +1,252 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useRouter } from 'next/router';
+import { useLanguage } from '../context/LanguageContext';
+import ProfileSection from '../components/settings/ProfileSection';
+import AccountSection from '../components/settings/AccountSection';
+import PurchasesSection from '../components/settings/PurchasesSection';
+import ReviewsSection from '../components/settings/ReviewsSection';
+import ListingsSection from '../components/settings/ListingsSection';
+import NotificationsSection from '../components/settings/NotificationsSection';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+type SettingsTab = 'profile' | 'account' | 'purchases' | 'reviews' | 'listings' | 'notifications';
+
+interface NavItem {
+  id: SettingsTab;
+  label: string;
+  icon: React.ReactNode;
+}
 
 export default function Settings() {
   const { user } = useAuth();
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const { t } = useLanguage();
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Handle tab query parameter
+  useEffect(() => {
+    if (router.isReady) {
+      const { tab } = router.query;
+      if (tab && ['profile', 'account', 'purchases', 'reviews', 'listings', 'notifications'].includes(tab as string)) {
+        setActiveTab(tab as SettingsTab);
+      }
+    }
+  }, [router.isReady, router.query]);
 
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-400 mb-4">Please sign in to view settings</p>
+          <p className="text-gray-400 mb-4">{t.settings.pleaseSignIn}</p>
           <Link href="/login" className="text-blue-400 hover:text-blue-300">
-            Sign in →
+            {t.settings.signIn} →
           </Link>
         </div>
       </div>
     );
   }
 
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
+  const navItems: NavItem[] = [
+    {
+      id: 'profile',
+      label: t.settings.profile,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      )
+    },
+    {
+      id: 'account',
+      label: t.settings.account,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      )
+    },
+    {
+      id: 'purchases',
+      label: t.settings.purchases,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+        </svg>
+      )
+    },
+    {
+      id: 'reviews',
+      label: t.settings.reviews,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+        </svg>
+      )
+    },
+    {
+      id: 'listings',
+      label: t.settings.myListings,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+      )
+    },
+    {
+      id: 'notifications',
+      label: t.settings.notifications,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+      )
+    },
+  ];
 
-    // Validation
-    if (newPassword.length < 6) {
-      setError('New password must be at least 6 characters');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError('New passwords do not match');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const token = localStorage.getItem('ar-token');
-      const response = await fetch(`${API_URL}/auth/change-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          current_password: currentPassword,
-          new_password: newPassword
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setSuccess('Password updated successfully');
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-      } else {
-        setError(data.detail || 'Failed to update password');
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to update password');
-    } finally {
-      setLoading(false);
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'profile':
+        return <ProfileSection />;
+      case 'account':
+        return <AccountSection />;
+      case 'purchases':
+        return <PurchasesSection />;
+      case 'reviews':
+        return <ReviewsSection />;
+      case 'listings':
+        return <ListingsSection />;
+      case 'notifications':
+        return <NotificationsSection />;
+      default:
+        return <ProfileSection />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       <Head>
-        <title>Settings | Agent Resources</title>
+        <title>{t.settings.title} | Agent Resources</title>
       </Head>
 
-      <main className="pt-8 pb-12">
-        <div className="max-w-2xl mx-auto">
-          {/* Header */}
+      <main className="pt-20 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-semibold text-white">Settings</h1>
-            <p className="text-gray-400">Manage your account settings</p>
+            <h1 className="text-3xl font-semibold text-white">{t.settings.title}</h1>
+            <p className="text-gray-400">{t.settings.subtitle}</p>
           </div>
 
-          {/* Account Info */}
-          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 mb-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Account Information</h2>
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm text-gray-500">Name</label>
-                <p className="font-medium text-white">{user.name}</p>
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Mobile Menu Button */}
+            <div className="lg:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="w-full bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-4 flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  {navItems.find(item => item.id === activeTab)?.icon}
+                  <span className="font-medium text-white">
+                    {navItems.find(item => item.id === activeTab)?.label}
+                  </span>
+                </div>
+                <svg
+                  className={`w-5 h-5 text-gray-400 transition-transform ${isMobileMenuOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Mobile Menu Dropdown */}
+              {isMobileMenuOpen && (
+                <div className="mt-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
+                  {navItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 transition-colors ${
+                        activeTab === item.id
+                          ? 'bg-blue-600/20 text-blue-400'
+                          : 'text-gray-300 hover:bg-gray-700/50'
+                      }`}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Sidebar - Desktop */}
+            <aside className="hidden lg:block w-64 flex-shrink-0">
+              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden sticky top-24">
+                <nav className="p-2">
+                  {navItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                        activeTab === item.id
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                          : 'text-gray-300 hover:bg-gray-700/50 hover:text-white'
+                      }`}
+                    >
+                      {item.icon}
+                      <span className="font-medium">{item.label}</span>
+                    </button>
+                  ))}
+                </nav>
+
+                {/* Quick Actions */}
+                <div className="border-t border-gray-700/50 p-4">
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:bg-gray-700/50 hover:text-white transition-all duration-200"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                    <span className="font-medium">{t.nav.dashboard}</span>
+                  </Link>
+                </div>
               </div>
-              <div>
-                <label className="text-sm text-gray-500">Email</label>
-                <p className="font-medium text-white">{user.email}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-500">Email Verified</label>
-                <p className={`font-medium ${user.isVerified ? 'text-green-400' : 'text-yellow-400'}`}>
-                  {user.isVerified ? 'Yes' : 'No'}
-                </p>
+            </aside>
+
+            {/* Main Content */}
+            <div className="flex-1 min-w-0">
+              <div className="animate-fadeIn">
+                {renderContent()}
               </div>
             </div>
           </div>
-
-          {/* Change Password */}
-          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 mb-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Change Password</h2>
-            
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg mb-4">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="bg-green-500/10 border border-green-500/20 text-green-400 px-4 py-3 rounded-lg mb-4">
-                {success}
-              </div>
-            )}
-
-            <form onSubmit={handleChangePassword} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Current Password
-                </label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 rounded-lg bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  placeholder="Enter your current password"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full px-4 py-3 rounded-lg bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  placeholder="Enter new password (min 6 characters)"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Confirm New Password
-                </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 rounded-lg bg-gray-900/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  placeholder="Confirm new password"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                {loading ? 'Updating...' : 'Update Password'}
-              </button>
-            </form>
-          </div>
-
-          {/* Profile Management Link */}
-          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Account Management</h2>
-            <p className="text-gray-400 mb-4">
-              Manage your profile, update your information, or delete your account.
-            </p>
-            <Link
-              href="/profile"
-              className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            >
-              Go to Profile
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-              </svg>
-            </Link>
-          </div>
         </div>
       </main>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }

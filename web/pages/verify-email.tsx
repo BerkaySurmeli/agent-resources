@@ -25,6 +25,21 @@ export default function VerifyEmail() {
       if (res.ok) {
         setStatus('success');
         setMessage(data.message);
+        
+        // Update localStorage to mark user as verified
+        // This ensures the verification banner disappears immediately
+        if (typeof window !== 'undefined') {
+          try {
+            const savedUser = localStorage.getItem('ar-user');
+            if (savedUser) {
+              const userData = JSON.parse(savedUser);
+              userData.isVerified = true;
+              localStorage.setItem('ar-user', JSON.stringify(userData));
+            }
+          } catch (e) {
+            console.error('Failed to update localStorage:', e);
+          }
+        }
       } else {
         setStatus('error');
         setMessage(data.detail || 'Verification failed');

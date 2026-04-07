@@ -59,7 +59,7 @@ const translationStatusLabels: Record<string, string> = {
 };
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { t } = useLanguage();
   const [listings, setListings] = useState<Listing[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -71,6 +71,8 @@ export default function Dashboard() {
   useEffect(() => {
     if (user) {
       fetchDashboardData();
+      // Refresh user data to ensure verification status is up to date
+      refreshUser();
     }
   }, [user]);
 

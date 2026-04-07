@@ -50,10 +50,10 @@ export default function UserMenu() {
         <div className="absolute end-0 top-full mt-2 w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
           <div className="py-2">
             <Link
-              href="/profile"
+              href="/settings"
               className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
             >
-              Profile
+              Settings
             </Link>
             <Link
               href="/dashboard"

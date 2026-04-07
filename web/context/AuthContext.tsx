@@ -19,6 +19,7 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
   updateProfile: (data: Partial<User>) => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -91,6 +92,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     setIsLoading(false);
   }, []);
+
+  // Listen for storage changes (e.g., when verify-email page updates localStorage)
+  useEffect(() => {
+    if (!isClient) return;
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'ar-user') {
+        if (e.newValue) {
+          try {
+            const parsedUser = JSON.parse(e.newValue);
+            setUser(parsedUser);
+          } catch (err) {
+            console.error('Failed to parse updated user:', err);
+          }
+        } else {
+          setUser(null);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [isClient]);
 
   // Save user to localStorage whenever it changes
   useEffect(() => {
@@ -201,8 +225,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshUser = async () => {
+    const token = getLocalStorage('ar-token');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/auth/validate`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const userData: User = {
+          id: data.id,
+          email: data.email,
+          name: data.name || data.email.split('@')[0],
+          initials: getInitials(data.name || data.email.split('@')[0]),
+          isDeveloper: data.is_developer,
+          isVerified: data.is_verified,
+        };
+        setUser(userData);
+        setLocalStorage('ar-user', JSON.stringify(userData));
+      }
+    } catch (err) {
+      console.error('Failed to refresh user:', err);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, updateProfile, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -44,6 +44,17 @@ const getCategoryName = (category: string, categories: {id: string, name: string
   return cat?.name || category;
 };
 
+const getScanStatusColor = (status?: string) => {
+  switch (status) {
+    case 'clean': return 'bg-green-500/20 text-green-400';
+    case 'scanning': return 'bg-yellow-500/20 text-yellow-400';
+    case 'pending': return 'bg-gray-500/20 text-gray-400';
+    case 'infected': return 'bg-red-500/20 text-red-400';
+    case 'failed': return 'bg-red-500/20 text-red-400';
+    default: return 'bg-gray-500/20 text-gray-400';
+  }
+};
+
 interface Seller {
   id: string;
   name: string;
@@ -61,6 +72,8 @@ interface Listing {
   created_at: string;
   seller?: Seller;
   is_verified?: boolean;
+  virus_scan_status?: string;
+  translation_status?: string;
 }
 
 export default function Listings() {
@@ -105,6 +118,11 @@ export default function Listings() {
 
   const isInCart = (slug: string) => cartItems.some(item => item.slug === slug);
 
+  const isAvailableForPurchase = (listing: Listing) => {
+    // Only allow purchase if virus scan is clean
+    return listing.virus_scan_status === 'clean';
+  };
+
   const filteredListings = useMemo(() => {
     let result = listings.filter(listing => {
       if (selectedCategory !== 'all' && listing.category !== selectedCategory) return false;
@@ -129,6 +147,18 @@ export default function Listings() {
   }, [searchQuery, selectedCategory, sortBy, listings]);
 
   const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+
+  const getScanStatusLabel = (status?: string) => {
+    if (!status) return t.settings?.scanPending || 'Pending';
+    switch (status) {
+      case 'pending': return t.settings?.scanPending || 'Pending';
+      case 'scanning': return t.settings?.scanScanning || 'Scanning';
+      case 'clean': return t.settings?.scanClean || 'Clean';
+      case 'infected': return t.settings?.scanInfected || 'Infected';
+      case 'failed': return t.settings?.scanFailed || 'Failed';
+      default: return status;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -204,9 +234,8 @@ export default function Listings() {
           {!loading && (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredListings.map(listing => (
-                <Link
+                <div
                   key={listing.slug}
-                  href={`/listings/${listing.slug}`}
                   className="group block bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden hover:border-blue-500/50 hover:shadow-lg transition-all duration-300"
                 >
                   {/* Card Header with Avatar */}
@@ -253,33 +282,64 @@ export default function Listings() {
                       </div>
                     )}
 
+                    {/* Virus Scan Status Badge */}
+                    <div className="mb-4">
+                      <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${getScanStatusColor(listing.virus_scan_status)}`}>
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        {getScanStatusLabel(listing.virus_scan_status)}
+                      </span>
+                    </div>
+
                     {/* Price & Actions */}
                     <div className="flex items-center justify-between pt-4 border-t border-gray-700">
                       <span className="text-2xl font-bold text-white">{formatPrice(listing.price_cents)}</span>
-                      <div className="flex items-center gap-2" onClick={(e) => e.preventDefault()}>
-                        <button
-                          onClick={() => addToCart({
-                            slug: listing.slug,
-                            name: listing.name,
-                            price: Math.round(listing.price_cents) / 100,
-                            category: listing.category
-                          })}
-                          disabled={isInCart(listing.slug)}
-                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            isInCart(listing.slug)
-                              ? 'bg-green-500/20 text-green-400 cursor-default'
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                          }`}
-                        >
-                          {isInCart(listing.slug) ? t.listings.inCart : t.listings.addToCart}
-                        </button>
-                        <span className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium group-hover:bg-blue-700 transition-colors">
-                          {t.listings.view}
-                        </span>
+                      <div className="flex items-center gap-2">
+                        {isAvailableForPurchase(listing) ? (
+                          <>
+                            <button
+                              onClick={() => addToCart({
+                                slug: listing.slug,
+                                name: listing.name,
+                                price: Math.round(listing.price_cents) / 100,
+                                category: listing.category
+                              })}
+                              disabled={isInCart(listing.slug)}
+                              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                isInCart(listing.slug)
+                                  ? 'bg-green-500/20 text-green-400 cursor-default'
+                                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                              }`}
+                            >
+                              {isInCart(listing.slug) ? t.listings.inCart : t.listings.addToCart}
+                            </button>
+                            <Link
+                              href={`/listings/${listing.slug}`}
+                              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                            >
+                              {t.listings.view}
+                            </Link>
+                          </>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-yellow-400 bg-yellow-500/10 px-2 py-1 rounded">
+                              {listing.virus_scan_status === 'scanning' 
+                                ? (t.settings?.scanInProgress || 'Scan in progress')
+                                : (t.settings?.itemNotAvailable || 'Not available')}
+                            </span>
+                            <Link
+                              href={`/listings/${listing.slug}`}
+                              className="bg-gray-700 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
+                            >
+                              {t.listings.view}
+                            </Link>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           )}
