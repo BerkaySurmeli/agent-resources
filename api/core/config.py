@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     FROM_EMAIL_INFO: str = "info@shopagentresources.com"
     FROM_EMAIL_SUPPORT: str = "support@shopagentresources.com"
     
+    # Cloudflare Analytics
+    CLOUDFLARE_API_TOKEN: str = ""
+    CLOUDFLARE_ZONE_ID: str = ""
+    
     class Config:
         env_file = ".env"
     
