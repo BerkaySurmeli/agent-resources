@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sqlmodel import create_engine
 from core.config import settings
 from models import SQLModel
@@ -21,6 +22,15 @@ app = FastAPI(
     description="Backend for MCP Server & Persona Distribution",
     lifespan=lifespan
 )
+
+# Trust proxy headers (for Railway/Cloudflare)
+@app.middleware("http")
+async def forward_https(request: Request, call_next):
+    # Check if request came through HTTPS
+    if request.headers.get("X-Forwarded-Proto") == "https":
+        request.scope["scheme"] = "https"
+    response = await call_next(request)
+    return response
 
 # CORS for frontend
 app.add_middleware(

@@ -72,6 +72,7 @@ def send_welcome_email(email: str, code: str):
         print(f"[EMAIL ERROR] Failed to send email to {email}: {e}")
 
 @router.post("/")
+@router.post("")
 def join_waitlist(request: WaitlistRequest):
     """Add email to waitlist"""
     session = get_db_session()
@@ -110,6 +111,7 @@ def join_waitlist(request: WaitlistRequest):
     }
 
 @router.get("/count")
+@router.get("/count/")
 def get_waitlist_count():
     """Get total waitlist count"""
     session = get_db_session()
