@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { useState } from 'react';
 
-const API_URL = 'https://api.shopagentresources.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
 export default function LandingPage() {
   const [email, setEmail] = useState('');
