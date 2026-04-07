@@ -90,7 +90,11 @@ def get_cloudflare_analytics(hours: int = 24):
                     
                     total_requests = sum(g.get("sum", {}).get("requests", 0) for g in groups)
                     total_bandwidth = sum(g.get("sum", {}).get("bytes", 0) for g in groups)
+                    # pageViews might not be available on all plans, use requests as fallback for views
                     total_views = sum(g.get("sum", {}).get("pageViews", 0) for g in groups)
+                    if total_views == 0:
+                        # Fallback: use unique visitors summed across all days
+                        total_views = sum(g.get("uniq", {}).get("uniques", 0) for g in groups)
                     # Get unique visitors from the most recent day
                     total_visits = groups[-1].get("uniq", {}).get("uniques", 0) if groups else 0
                     
