@@ -21,8 +21,8 @@ def check_admin_auth(request: Request):
     if password != '16384bEr32768!':
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-def get_cloudflare_analytics():
-    """Fetch real analytics from Cloudflare"""
+def get_cloudflare_analytics(hours: int = 24):
+    """Fetch real analytics from Cloudflare for specified time range"""
     if not settings.CLOUDFLARE_API_TOKEN or not settings.CLOUDFLARE_ZONE_ID:
         # Return mock data if not configured
         return {
@@ -34,9 +34,9 @@ def get_cloudflare_analytics():
         }
     
     try:
-        # Calculate time range (last 24 hours)
+        # Calculate time range
         end_time = datetime.utcnow()
-        start_time = end_time - timedelta(hours=24)
+        start_time = end_time - timedelta(hours=hours)
         
         # GraphQL query for analytics
         query = {
@@ -118,9 +118,9 @@ def get_cloudflare_analytics():
     }
 
 @router.get("/metrics/")
-def get_cloudflare_metrics():
+def get_cloudflare_metrics(hours: int = 24):
     """Get Cloudflare analytics for the website"""
-    return get_cloudflare_analytics()
+    return get_cloudflare_analytics(hours)
 
 @router.get("/waitlist/")
 def get_waitlist_details(request: Request):
