@@ -115,16 +115,16 @@ export default function LandingPage() {
         {/* Hero Section */}
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
           <div className="text-center">
-            <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-8">
+            <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-10">
               {lt.title}<br /><span className="text-blue-400">{lt.titleHighlight}</span>
             </h1>
             
-            <p className="text-xl text-slate-300 mb-10 max-w-xl mx-auto leading-relaxed">
+            <p className="text-xl text-slate-300 mb-12 max-w-xl mx-auto leading-relaxed">
               {lt.subtitle}
             </p>
 
             {/* Developer Incentive */}
-            <p className="text-lg text-amber-400 font-medium mb-10">
+            <p className="text-lg text-amber-400 font-medium mb-12">
               {lt.incentive}
             </p>
 
@@ -158,7 +158,7 @@ export default function LandingPage() {
 
             {/* Spots Counter */}
             {spotsRemaining !== null && spotsRemaining > 0 && (
-              <p className="text-lg font-medium text-white mb-16">
+              <p className="text-lg font-medium text-white mb-20">
                 {spotsRemaining} / 50 {lt.spotsRemaining}
               </p>
             )}
