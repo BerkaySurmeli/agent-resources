@@ -39,7 +39,9 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const waitlistRes = await fetch(`${API_URL}/waitlist/`);
+      const waitlistRes = await fetch(`${API_URL}/admin/waitlist/`, {
+        headers: { 'X-Admin-Password': password }
+      });
       if (waitlistRes.ok) {
         const data = await waitlistRes.json();
         setWaitlist(data.entries || []);
@@ -60,9 +62,12 @@ export default function AdminDashboard() {
     if (!confirm(`Are you sure you want to delete ${email}?`)) return;
     
     try {
-      const response = await fetch(`${API_URL}/waitlist/delete/`, {
+      const response = await fetch(`${API_URL}/admin/waitlist/delete/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Admin-Password': password 
+        },
         body: JSON.stringify({ email }),
       });
       

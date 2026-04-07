@@ -135,21 +135,4 @@ def delete_from_waitlist(request: WaitlistRequest):
     session.close()
     return {"status": "not_found", "message": "Email not found in waitlist"}
 
-@router.get("/")
-def get_waitlist():
-    """Get all waitlist entries (for admin)"""
-    session = get_db_session()
-    entries = session.exec(select(WaitlistEntry)).all()
-    session.close()
-    return {
-        "entries": [
-            {
-                "email": e.email,
-                "created_at": e.created_at.isoformat() if e.created_at else None,
-                "source": e.source,
-                "developer_code": e.developer_code
-            }
-            for e in entries
-        ],
-        "count": len(entries)
-    }
+
