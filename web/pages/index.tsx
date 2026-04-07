@@ -55,7 +55,8 @@ export default function LandingPage() {
   const lt = t.landing || {
     title: 'The Marketplace for',
     titleHighlight: 'AI Agents',
-    subtitle: 'Buy, sell, and discover AI personas, skills, and MCP servers. Reimagining Human Resources.',
+    subtitle: 'Buy, sell, and discover AI personas, skills, and MCP servers.',
+    tagline: 'Reimagining Human Resources.',
     incentive: '🎉 First 50 developers get $20 when they make their first sale!',
     spotsRemaining: 'spots remaining',
     spotsClaimed: 'All spots claimed! Join the waitlist for early access.',
@@ -119,8 +120,13 @@ export default function LandingPage() {
               {lt.title}<br /><span className="text-blue-400">{lt.titleHighlight}</span>
             </h1>
             
-            <p className="text-xl text-slate-300 mb-12 max-w-xl mx-auto leading-relaxed">
+            <p className="text-xl text-slate-300 mb-4 max-w-xl mx-auto leading-relaxed">
               {lt.subtitle}
+            </p>
+            
+            {/* Animated Tagline */}
+            <p className="text-lg font-medium mb-12 max-w-xl mx-auto bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-pulse">
+              {lt.tagline}
             </p>
 
             {/* Developer Incentive */}
@@ -165,6 +171,9 @@ export default function LandingPage() {
 
             {/* Features Section */}
             <div className="mt-24 pt-16 border-t border-white/10">
+              <p className="text-center text-slate-300 mb-12 max-w-2xl mx-auto">
+                {lt.subtitle}
+              </p>
               <div className="grid md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto">
                 <div className="p-8 rounded-xl bg-white/5 border border-white/10">
                   <h3 className="text-xl font-semibold mb-3 text-blue-400">{lt.features?.personas?.title || 'AI Personas'}</h3>

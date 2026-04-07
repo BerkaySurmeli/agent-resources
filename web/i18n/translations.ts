@@ -4,7 +4,8 @@ export const translations = {
     landing: {
       title: 'The Marketplace for',
       titleHighlight: 'AI Agents',
-      subtitle: 'Buy, sell, and discover AI personas, skills, and MCP servers. Reimagining Human Resources.',
+      subtitle: 'Buy, sell, and discover AI personas, skills, and MCP servers.',
+      tagline: 'Reimagining Human Resources.',
       incentive: '🎉 First 50 developers get $20 when they make their first sale!',
       spotsRemaining: 'spots remaining',
       spotsClaimed: 'All spots claimed! Join the waitlist for early access.',
@@ -152,7 +153,8 @@ export const translations = {
     landing: {
       title: 'El Mercado para',
       titleHighlight: 'Agentes de IA',
-      subtitle: 'Compra, vende y descubre personalidades de IA, habilidades y servidores MCP. Reimaginando los Recursos Humanos.',
+      subtitle: 'Compra, vende y descubre personalidades de IA, habilidades y servidores MCP.',
+      tagline: 'Reimaginando los Recursos Humanos.',
       incentive: '🎉 ¡Los primeros 50 desarrolladores obtienen $20 cuando hacen su primera venta!',
       spotsRemaining: 'plazas restantes',
       spotsClaimed: '¡Todas las plazas reclamadas! Únete a la lista de espera para acceso anticipado.',
@@ -188,7 +190,8 @@ export const translations = {
     landing: {
       title: 'AI智能体的',
       titleHighlight: '交易市场',
-      subtitle: '购买、销售和发现AI角色、技能和MCP服务器。重塑人力资源。',
+      subtitle: '购买、销售和发现AI角色、技能和MCP服务器。',
+      tagline: '重塑人力资源。',
       incentive: '🎉 前50名开发者首次销售可获得$20！',
       spotsRemaining: '个名额剩余',
       spotsClaimed: '所有名额已满！加入等待列表获取早期访问权限。',
@@ -224,7 +227,8 @@ export const translations = {
     landing: {
       title: 'السوق لـ',
       titleHighlight: 'وكلاء الذكاء الاصطناعي',
-      subtitle: 'اشترِ وبيع واكتشف شخصيات الذكاء الاصطناعي والمهارات وخوادم MCP. إعادة تصور الموارد البشرية.',
+      subtitle: 'اشترِ وبيع واكتشف شخصيات الذكاء الاصطناعي والمهارات وخوادم MCP.',
+      tagline: 'إعادة تصور الموارد البشرية.',
       incentive: '🎉 يحصل أول 50 مطوراً على 20 دولاراً عند أول عملية بيع لهم!',
       spotsRemaining: 'مقاعد متبقية',
       spotsClaimed: 'تم استلام جميع المقاعد! انضم إلى قائمة الانتظار للوصول المبكر.',
@@ -260,7 +264,8 @@ export const translations = {
     landing: {
       title: 'AIエージェントの',
       titleHighlight: 'マーケットプレイス',
-      subtitle: 'AIペルソナ、スキル、MCPサーバーを購入、販売、発見。人材の再想像。',
+      subtitle: 'AIペルソナ、スキル、MCPサーバーを購入、販売、発見。',
+      tagline: '人材の再想像。',
       incentive: '🎉 最初の50人の開発者は初回販売時に$20を獲得！',
       spotsRemaining: '枠残り',
       spotsClaimed: 'すべての枠が埋まりました！早期アクセスのためにウェイトリストに参加してください。',
@@ -296,7 +301,8 @@ export const translations = {
     landing: {
       title: 'Der Marktplatz für',
       titleHighlight: 'KI-Agenten',
-      subtitle: 'Kaufen, verkaufen und entdecken Sie KI-Personas, Fähigkeiten und MCP-Server. Human Resources neu gedacht.',
+      subtitle: 'Kaufen, verkaufen und entdecken Sie KI-Personas, Fähigkeiten und MCP-Server.',
+      tagline: 'Human Resources neu gedacht.',
       incentive: '🎉 Die ersten 50 Entwickler erhalten $20 bei ihrem ersten Verkauf!',
       spotsRemaining: 'Plätze verfügbar',
       spotsClaimed: 'Alle Plätze vergeben! Treten Sie der Warteliste für frühen Zugang bei.',
@@ -332,7 +338,8 @@ export const translations = {
     landing: {
       title: 'AI 에이전트를 위한',
       titleHighlight: '마켓플레이스',
-      subtitle: 'AI 페르소나, 스킬, MCP 서버를 구매, 판매 및 발견하세요. 인적 자원을 재구상합니다.',
+      subtitle: 'AI 페르소나, 스킬, MCP 서버를 구매, 판매 및 발견하세요.',
+      tagline: '인적 자원을 재구상합니다.',
       incentive: '🎉 처음 50명의 개발자는 첫 판매 시 $20을 받습니다!',
       spotsRemaining: '자리 남음',
       spotsClaimed: '모든 자리가 찼습니다! 조기 접근을 위해 대기 목록에 가입하세요.',
@@ -368,7 +375,8 @@ export const translations = {
     landing: {
       title: 'Yapay Zeka Ajanları için',
       titleHighlight: 'Pazar Yeri',
-      subtitle: 'AI kişilikleri, beceriler ve MCP sunucuları satın alın, satın ve keşfedin. İnsan Kaynaklarını yeniden hayal edin.',
+      subtitle: 'AI kişilikleri, beceriler ve MCP sunucuları satın alın, satın ve keşfedin.',
+      tagline: 'İnsan Kaynaklarını yeniden hayal edin.',
       incentive: '🎉 İlk 50 geliştirici ilk satışlarında $20 kazanıyor!',
       spotsRemaining: 'kontenjan kaldı',
       spotsClaimed: 'Tüm kontenjanlar doldu! Erken erişim için bekleme listesine katılın.',
