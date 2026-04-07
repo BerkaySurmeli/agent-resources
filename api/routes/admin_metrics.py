@@ -23,8 +23,15 @@ def check_admin_auth(request: Request):
 
 def get_cloudflare_analytics(hours: int = 24):
     """Fetch real analytics from Cloudflare for specified time range"""
+    # Debug logging
+    print(f"[CLOUDFLARE DEBUG] API Token set: {bool(settings.CLOUDFLARE_API_TOKEN)}")
+    print(f"[CLOUDFLARE DEBUG] Zone ID set: {bool(settings.CLOUDFLARE_ZONE_ID)}")
+    print(f"[CLOUDFLARE DEBUG] API Token length: {len(settings.CLOUDFLARE_API_TOKEN) if settings.CLOUDFLARE_API_TOKEN else 0}")
+    print(f"[CLOUDFLARE DEBUG] Zone ID value: {settings.CLOUDFLARE_ZONE_ID[:10] + '...' if settings.CLOUDFLARE_ZONE_ID else 'NOT SET'}")
+    
     if not settings.CLOUDFLARE_API_TOKEN or not settings.CLOUDFLARE_ZONE_ID:
         # Return mock data if not configured
+        print("[CLOUDFLARE DEBUG] Returning zeros - credentials not configured")
         return {
             "requests": 0,
             "bandwidth": 0,
@@ -46,18 +53,22 @@ def get_cloudflare_analytics(hours: int = 24):
             timeout=10
         )
         
+        print(f"[CLOUDFLARE DEBUG] Response status: {response.status_code}")
         if response.status_code == 200:
             data = response.json()
+            print(f"[CLOUDFLARE DEBUG] API success: {data.get('success')}")
             if data.get("success"):
                 result = data.get("result", {})
                 # Sum up all timeseries data
                 timeseries = result.get("timeseries", [])
+                print(f"[CLOUDFLARE DEBUG] Timeseries points: {len(timeseries)}")
                 total_requests = sum(t.get("requests", {}).get("all", 0) for t in timeseries)
                 total_bandwidth = sum(t.get("bandwidth", {}).get("all", 0) for t in timeseries)
                 total_views = sum(t.get("pageviews", {}).get("all", 0) for t in timeseries)
                 # For unique visitors, use the last data point (approximation)
                 total_visits = timeseries[-1].get("uniques", {}).get("all", 0) if timeseries else 0
                 
+                print(f"[CLOUDFLARE DEBUG] Calculated metrics - requests: {total_requests}, views: {total_views}, visits: {total_visits}")
                 return {
                     "requests": total_requests,
                     "bandwidth": total_bandwidth,
@@ -65,8 +76,14 @@ def get_cloudflare_analytics(hours: int = 24):
                     "visits": total_visits,
                     "period": f"{hours}h"
                 }
+            else:
+                print(f"[CLOUDFLARE DEBUG] API returned errors: {data.get('errors')}")
+        else:
+            print(f"[CLOUDFLARE DEBUG] API error response: {response.text[:500]}")
     except Exception as e:
         print(f"[CLOUDFLARE ERROR] {e}")
+        import traceback
+        traceback.print_exc()
     
     # Return zeros if API fails
     return {
@@ -80,7 +97,26 @@ def get_cloudflare_analytics(hours: int = 24):
 @router.get("/metrics/")
 def get_cloudflare_metrics(hours: int = 24):
     """Get Cloudflare analytics for the website"""
-    return get_cloudflare_analytics(hours)
+    # Temporarily return debug info to diagnose the issue
+    result = get_cloudflare_analytics(hours)
+    result["_debug"] = {
+        "api_token_set": bool(settings.CLOUDFLARE_API_TOKEN),
+        "api_token_length": len(settings.CLOUDFLARE_API_TOKEN) if settings.CLOUDFLARE_API_TOKEN else 0,
+        "zone_id_set": bool(settings.CLOUDFLARE_ZONE_ID),
+        "zone_id": settings.CLOUDFLARE_ZONE_ID
+    }
+    return result
+
+@router.get("/metrics/debug/")
+def debug_cloudflare_config():
+    """Debug endpoint to check Cloudflare configuration"""
+    return {
+        "api_token_set": bool(settings.CLOUDFLARE_API_TOKEN),
+        "api_token_length": len(settings.CLOUDFLARE_API_TOKEN) if settings.CLOUDFLARE_API_TOKEN else 0,
+        "api_token_prefix": settings.CLOUDFLARE_API_TOKEN[:10] + "..." if settings.CLOUDFLARE_API_TOKEN else None,
+        "zone_id_set": bool(settings.CLOUDFLARE_ZONE_ID),
+        "zone_id": settings.CLOUDFLARE_ZONE_ID
+    }
 
 @router.get("/waitlist/")
 def get_waitlist_details(request: Request):

@@ -1,53 +1,10 @@
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
-
-// Default translations (English)
-const defaultTranslations = {
-  landing: {
-    title: 'The Marketplace for',
-    titleHighlight: 'AI Agents',
-    subtitle: 'Buy, sell, and discover AI personas, skills, and MCP servers. Reimagining Human Resources.',
-    incentive: '🎉 First 50 developers get $20 when they make their first sale!',
-    spotsRemaining: 'spots remaining',
-    spotsClaimed: 'All spots claimed! Join the waitlist for early access.',
-    emailPlaceholder: 'Enter your email',
-    getAccess: 'Secure Your Spot',
-    joining: 'Joining...',
-    successMessage: 'Thanks! Check your email for your developer code.',
-    errorMessage: 'Something went wrong. Please try again.',
-    footer: '© 2026 Agent Resources. Built for the agent economy.'
-  }
-};
+import { useLanguage } from '../context/LanguageContext';
 
 export default function LandingPage() {
-  // Hardcoded languages with flags
-  const languages = [
-    { code: 'en', name: 'English', flag: '🇺🇸' },
-    { code: 'es', name: 'Español', flag: '🇪🇸' },
-    { code: 'zh', name: '中文', flag: '🇨🇳' },
-    { code: 'ar', name: 'العربية', flag: '🇸🇦' },
-    { code: 'ja', name: '日本語', flag: '🇯🇵' },
-    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-    { code: 'ko', name: '한국어', flag: '🇰🇷' },
-    { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
-  ];
+  const { t, language, setLanguage, languages } = useLanguage();
   
-  // Try to use language context, fallback to defaults
-  let t = defaultTranslations;
-  let language = 'en';
-  let setLanguage = (lang: string) => {};
-  
-  try {
-    const langContext = require('../context/LanguageContext');
-    if (langContext.useLanguage) {
-      const ctx = langContext.useLanguage();
-      t = ctx.t || defaultTranslations;
-      language = ctx.language || 'en';
-      setLanguage = ctx.setLanguage || ((lang: string) => {});
-    }
-  } catch (e) {
-    // Context not available, use defaults
-  }
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -136,8 +93,8 @@ export default function LandingPage() {
                 <span className="font-semibold text-white">Agent Resources</span>
               </div>
               <div className="flex items-center gap-6">
-                <a href="/blog" className="text-sm text-slate-400 hover:text-white transition-colors">Blog</a>
-                <span className="text-sm text-slate-400">Coming Soon</span>
+                <a href="/blog" className="text-sm text-slate-400 hover:text-white transition-colors">{t.nav?.blog || 'Blog'}</a>
+                <span className="text-sm text-slate-400">{t.landing?.comingSoon || 'Coming Soon'}</span>
                 {/* Language Selector */}
                 <select
                   value={language}
@@ -158,18 +115,16 @@ export default function LandingPage() {
         {/* Hero Section */}
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
           <div className="text-center">
-            <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
-              {lt.title}
-              <br />
-              <span className="text-blue-400">{lt.titleHighlight}</span>
+            <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-8">
+              {lt.title}<br /><span className="text-blue-400">{lt.titleHighlight}</span>
             </h1>
             
-            <p className="text-xl text-slate-300 mb-8 max-w-xl mx-auto">
+            <p className="text-xl text-slate-300 mb-10 max-w-xl mx-auto leading-relaxed">
               {lt.subtitle}
             </p>
 
             {/* Developer Incentive */}
-            <p className="text-lg text-amber-400 font-medium mb-6">
+            <p className="text-lg text-amber-400 font-medium mb-10">
               {lt.incentive}
             </p>
 
@@ -203,24 +158,24 @@ export default function LandingPage() {
 
             {/* Spots Counter */}
             {spotsRemaining !== null && spotsRemaining > 0 && (
-              <p className="text-lg font-medium text-white mb-12">
-                {spotsRemaining}/50 {lt.spotsRemaining}
+              <p className="text-lg font-medium text-white mb-16">
+                {spotsRemaining} / 50 {lt.spotsRemaining}
               </p>
             )}
 
             {/* Features */}
             <div className="grid md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto">
               <div className="p-8 rounded-xl bg-white/5 border border-white/10">
-                <h3 className="text-xl font-semibold mb-3 text-blue-400">AI Personas</h3>
-                <p className="text-slate-400">Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.</p>
+                <h3 className="text-xl font-semibold mb-3 text-blue-400">{lt.features?.personas?.title || 'AI Personas'}</h3>
+                <p className="text-slate-400">{lt.features?.personas?.description || 'Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.'}</p>
               </div>
               <div className="p-8 rounded-xl bg-white/5 border border-white/10">
-                <h3 className="text-xl font-semibold mb-3 text-purple-400">Skills</h3>
-                <p className="text-slate-400">Reusable capabilities for agents — from web scraping to API integrations.</p>
+                <h3 className="text-xl font-semibold mb-3 text-purple-400">{lt.features?.skills?.title || 'Skills'}</h3>
+                <p className="text-slate-400">{lt.features?.skills?.description || 'Reusable capabilities for agents — from web scraping to API integrations.'}</p>
               </div>
               <div className="p-8 rounded-xl bg-white/5 border border-white/10">
-                <h3 className="text-xl font-semibold mb-3 text-green-400">MCP Servers</h3>
-                <p className="text-slate-400">Model Context Protocol servers for extending agent capabilities.</p>
+                <h3 className="text-xl font-semibold mb-3 text-green-400">{lt.features?.mcp?.title || 'MCP Servers'}</h3>
+                <p className="text-slate-400">{lt.features?.mcp?.description || 'Model Context Protocol servers for extending agent capabilities.'}</p>
               </div>
             </div>
           </div>
