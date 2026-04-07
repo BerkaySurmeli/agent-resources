@@ -9,7 +9,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     // Fetch waitlist count
-    fetch('https://api.shopagentresources.com/waitlist/count')
+    fetch('https://api.shopagentresources.com/waitlist/count/')
       .then(res => res.json())
       .then(data => {
         const remaining = Math.max(0, 50 - data.count);
@@ -28,7 +28,7 @@ export default function LandingPage() {
 
     setStatus('loading');
     try {
-      const response = await fetch('https://api.shopagentresources.com/waitlist', {
+      const response = await fetch('https://api.shopagentresources.com/waitlist/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -39,7 +39,7 @@ export default function LandingPage() {
         setMessage('Thanks! Check your email for your developer code.');
         setEmail('');
         // Refresh spots remaining
-        const countRes = await fetch('https://api.shopagentresources.com/waitlist/count');
+        const countRes = await fetch('https://api.shopagentresources.com/waitlist/count/');
         const data = await countRes.json();
         setSpotsRemaining(Math.max(0, 50 - data.count));
       } else {
