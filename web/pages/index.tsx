@@ -1,8 +1,6 @@
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com').replace('http://', 'https://');
-
 export default function LandingPage() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -11,7 +9,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     // Fetch waitlist count
-    fetch(`${API_URL}/waitlist/count`)
+    fetch('https://api.shopagentresources.com/waitlist/count')
       .then(res => res.json())
       .then(data => {
         const remaining = Math.max(0, 50 - data.count);
@@ -30,7 +28,7 @@ export default function LandingPage() {
 
     setStatus('loading');
     try {
-      const response = await fetch(`${API_URL}/waitlist`, {
+      const response = await fetch('https://api.shopagentresources.com/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -41,7 +39,7 @@ export default function LandingPage() {
         setMessage('Thanks! Check your email for your developer code.');
         setEmail('');
         // Refresh spots remaining
-        const countRes = await fetch(`${API_URL}/waitlist/count`);
+        const countRes = await fetch('https://api.shopagentresources.com/waitlist/count');
         const data = await countRes.json();
         setSpotsRemaining(Math.max(0, 50 - data.count));
       } else {
