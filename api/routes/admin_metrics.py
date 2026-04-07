@@ -79,33 +79,34 @@ def get_cloudflare_analytics(hours: int = 24):
             else:
                 print(f"[CLOUDFLARE DEBUG] API returned errors: {data.get('errors')}")
         else:
-            print(f"[CLOUDFLARE DEBUG] API error response: {response.text[:500]}")
+            error_text = response.text[:500]
+            print(f"[CLOUDFLARE DEBUG] API error response: {error_text}")
+            # Return error info for debugging
+            return {
+                "requests": 0,
+                "bandwidth": 0,
+                "views": 0,
+                "visits": 0,
+                "period": "24h",
+                "_error": f"API returned {response.status_code}: {error_text}"
+            }
     except Exception as e:
         print(f"[CLOUDFLARE ERROR] {e}")
         import traceback
         traceback.print_exc()
-    
-    # Return zeros if API fails
-    return {
-        "requests": 0,
-        "bandwidth": 0,
-        "views": 0,
-        "visits": 0,
-        "period": "24h"
-    }
+        return {
+            "requests": 0,
+            "bandwidth": 0,
+            "views": 0,
+            "visits": 0,
+            "period": "24h",
+            "_error": str(e)
+        }
 
 @router.get("/metrics/")
 def get_cloudflare_metrics(hours: int = 24):
     """Get Cloudflare analytics for the website"""
-    # Temporarily return debug info to diagnose the issue
-    result = get_cloudflare_analytics(hours)
-    result["_debug"] = {
-        "api_token_set": bool(settings.CLOUDFLARE_API_TOKEN),
-        "api_token_length": len(settings.CLOUDFLARE_API_TOKEN) if settings.CLOUDFLARE_API_TOKEN else 0,
-        "zone_id_set": bool(settings.CLOUDFLARE_ZONE_ID),
-        "zone_id": settings.CLOUDFLARE_ZONE_ID
-    }
-    return result
+    return get_cloudflare_analytics(hours)
 
 @router.get("/metrics/debug/")
 def debug_cloudflare_config():
