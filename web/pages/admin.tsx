@@ -2,6 +2,7 @@ import Head from 'next/head';
 import { useState, useEffect } from 'react';
 
 const API_URL = 'https://api.shopagentresources.com';
+const SESSION_KEY = 'admin_session';
 
 interface WaitlistEntry {
   email: string;
@@ -25,26 +26,68 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // Check for existing session on mount
+  useEffect(() => {
+    const session = localStorage.getItem(SESSION_KEY);
+    if (session) {
+      try {
+        const { password: savedPassword, expires } = JSON.parse(session);
+        if (new Date(expires) > new Date()) {
+          setPassword(savedPassword);
+          setAuthenticated(true);
+          fetchData(savedPassword);
+        } else {
+          localStorage.removeItem(SESSION_KEY);
+        }
+      } catch (e) {
+        localStorage.removeItem(SESSION_KEY);
+      }
+    }
+  }, []);
+
+  const saveSession = (pwd: string) => {
+    const expires = new Date();
+    expires.setHours(expires.getHours() + 8); // 8 hour session
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      password: pwd,
+      expires: expires.toISOString()
+    }));
+  };
+
+  const clearSession = () => {
+    localStorage.removeItem(SESSION_KEY);
+    setAuthenticated(false);
+    setPassword('');
+    setWaitlist([]);
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (password === '16384bEr32768!') {
       setAuthenticated(true);
-      fetchData();
+      saveSession(password);
+      fetchData(password);
     } else {
       alert('Invalid password');
     }
   };
 
-  const fetchData = async () => {
+  const fetchData = async (pwd: string = password) => {
     setLoading(true);
     try {
       const waitlistRes = await fetch(`${API_URL}/admin/waitlist/`, {
-        headers: { 'X-Admin-Password': password }
+        headers: { 'X-Admin-Password': pwd }
       });
       if (waitlistRes.ok) {
         const data = await waitlistRes.json();
         setWaitlist(data.entries || []);
+        setLastUpdated(new Date());
+      } else if (waitlistRes.status === 401) {
+        clearSession();
+        alert('Session expired. Please login again.');
+        return;
       }
 
       const metricsRes = await fetch(`${API_URL}/admin/metrics/`);
@@ -74,6 +117,9 @@ export default function AdminDashboard() {
       if (response.ok) {
         setWaitlist(waitlist.filter(e => e.email !== email));
         setDeleteConfirm(null);
+      } else if (response.status === 401) {
+        clearSession();
+        alert('Session expired. Please login again.');
       } else {
         alert('Failed to delete');
       }
@@ -124,10 +170,34 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <button onClick={fetchData} className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded">
-            Refresh
-          </button>
+          <div>
+            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+            {lastUpdated && (
+              <p className="text-slate-400 text-sm mt-1">
+                Last updated: {lastUpdated.toLocaleTimeString()}
+              </p>
+            )}
+          </div>
+          <div className="flex gap-3">
+            <button 
+              onClick={() => fetchData()} 
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 px-4 py-2 rounded flex items-center gap-2"
+            >
+              {loading ? 'Refreshing...' : 'Refresh Data'}
+              {!loading && (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              )}
+            </button>
+            <button 
+              onClick={clearSession}
+              className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded"
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         {/* Metrics */}
@@ -189,22 +259,30 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {filteredWaitlist.map((entry, i) => (
-                  <tr key={i} className={`border-b border-slate-700 ${duplicates.includes(entry.email) ? 'bg-amber-900/20' : ''}`}>
-                    <td className="p-4">{entry.email}</td>
-                    <td className="p-4 font-mono text-sm">{entry.developer_code}</td>
-                    <td className="p-4">{new Date(entry.created_at).toLocaleDateString()}</td>
-                    <td className="p-4">{entry.source}</td>
-                    <td className="p-4">
-                      <button
-                        onClick={() => handleDelete(entry.email)}
-                        className="text-red-400 hover:text-red-300 text-sm"
-                      >
-                        Delete
-                      </button>
+                {filteredWaitlist.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-slate-400">
+                      {loading ? 'Loading...' : 'No entries found'}
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredWaitlist.map((entry, i) => (
+                    <tr key={i} className={`border-b border-slate-700 ${duplicates.includes(entry.email) ? 'bg-amber-900/20' : ''}`}>
+                      <td className="p-4">{entry.email}</td>
+                      <td className="p-4 font-mono text-sm">{entry.developer_code}</td>
+                      <td className="p-4">{new Date(entry.created_at).toLocaleDateString()}</td>
+                      <td className="p-4">{entry.source}</td>
+                      <td className="p-4">
+                        <button
+                          onClick={() => handleDelete(entry.email)}
+                          className="text-red-400 hover:text-red-300 text-sm"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
