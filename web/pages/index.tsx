@@ -129,13 +129,13 @@ export default function LandingPage() {
               {lt.tagline}
             </p>
 
-            {/* Developer Incentive */}
-            <p className="text-lg text-amber-400 font-medium mb-12">
-              {lt.incentive}
-            </p>
-
             {/* Email Signup */}
             <div className="max-w-md mx-auto mb-4">
+
+              {/* Developer Incentive - moved closer to signup */}
+              <p className="text-lg text-amber-400 font-medium mb-6">
+                {lt.incentive}
+              </p>
               <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="email"
