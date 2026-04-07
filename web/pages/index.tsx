@@ -169,19 +169,12 @@ export default function LandingPage() {
             </p>
 
             {/* Developer Incentive */}
-            <div className="mb-8">
-              <p className="text-lg text-amber-400 font-medium mb-2">
-                {lt.incentive}
-              </p>
-              {spotsRemaining !== null && spotsRemaining > 0 && (
-                <p className="text-xl font-bold text-white">
-                  {spotsRemaining}/50 {lt.spotsRemaining}
-                </p>
-              )}
-            </div>
+            <p className="text-lg text-amber-400 font-medium mb-6">
+              {lt.incentive}
+            </p>
 
             {/* Email Signup */}
-            <div className="max-w-md mx-auto mb-16">
+            <div className="max-w-md mx-auto mb-4">
               <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="email"
@@ -208,19 +201,26 @@ export default function LandingPage() {
               )}
             </div>
 
+            {/* Spots Counter */}
+            {spotsRemaining !== null && spotsRemaining > 0 && (
+              <p className="text-lg font-medium text-white mb-12">
+                {spotsRemaining}/50 {lt.spotsRemaining}
+              </p>
+            )}
+
             {/* Features */}
-            <div className="grid md:grid-cols-3 gap-6 text-left max-w-4xl mx-auto">
-              <div className="p-6 rounded-xl bg-white/5 border border-white/10">
-                <h3 className="text-lg font-semibold mb-2 text-blue-400">AI Personas</h3>
-                <p className="text-slate-400 text-sm">Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.</p>
+            <div className="grid md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto">
+              <div className="p-8 rounded-xl bg-white/5 border border-white/10">
+                <h3 className="text-xl font-semibold mb-3 text-blue-400">AI Personas</h3>
+                <p className="text-slate-400">Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.</p>
               </div>
-              <div className="p-6 rounded-xl bg-white/5 border border-white/10">
-                <h3 className="text-lg font-semibold mb-2 text-purple-400">Skills</h3>
-                <p className="text-slate-400 text-sm">Reusable capabilities for agents — from web scraping to API integrations.</p>
+              <div className="p-8 rounded-xl bg-white/5 border border-white/10">
+                <h3 className="text-xl font-semibold mb-3 text-purple-400">Skills</h3>
+                <p className="text-slate-400">Reusable capabilities for agents — from web scraping to API integrations.</p>
               </div>
-              <div className="p-6 rounded-xl bg-white/5 border border-white/10">
-                <h3 className="text-lg font-semibold mb-2 text-green-400">MCP Servers</h3>
-                <p className="text-slate-400 text-sm">Model Context Protocol servers for extending agent capabilities.</p>
+              <div className="p-8 rounded-xl bg-white/5 border border-white/10">
+                <h3 className="text-xl font-semibold mb-3 text-green-400">MCP Servers</h3>
+                <p className="text-slate-400">Model Context Protocol servers for extending agent capabilities.</p>
               </div>
             </div>
           </div>
