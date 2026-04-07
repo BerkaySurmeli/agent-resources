@@ -983,7 +983,7 @@ async def process_pending_scans(
                 listing.rejection_reason = f"Security scan failed: {analysis.get('reason')}"
                 session.commit()
                 
-                results.append({"id": str(listing                results.append({"id": str(listing.id), "status": "rejected", "reason": analysis.get("reason")})
+                results.append({"id": str(listing.id), "status": "rejected", "reason": analysis.get("reason")})
                 
         except Exception as e:
             import traceback
