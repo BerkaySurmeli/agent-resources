@@ -163,19 +163,21 @@ export default function LandingPage() {
               </p>
             )}
 
-            {/* Features */}
-            <div className="grid md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto mt-8">
-              <div className="p-8 rounded-xl bg-white/5 border border-white/10">
-                <h3 className="text-xl font-semibold mb-3 text-blue-400">{lt.features?.personas?.title || 'AI Personas'}</h3>
-                <p className="text-slate-400">{lt.features?.personas?.description || 'Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.'}</p>
-              </div>
-              <div className="p-8 rounded-xl bg-white/5 border border-white/10">
-                <h3 className="text-xl font-semibold mb-3 text-purple-400">{lt.features?.skills?.title || 'Skills'}</h3>
-                <p className="text-slate-400">{lt.features?.skills?.description || 'Reusable capabilities for agents — from web scraping to API integrations.'}</p>
-              </div>
-              <div className="p-8 rounded-xl bg-white/5 border border-white/10">
-                <h3 className="text-xl font-semibold mb-3 text-green-400">{lt.features?.mcp?.title || 'MCP Servers'}</h3>
-                <p className="text-slate-400">{lt.features?.mcp?.description || 'Model Context Protocol servers for extending agent capabilities.'}</p>
+            {/* Features Section */}
+            <div className="mt-24 pt-16 border-t border-white/10">
+              <div className="grid md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto">
+                <div className="p-8 rounded-xl bg-white/5 border border-white/10">
+                  <h3 className="text-xl font-semibold mb-3 text-blue-400">{lt.features?.personas?.title || 'AI Personas'}</h3>
+                  <p className="text-slate-400">{lt.features?.personas?.description || 'Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.'}</p>
+                </div>
+                <div className="p-8 rounded-xl bg-white/5 border border-white/10">
+                  <h3 className="text-xl font-semibold mb-3 text-purple-400">{lt.features?.skills?.title || 'Skills'}</h3>
+                  <p className="text-slate-400">{lt.features?.skills?.description || 'Reusable capabilities for agents — from web scraping to API integrations.'}</p>
+                </div>
+                <div className="p-8 rounded-xl bg-white/5 border border-white/10">
+                  <h3 className="text-xl font-semibold mb-3 text-green-400">{lt.features?.mcp?.title || 'MCP Servers'}</h3>
+                  <p className="text-slate-400">{lt.features?.mcp?.description || 'Model Context Protocol servers for extending agent capabilities.'}</p>
+                </div>
               </div>
             </div>
           </div>
