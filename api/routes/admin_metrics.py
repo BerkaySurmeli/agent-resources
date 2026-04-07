@@ -34,62 +34,15 @@ def get_cloudflare_analytics(hours: int = 24):
         }
     
     try:
+        # Use the analytics dashboard API
         # Calculate time range
-        end_time = datetime.utcnow()
-        start_time = end_time - timedelta(hours=hours)
+        end_time = int(datetime.utcnow().timestamp())
+        start_time = int((datetime.utcnow() - timedelta(hours=hours)).timestamp())
         
-        # GraphQL query for analytics
-        query = {
-            "query": f"""
-            query {{
-                viewer {{
-                    zones(filter: {{zoneTag: "{settings.CLOUDFLARE_ZONE_ID}"}}) {{
-                        httpRequests1dGroups(
-                            limit: 1,
-                            filter: {{date_geq: "{start_time.strftime('%Y-%m-%d')}"}}
-                        ) {{
-                            dimensions {{date}}
-                            sum {{
-                                requests
-                                bytes
-                                pageViews
-                                visits
-                            }}
-                        }}
-                    }}
-                }}
-            }}
-            """
-        }
-        
-        response = requests.post(
-            "https://api.cloudflare.com/client/v4/graphql",
-            headers={
-                "Authorization": f"Bearer {settings.CLOUDFLARE_API_TOKEN}",
-                "Content-Type": "application/json"
-            },
-            json=query,
-            timeout=10
-        )
-        
-        if response.status_code == 200:
-            data = response.json()
-            zones = data.get("data", {}).get("viewer", {}).get("zones", [])
-            if zones and zones[0].get("httpRequests1dGroups"):
-                group = zones[0]["httpRequests1dGroups"][0]
-                sums = group.get("sum", {})
-                return {
-                    "requests": sums.get("requests", 0),
-                    "bandwidth": sums.get("bytes", 0),
-                    "views": sums.get("pageViews", 0),
-                    "visits": sums.get("visits", 0),
-                    "period": "24h"
-                }
-        
-        # Fallback to simple API if GraphQL fails
         response = requests.get(
             f"https://api.cloudflare.com/client/v4/zones/{settings.CLOUDFLARE_ZONE_ID}/analytics/dashboard",
             headers={"Authorization": f"Bearer {settings.CLOUDFLARE_API_TOKEN}"},
+            params={"since": start_time, "until": end_time, "continuous": "true"},
             timeout=10
         )
         
@@ -97,13 +50,20 @@ def get_cloudflare_analytics(hours: int = 24):
             data = response.json()
             if data.get("success"):
                 result = data.get("result", {})
-                timeseries = result.get("timeseries", [{}])[0]
+                # Sum up all timeseries data
+                timeseries = result.get("timeseries", [])
+                total_requests = sum(t.get("requests", {}).get("all", 0) for t in timeseries)
+                total_bandwidth = sum(t.get("bandwidth", {}).get("all", 0) for t in timeseries)
+                total_views = sum(t.get("pageviews", {}).get("all", 0) for t in timeseries)
+                # For unique visitors, use the last data point (approximation)
+                total_visits = timeseries[-1].get("uniques", {}).get("all", 0) if timeseries else 0
+                
                 return {
-                    "requests": timeseries.get("requests", {}).get("all", 0),
-                    "bandwidth": timeseries.get("bandwidth", {}).get("all", 0),
-                    "views": timeseries.get("pageviews", {}).get("all", 0),
-                    "visits": timeseries.get("uniques", {}).get("all", 0),
-                    "period": "24h"
+                    "requests": total_requests,
+                    "bandwidth": total_bandwidth,
+                    "views": total_views,
+                    "visits": total_visits,
+                    "period": f"{hours}h"
                 }
     except Exception as e:
         print(f"[CLOUDFLARE ERROR] {e}")
