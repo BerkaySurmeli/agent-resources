@@ -41,67 +41,87 @@ def get_cloudflare_analytics(hours: int = 24):
         }
     
     try:
-        # Use the analytics dashboard API
-        # Calculate time range
-        end_time = int(datetime.utcnow().timestamp())
-        start_time = int((datetime.utcnow() - timedelta(hours=hours)).timestamp())
+        # Use GraphQL API (the REST analytics API is deprecated)
+        end_date = datetime.utcnow().strftime("%Y-%m-%d")
+        start_date = (datetime.utcnow() - timedelta(hours=hours)).strftime("%Y-%m-%d")
         
-        response = requests.get(
-            f"https://api.cloudflare.com/client/v4/zones/{settings.CLOUDFLARE_ZONE_ID}/analytics/dashboard",
-            headers={"Authorization": f"Bearer {settings.CLOUDFLARE_API_TOKEN}"},
-            params={"since": start_time, "until": end_time, "continuous": "true"},
+        graphql_query = {
+            "query": """
+                query GetZoneAnalytics($zoneId: String!, $since: Time!, $until: Time!) {
+                    viewer {
+                        zones(filter: { zoneTag: $zoneId }) {
+                            httpRequests1dGroups(
+                                limit: 100
+                                filter: { date_geq: $since, date_leq: $until }
+                            ) {
+                                dimensions { date }
+                                sum { requests bytes cachedBytes threats pageViews }
+                                uniq { uniques }
+                            }
+                        }
+                    }
+                }
+            """,
+            "variables": {
+                "zoneId": settings.CLOUDFLARE_ZONE_ID,
+                "since": start_date,
+                "until": end_date
+            }
+        }
+        
+        response = requests.post(
+            "https://api.cloudflare.com/client/v4/graphql",
+            headers={
+                "Authorization": f"Bearer {settings.CLOUDFLARE_API_TOKEN}",
+                "Content-Type": "application/json"
+            },
+            json=graphql_query,
             timeout=10
         )
         
-        print(f"[CLOUDFLARE DEBUG] Response status: {response.status_code}")
+        print(f"[CLOUDFLARE DEBUG] GraphQL Response status: {response.status_code}")
         if response.status_code == 200:
             data = response.json()
-            print(f"[CLOUDFLARE DEBUG] API success: {data.get('success')}")
-            if data.get("success"):
-                result = data.get("result", {})
-                # Sum up all timeseries data
-                timeseries = result.get("timeseries", [])
-                print(f"[CLOUDFLARE DEBUG] Timeseries points: {len(timeseries)}")
-                total_requests = sum(t.get("requests", {}).get("all", 0) for t in timeseries)
-                total_bandwidth = sum(t.get("bandwidth", {}).get("all", 0) for t in timeseries)
-                total_views = sum(t.get("pageviews", {}).get("all", 0) for t in timeseries)
-                # For unique visitors, use the last data point (approximation)
-                total_visits = timeseries[-1].get("uniques", {}).get("all", 0) if timeseries else 0
-                
-                print(f"[CLOUDFLARE DEBUG] Calculated metrics - requests: {total_requests}, views: {total_views}, visits: {total_visits}")
-                return {
-                    "requests": total_requests,
-                    "bandwidth": total_bandwidth,
-                    "views": total_views,
-                    "visits": total_visits,
-                    "period": f"{hours}h"
-                }
+            if data.get("data") and data["data"].get("viewer"):
+                zones = data["data"]["viewer"].get("zones", [])
+                if zones and zones[0].get("httpRequests1dGroups"):
+                    groups = zones[0]["httpRequests1dGroups"]
+                    print(f"[CLOUDFLARE DEBUG] Got {len(groups)} day groups")
+                    
+                    total_requests = sum(g.get("sum", {}).get("requests", 0) for g in groups)
+                    total_bandwidth = sum(g.get("sum", {}).get("bytes", 0) for g in groups)
+                    total_views = sum(g.get("sum", {}).get("pageViews", 0) for g in groups)
+                    # Get unique visitors from the most recent day
+                    total_visits = groups[-1].get("uniq", {}).get("uniques", 0) if groups else 0
+                    
+                    print(f"[CLOUDFLARE DEBUG] Calculated metrics - requests: {total_requests}, views: {total_views}, visits: {total_visits}")
+                    return {
+                        "requests": total_requests,
+                        "bandwidth": total_bandwidth,
+                        "views": total_views,
+                        "visits": total_visits,
+                        "period": f"{hours}h"
+                    }
+                else:
+                    print(f"[CLOUDFLARE DEBUG] No data groups found")
             else:
-                print(f"[CLOUDFLARE DEBUG] API returned errors: {data.get('errors')}")
+                print(f"[CLOUDFLARE DEBUG] GraphQL errors: {data.get('errors')}")
         else:
             error_text = response.text[:500]
-            print(f"[CLOUDFLARE DEBUG] API error response: {error_text}")
-            # Return error info for debugging
-            return {
-                "requests": 0,
-                "bandwidth": 0,
-                "views": 0,
-                "visits": 0,
-                "period": "24h",
-                "_error": f"API returned {response.status_code}: {error_text}"
-            }
+            print(f"[CLOUDFLARE DEBUG] API error: {error_text}")
     except Exception as e:
         print(f"[CLOUDFLARE ERROR] {e}")
         import traceback
         traceback.print_exc()
-        return {
-            "requests": 0,
-            "bandwidth": 0,
-            "views": 0,
-            "visits": 0,
-            "period": "24h",
-            "_error": str(e)
-        }
+    
+    # Return zeros if API fails
+    return {
+        "requests": 0,
+        "bandwidth": 0,
+        "views": 0,
+        "visits": 0,
+        "period": "24h"
+    }
 
 @router.get("/metrics/")
 def get_cloudflare_metrics(hours: int = 24):
