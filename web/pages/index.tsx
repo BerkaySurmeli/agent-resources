@@ -1,9 +1,43 @@
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
-import { useLanguage } from '../context/LanguageContext';
+
+// Default translations (English)
+const defaultTranslations = {
+  landing: {
+    title: 'The Marketplace for',
+    titleHighlight: 'AI Agents',
+    subtitle: 'Buy, sell, and discover AI personas, skills, and MCP servers. Reimagining Human Resources.',
+    incentive: '🎉 First 50 developers get $20 when they make their first sale!',
+    spotsRemaining: 'spots remaining',
+    spotsClaimed: 'All spots claimed! Join the waitlist for early access.',
+    emailPlaceholder: 'Enter your email',
+    getAccess: 'Secure Your Spot',
+    joining: 'Joining...',
+    successMessage: 'Thanks! Check your email for your developer code.',
+    errorMessage: 'Something went wrong. Please try again.',
+    footer: '© 2026 Agent Resources. Built for the agent economy.'
+  }
+};
 
 export default function LandingPage() {
-  const { t, language, setLanguage, languages } = useLanguage();
+  // Try to use language context, fallback to defaults
+  let t = defaultTranslations;
+  let language = 'en';
+  let setLanguage = (lang: string) => {};
+  let languages: {code: string, name: string, flag: string}[] = [];
+  
+  try {
+    const langContext = require('../context/LanguageContext');
+    if (langContext.useLanguage) {
+      const ctx = langContext.useLanguage();
+      t = ctx.t || defaultTranslations;
+      language = ctx.language || 'en';
+      setLanguage = ctx.setLanguage || ((lang: string) => {});
+      languages = ctx.languages || [];
+    }
+  } catch (e) {
+    // Context not available, use defaults
+  }
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
