@@ -6,6 +6,11 @@ import { useLanguage } from '../../context/LanguageContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
+// Disable static generation
+export async function getServerSideProps() {
+  return { props: {} };
+}
+
 // Developer role and description translations - only Claudia is a developer
 const getDeveloperInfo = (t: any, developerId: string) => {
   const info: Record<string, { role: string; description: string }> = {

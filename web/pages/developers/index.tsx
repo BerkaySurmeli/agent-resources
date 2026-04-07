@@ -5,6 +5,11 @@ import { useLanguage } from '../../context/LanguageContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
+// Disable static generation
+export async function getServerSideProps() {
+  return { props: {} };
+}
+
 // Fade in animation component
 const FadeIn = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => {
   const [visible, setVisible] = useState(false);

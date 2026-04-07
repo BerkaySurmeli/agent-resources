@@ -7,6 +7,11 @@ import { useAdminAuth } from '../../context/AdminAuthContext';
 // Force dynamic rendering to ensure client-side JavaScript runs
 export const dynamic = 'force-dynamic';
 
+// Disable static generation for this page
+export async function getServerSideProps() {
+  return { props: {} };
+}
+
 export default function AdminLogin() {
   const router = useRouter();
   const [email, setEmail] = useState('');
