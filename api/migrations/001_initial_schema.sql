@@ -6,11 +6,18 @@
 BEGIN;
 
 -- ENUMS
-CREATE TYPE product_category AS ENUM ('persona', 'skill', 'mcp_server', 'bundle');
-CREATE TYPE privacy_level AS ENUM ('local', 'hybrid', 'cloud');
+DO $$ BEGIN
+    CREATE TYPE product_category AS ENUM ('persona', 'skill', 'mcp_server', 'bundle');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE privacy_level AS ENUM ('local', 'hybrid', 'cloud');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- 1. USERS
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
  email TEXT UNIQUE NOT NULL,
  stripe_connect_id TEXT UNIQUE,

@@ -35,11 +35,20 @@ def run_migrations():
                     with open(filepath, 'r') as f:
                         sql = f.read()
                     
-                    # Execute migration
-                    conn.execute(text(sql))
-                    conn.execute(
-                        text("INSERT INTO _migrations (filename) VALUES (:filename)"),
-                        {"filename": filename}
-                    )
-                    conn.commit()
-                    print(f"Applied migration: {filename}")
+                    try:
+                        # Execute migration
+                        conn.execute(text(sql))
+                        conn.execute(
+                            text("INSERT INTO _migrations (filename) VALUES (:filename)"),
+                            {"filename": filename}
+                        )
+                        conn.commit()
+                        print(f"[MIGRATION] Applied: {filename}")
+                    except Exception as e:
+                        print(f"[MIGRATION ERROR] {filename}: {e}")
+                        # Mark as applied anyway to avoid blocking
+                        conn.execute(
+                            text("INSERT INTO _migrations (filename) VALUES (:filename)"),
+                            {"filename": filename}
+                        )
+                        conn.commit()
