@@ -120,6 +120,21 @@ def get_waitlist_count():
     session.close()
     return {"count": count, "spots_remaining": max(0, 50 - count)}
 
+@router.post("/delete/")
+def delete_from_waitlist(request: WaitlistRequest):
+    """Delete email from waitlist (admin only)"""
+    session = get_db_session()
+    entry = session.exec(select(WaitlistEntry).where(WaitlistEntry.email == request.email)).first()
+    
+    if entry:
+        session.delete(entry)
+        session.commit()
+        session.close()
+        return {"status": "success", "message": f"{request.email} removed from waitlist"}
+    
+    session.close()
+    return {"status": "not_found", "message": "Email not found in waitlist"}
+
 @router.get("/")
 def get_waitlist():
     """Get all waitlist entries (for admin)"""
