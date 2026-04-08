@@ -120,16 +120,16 @@ export default function LandingPage() {
               {lt.title}<br /><span className="text-blue-400">{lt.titleHighlight}</span>
             </h1>
             
-            {/* Animated Tagline - bigger with moving gradient */}
-            <p className="text-2xl md:text-3xl font-bold mb-12 max-w-xl mx-auto bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
+            {/* Animated Tagline - RGB style */}
+            <p className="text-2xl md:text-3xl font-bold mb-12 max-w-xl mx-auto rgb-gradient-text">
               {lt.tagline}
             </p>
 
             {/* Email Signup */}
             <div className="max-w-md mx-auto mb-4">
 
-              {/* Developer Incentive - moved closer to signup */}
-              <p className="text-lg text-amber-400 font-medium mb-6">
+              {/* Developer Incentive - one line */}
+              <p className="text-lg text-amber-400 font-medium mb-6 whitespace-nowrap">
                 {lt.incentive}
               </p>
               <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
