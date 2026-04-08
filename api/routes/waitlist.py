@@ -87,8 +87,12 @@ def join_waitlist(request: WaitlistRequest):
         session.close()
         return {"status": "already_registered", "message": "You're already on the waitlist!"}
     
-    # Generate developer code
-    developer_code = generate_developer_code()
+    # Get current count before adding
+    current_count = len(session.exec(select(WaitlistEntry)).all())
+    is_in_first_50 = current_count < 50
+    
+    # Generate developer code only for first 50
+    developer_code = generate_developer_code() if is_in_first_50 else None
     
     # Create new entry
     entry = WaitlistEntry(
@@ -99,20 +103,28 @@ def join_waitlist(request: WaitlistRequest):
     session.add(entry)
     session.commit()
     
-    # Get count for response
+    # Get updated count
     count = len(session.exec(select(WaitlistEntry)).all())
     
     session.close()
     
-    # Send welcome email
-    send_welcome_email(request.email, developer_code)
+    # Send welcome email only to first 50
+    if is_in_first_50 and developer_code:
+        send_welcome_email(request.email, developer_code)
     
-    return {
-        "status": "success",
-        "message": "You've been added to the waitlist! Check your email for your developer code.",
-        "developer_code": developer_code,
-        "spots_remaining": max(0, 50 - count)
-    }
+    if is_in_first_50:
+        return {
+            "status": "success",
+            "message": "You've been added to the waitlist! Check your email for your developer code.",
+            "developer_code": developer_code,
+            "spots_remaining": max(0, 50 - count)
+        }
+    else:
+        return {
+            "status": "success",
+            "message": "You've been added to the waitlist! We'll notify you when we're live.",
+            "spots_remaining": max(0, 50 - count)
+        }
 
 @router.get("/count")
 @router.get("/count/")
