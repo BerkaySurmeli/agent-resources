@@ -24,27 +24,32 @@ def check_admin_auth(request: Request):
 def get_cloudflare_analytics(hours: int = 24):
     """Fetch real analytics from Cloudflare for specified time range"""
     # Debug logging
+    print(f"[CLOUDFLARE DEBUG] Hours requested: {hours}")
     print(f"[CLOUDFLARE DEBUG] API Token set: {bool(settings.CLOUDFLARE_API_TOKEN)}")
     print(f"[CLOUDFLARE DEBUG] Zone ID set: {bool(settings.CLOUDFLARE_ZONE_ID)}")
-    print(f"[CLOUDFLARE DEBUG] API Token length: {len(settings.CLOUDFLARE_API_TOKEN) if settings.CLOUDFLARE_API_TOKEN else 0}")
-    print(f"[CLOUDFLARE DEBUG] Zone ID value: {settings.CLOUDFLARE_ZONE_ID[:10] + '...' if settings.CLOUDFLARE_ZONE_ID else 'NOT SET'}")
     
     if not settings.CLOUDFLARE_API_TOKEN or not settings.CLOUDFLARE_ZONE_ID:
-        # Return mock data if not configured
         print("[CLOUDFLARE DEBUG] Returning zeros - credentials not configured")
         return {
             "requests": 0,
             "bandwidth": 0,
             "views": 0,
             "visits": 0,
-            "period": "24h"
+            "period": f"{hours}h"
         }
     
     try:
-        # Use GraphQL API (the REST analytics API is deprecated)
-        end_date = datetime.utcnow().strftime("%Y-%m-%d")
-        start_date = (datetime.utcnow() - timedelta(hours=hours)).strftime("%Y-%m-%d")
+        # Calculate date range
+        end_time = datetime.utcnow()
+        start_time = end_time - timedelta(hours=hours)
         
+        # Format dates for Cloudflare API
+        end_date = end_time.strftime("%Y-%m-%d")
+        start_date = start_time.strftime("%Y-%m-%d")
+        
+        print(f"[CLOUDFLARE DEBUG] Date range: {start_date} to {end_date}")
+        
+        # Use GraphQL API with daily groups
         graphql_query = {
             "query": """
                 query GetZoneAnalytics($zoneId: String!, $since: Time!, $until: Time!) {
@@ -79,52 +84,61 @@ def get_cloudflare_analytics(hours: int = 24):
             timeout=10
         )
         
-        print(f"[CLOUDFLARE DEBUG] GraphQL Response status: {response.status_code}")
+        print(f"[CLOUDFLARE DEBUG] Response status: {response.status_code}")
+        
         if response.status_code == 200:
             data = response.json()
-            if data.get("data") and data["data"].get("viewer"):
-                zones = data["data"]["viewer"].get("zones", [])
-                if zones and zones[0].get("httpRequests1dGroups"):
-                    groups = zones[0]["httpRequests1dGroups"]
-                    print(f"[CLOUDFLARE DEBUG] Got {len(groups)} day groups")
-                    
-                    total_requests = sum(g.get("sum", {}).get("requests", 0) for g in groups)
-                    total_bandwidth = sum(g.get("sum", {}).get("bytes", 0) for g in groups)
-                    # pageViews might not be available on all plans, use requests as fallback for views
-                    total_views = sum(g.get("sum", {}).get("pageViews", 0) for g in groups)
-                    if total_views == 0:
-                        # Fallback: use unique visitors summed across all days
-                        total_views = sum(g.get("uniq", {}).get("uniques", 0) for g in groups)
-                    # Get unique visitors from the most recent day
-                    total_visits = groups[-1].get("uniq", {}).get("uniques", 0) if groups else 0
-                    
-                    print(f"[CLOUDFLARE DEBUG] Calculated metrics - requests: {total_requests}, views: {total_views}, visits: {total_visits}")
-                    return {
-                        "requests": total_requests,
-                        "bandwidth": total_bandwidth,
-                        "views": total_views,
-                        "visits": total_visits,
-                        "period": f"{hours}h"
-                    }
-                else:
-                    print(f"[CLOUDFLARE DEBUG] No data groups found")
+            
+            if data.get("errors"):
+                print(f"[CLOUDFLARE DEBUG] GraphQL errors: {data['errors']}")
+                return {"requests": 0, "bandwidth": 0, "views": 0, "visits": 0, "period": f"{hours}h"}
+            
+            zones = data.get("data", {}).get("viewer", {}).get("zones", [])
+            
+            if zones and zones[0].get("httpRequests1dGroups"):
+                groups = zones[0]["httpRequests1dGroups"]
+                print(f"[CLOUDFLARE DEBUG] Got {len(groups)} day groups")
+                
+                # Sum up totals across all days
+                total_requests = sum(g.get("sum", {}).get("requests", 0) for g in groups)
+                total_bandwidth = sum(g.get("sum", {}).get("bytes", 0) for g in groups)
+                
+                # Try to get pageViews, fall back to requests if not available
+                total_pageviews = sum(g.get("sum", {}).get("pageViews", 0) for g in groups)
+                if total_pageviews == 0:
+                    # If no pageViews, estimate from requests (not perfect but better than 0)
+                    total_pageviews = total_requests
+                
+                # Sum unique visitors across all days (this is approximate)
+                total_uniques = sum(g.get("uniq", {}).get("uniques", 0) for g in groups)
+                
+                print(f"[CLOUDFLARE DEBUG] Totals - requests: {total_requests}, pageviews: {total_pageviews}, uniques: {total_uniques}")
+                
+                return {
+                    "requests": total_requests,
+                    "bandwidth": total_bandwidth,
+                    "views": total_pageviews,
+                    "visits": total_uniques,
+                    "period": f"{hours}h",
+                    "days_of_data": len(groups)
+                }
             else:
-                print(f"[CLOUDFLARE DEBUG] GraphQL errors: {data.get('errors')}")
+                print("[CLOUDFLARE DEBUG] No zones or data groups found")
         else:
-            error_text = response.text[:500]
-            print(f"[CLOUDFLARE DEBUG] API error: {error_text}")
+            print(f"[CLOUDFLARE DEBUG] API error: {response.text[:500]}")
+            
     except Exception as e:
         print(f"[CLOUDFLARE ERROR] {e}")
         import traceback
         traceback.print_exc()
     
-    # Return zeros if API fails
+    # Return zeros if anything fails
     return {
         "requests": 0,
         "bandwidth": 0,
         "views": 0,
         "visits": 0,
-        "period": "24h"
+        "period": f"{hours}h"
     }
 
 @router.get("/metrics/")

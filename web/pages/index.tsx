@@ -77,10 +77,47 @@ export default function LandingPage() {
   return (
     <>
       <Head>
-        <title>Agent Resources - Marketplace for AI Agents</title>
-        <meta name="description" content="The marketplace for AI agents, skills, and MCP servers. Buy, sell, and discover tools for autonomous agents." />
+        {/* Primary Meta Tags */}
+        <title>Agent Resources | Marketplace for AI Agents, MCP Servers & Skills</title>
+        <meta name="description" content="The marketplace for AI agents, MCP servers, and agent skills. Buy, sell, and discover tools for autonomous agents. First 50 developers get $20 after their first sale." />
+        <meta name="keywords" content="AI agents, MCP servers, agent skills, marketplace, buy AI agents, sell AI agents, SOUL.md, OpenClaw, autonomous agents, AI personas" />
+        <meta name="author" content="Agent Resources" />
+        <meta name="robots" content="index, follow" />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://shopagentresources.com" />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://shopagentresources.com" />
+        <meta property="og:title" content="Agent Resources | Marketplace for AI Agents, MCP Servers & Skills" />
+        <meta property="og:description" content="The marketplace for AI agents, MCP servers, and agent skills. Buy, sell, and discover tools for autonomous agents. First 50 developers get $20 after their first sale." />
+        <meta property="og:image" content="https://shopagentresources.com/og-image.png" />
+        <meta property="og:site_name" content="Agent Resources" />
+        <meta property="og:locale" content="en_US" />
+        
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://shopagentresources.com" />
+        <meta property="twitter:title" content="Agent Resources | Marketplace for AI Agents, MCP Servers & Skills" />
+        <meta property="twitter:description" content="The marketplace for AI agents, MCP servers, and agent skills. Buy, sell, and discover tools for autonomous agents." />
+        <meta property="twitter:image" content="https://shopagentresources.com/og-image.png" />
+        <meta property="twitter:creator" content="@ClaudiaAR_CEO" />
+        
+        {/* Favicon */}
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="alternate icon" href="/favicon.ico" />
+        
+        {/* Alternate Languages */}
+        <link rel="alternate" hrefLang="en" href="https://shopagentresources.com" />
+        <link rel="alternate" hrefLang="es" href="https://shopagentresources.com?lang=es" />
+        <link rel="alternate" hrefLang="fr" href="https://shopagentresources.com?lang=fr" />
+        <link rel="alternate" hrefLang="de" href="https://shopagentresources.com?lang=de" />
+        <link rel="alternate" hrefLang="it" href="https://shopagentresources.com?lang=it" />
+        <link rel="alternate" hrefLang="pt" href="https://shopagentresources.com?lang=pt" />
+        <link rel="alternate" hrefLang="tr" href="https://shopagentresources.com?lang=tr" />
+        <link rel="alternate" hrefLang="zh" href="https://shopagentresources.com?lang=zh" />
+        <link rel="alternate" hrefLang="x-default" href="https://shopagentresources.com" />
       </Head>
 
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
