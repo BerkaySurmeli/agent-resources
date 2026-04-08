@@ -82,7 +82,8 @@ The Agent Resources Team
                 "to": [to_email],
                 "subject": "Welcome to Agent Resources - Verify Your Email",
                 "html": html_content,
-                "text": text_content
+                "text": text_content,
+                "reply_to": settings.FROM_EMAIL_SUPPORT
             })
             print(f"[EMAIL] Verification email sent to {to_email}")
             return response
@@ -247,7 +248,103 @@ This email was sent via the Agent Resources contact form.
             raise
 
 
+    @staticmethod
+    def send_developer_welcome_email(to_email: str, name: str, developer_code: str) -> dict:
+        """Send welcome email to new developers with their developer code"""
+        if not settings.RESEND_API_KEY:
+            print("[EMAIL ERROR] Resend API key not configured")
+            raise Exception("Email service not configured. Please contact support.")
+        
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Agent Resources - Your Developer Code Inside!</title>
+</head>
+<body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <div style="width: 60px; height: 60px; background: #2563eb; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+            <span style="color: white; font-weight: bold; font-size: 24px;">AR</span>
+        </div>
+        <h1 style="color: #0f172a; margin: 0;">Agent Resources</h1>
+    </div>
+
+    <h2 style="color: #2563eb; text-align: center;">Welcome to Agent Resources!</h2>
+    
+    <p style="text-align: center; color: #64748b;">Your spot is secured. We'll notify you when the marketplace is ready.</p>
+
+    <div style="background: #f8fafc; border-radius: 12px; padding: 30px; margin: 30px 0;">
+        <h3 style="color: #0f172a; margin-top: 0;">Your Developer Code</h3>
+        <div style="background: white; border-radius: 8px; padding: 20px; text-align: center; border: 2px solid #2563eb;">
+            <code style="font-size: 24px; font-weight: bold; color: #2563eb; letter-spacing: 2px;">{developer_code}</code>
+        </div>
+        <p style="margin-bottom: 0; font-size: 14px; color: #64748b;">Use this code when creating your first listing to get $20 after your first sale!</p>
+    </div>
+
+    <div style="background: #eff6ff; border-radius: 12px; padding: 24px; margin: 30px 0;">
+        <p style="margin-top: 0; color: #0f172a; font-weight: 500;">As one of our first 50 developers, you're eligible for:</p>
+        <ul style="margin-bottom: 0; padding-left: 20px; color: #334155;">
+            <li style="margin-bottom: 8px;">List your first item free</li>
+            <li>$20 bonus after your first sale</li>
+        </ul>
+    </div>
+
+    <p style="color: #64748b;">Stay tuned for updates!</p>
+
+    <div style="text-align: center; font-size: 14px; color: #64748b; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+        <p>— The Agent Resources Team</p>
+        <p style="margin-top: 20px;">
+            <a href="https://shopagentresources.com" style="color: #2563eb;">shopagentresources.com</a>
+        </p>
+    </div>
+</body>
+</html>
+"""
+        
+        text_content = f"""
+Welcome to Agent Resources!
+
+Your spot is secured. We'll notify you when the marketplace is ready.
+
+Your Developer Code
+{developer_code}
+
+Use this code when creating your first listing to get $20 after your first sale!
+
+As one of our first 50 developers, you're eligible for:
+- List your first item free
+- $20 bonus after your first sale
+
+Stay tuned for updates!
+
+— The Agent Resources Team
+shopagentresources.com
+"""
+        
+        try:
+            response = resend.Emails.send({
+                "from": f"Agent Resources <{settings.FROM_EMAIL_INFO}>",
+                "to": [to_email],
+                "subject": "Welcome to Agent Resources - Your Developer Code Inside!",
+                "html": html_content,
+                "text": text_content,
+                "reply_to": settings.FROM_EMAIL_SUPPORT
+            })
+            print(f"[EMAIL] Developer welcome email sent to {to_email}")
+            return response
+        except Exception as e:
+            print(f"[EMAIL ERROR] Failed to send developer welcome email: {e}")
+            raise
+
+
 # Convenience function for backward compatibility
 def send_verification_email(to_email: str, name: str, token: str) -> dict:
     """Send verification email via Resend API"""
     return EmailService.send_verification_email(to_email, name, token)
+
+
+def send_developer_welcome_email(to_email: str, name: str, developer_code: str) -> dict:
+    """Send developer welcome email with code"""
+    return EmailService.send_developer_welcome_email(to_email, name, developer_code)

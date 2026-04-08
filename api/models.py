@@ -31,6 +31,9 @@ class User(SQLModel, table=True):
     is_verified: bool = Field(default=False)
     verification_token: Optional[str] = Field(default=None, index=True)
     verification_sent_at: Optional[datetime] = Field(default=None)
+    # Developer fields
+    developer_code: Optional[str] = Field(default=None, unique=True, index=True)
+    became_developer_at: Optional[datetime] = Field(default=None)
     stripe_connect_id: Optional[str] = Field(default=None, unique=True)
     stripe_status: str = Field(default="pending")
     stripe_charges_enabled: bool = Field(default=False)
