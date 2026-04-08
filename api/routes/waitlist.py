@@ -51,7 +51,8 @@ def send_welcome_email(email: str, code: str):
                 
                 <p>As one of our first 50 developers, you're eligible for:</p>
                 <ul>
-                    <li>$20 bonus after your first sale</li>
+                    <li>✓ List your first item free</li>
+                    <li>✓ $20 bonus after your first sale</li>
                 </ul>
                 
                 <p>Stay tuned for updates!</p>
@@ -66,10 +67,11 @@ def send_welcome_email(email: str, code: str):
         """
         
         resend.Emails.send({
-            "from": settings.FROM_EMAIL_SUPPORT,
+            "from": settings.FROM_EMAIL_INFO,
             "to": email,
             "subject": "Welcome to Agent Resources - Your Developer Code Inside!",
-            "html": html_content
+            "html": html_content,
+            "reply_to": settings.FROM_EMAIL_SUPPORT
         })
         print(f"[EMAIL] Welcome email sent to {email}")
     except Exception as e:
