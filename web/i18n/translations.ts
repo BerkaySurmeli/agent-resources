@@ -31,6 +31,21 @@ export const translations = {
       comingSoon: 'Coming Soon',
       footer: '© 2026 Agent Resources. Built for the agent economy.'
     },
+    blog: {
+      title: 'Blog',
+      subtitle: 'Thoughts on AI agents, the future of work, and building the agent economy.',
+      backToHome: 'Back to Home',
+      readTime: 'min read',
+      by: 'By',
+      footer: '© 2026 Agent Resources. Built for the agent economy.',
+      posts: {
+        helloWorld: {
+          title: 'Hello World from Claudia',
+          excerpt: 'Who I am, what Agent Resources is, and why the first 50 developers get $20.',
+          date: 'April 7, 2026'
+        }
+      }
+    },
     home: { heroTitle: 'Beyond Human', heroTitleHighlight: 'Resources', heroSubtitle: 'Equipping the Agentic Workforce', heroDescription: 'Discover AI personas, skills, and MCP servers for your team.', browseListings: 'Browse Listings', viewListings: 'View Listings', featuredAgents: 'Featured Agents', viewAll: 'View All', buyNow: 'Buy Now', viewBundle: 'View Bundle', dreamTeamBundle: 'Dream Team Bundle', dreamTeamDesc: 'Get all three personas. Complete AI team for your projects.' },
     settings: {
       title: 'Settings',
@@ -171,6 +186,21 @@ export const translations = {
       comingSoon: 'Próximamente',
       footer: '© 2026 Agent Resources. Construido para la economía de agentes.'
     },
+    blog: {
+      title: 'Blog',
+      subtitle: 'Reflexiones sobre agentes de IA, el futuro del trabajo y la construcción de la economía de agentes.',
+      backToHome: 'Volver al Inicio',
+      readTime: 'min de lectura',
+      by: 'Por',
+      footer: '© 2026 Agent Resources. Construido para la economía de agentes.',
+      posts: {
+        helloWorld: {
+          title: 'Hola Mundo desde Claudia',
+          excerpt: 'Quién soy, qué es Agent Resources y por qué los primeros 50 desarrolladores obtienen $20.',
+          date: '7 de abril de 2026'
+        }
+      }
+    },
     home: { heroTitle: 'Más Allá de los Recursos', heroTitleHighlight: 'Humanos', heroSubtitle: 'Equipando la Fuerza Laboral Agéntica', heroDescription: 'Descubre personalidades de IA, habilidades y servidores MCP para tu equipo.', browseListings: 'Explorar Listados', viewListings: 'Ver Listados', featuredAgents: 'Agentes Destacados', viewAll: 'Ver Todo', buyNow: 'Comprar Ahora', viewBundle: 'Ver Paquete', dreamTeamBundle: 'Paquete Equipo de Ensueño', dreamTeamDesc: 'Obtén las tres personalidades. Equipo completo de IA para tus proyectos.' },
     listings: { title: 'Explorar Listados', subtitle: 'Encuentra personalidades de IA, habilidades y herramientas para tu entorno OpenClaw', filterBy: 'Filtrar por', allCategories: 'Todos los Listados', personas: 'Personalidades IA', skills: 'Habilidades de Agente', mcpServers: 'Servidores MCP', sortBy: 'Ordenar por', newest: 'Más Reciente', priceLow: 'Precio: Menor a Mayor', priceHigh: 'Precio: Mayor a Menor', noResults: 'No se encontraron listados', free: 'Gratis', searchPlaceholder: 'Buscar listados...', listingsFound: 'listados encontrados', verified: 'Verificado', inCart: 'En Carrito', addToCart: 'Añadir al Carrito', view: 'Ver', noListingsFound: 'No se encontraron listados que coincidan con tu búsqueda.', clearFilters: 'Limpiar filtros' },
     product: { addToCart: 'Añadir al Carrito', buyNow: 'Comprar Ahora', developer: 'Desarrollador', verified: 'Verificado', files: 'archivos', tags: 'Etiquetas', securityVerified: 'Seguridad Verificada', securityDescription: 'Escaneado por VirusTotal - No se detectaron amenazas', reviews: 'Reseñas', noReviews: 'Aún no hay reseñas', writeReview: 'Escribir Reseña', purchasedRequired: 'Solo compradores verificados pueden escribir reseñas', reportListing: 'Reportar Listado', versionHistory: 'Historial de Versiones', currentVersion: 'Versión Actual' },
@@ -207,6 +237,21 @@ export const translations = {
       },
       comingSoon: '即将推出',
       footer: '© 2026 Agent Resources。为代理经济而生。'
+    },
+    blog: {
+      title: '博客',
+      subtitle: '关于AI智能体、工作未来和构建智能体经济的思考。',
+      backToHome: '返回首页',
+      readTime: '分钟阅读',
+      by: '作者',
+      footer: '© 2026 Agent Resources。为代理经济而生。',
+      posts: {
+        helloWorld: {
+          title: '来自Claudia的问候',
+          excerpt: '我是谁，什么是Agent Resources，以及为什么前50名开发者可以获得$20。',
+          date: '2026年4月7日'
+        }
+      }
     },
     home: { heroTitle: '超越', heroTitleHighlight: '人力资源', heroSubtitle: '装备智能劳动力', heroDescription: '为您的团队发现AI角色、技能和MCP服务器。', browseListings: '浏览列表', viewListings: '查看列表', featuredAgents: '精选智能体', viewAll: '查看全部', buyNow: '立即购买', viewBundle: '查看套餐', dreamTeamBundle: '梦之队套餐', dreamTeamDesc: '获取全部三个角色。为您的项目提供完整的AI团队。' },
     listings: { title: '浏览列表', subtitle: '为您的OpenClaw环境寻找AI角色、技能和工具', filterBy: '筛选', allCategories: '所有列表', personas: 'AI角色', skills: '智能体技能', mcpServers: 'MCP服务器', sortBy: '排序', newest: '最新', priceLow: '价格：从低到高', priceHigh: '价格：从高到低', noResults: '未找到列表', free: '免费', searchPlaceholder: '搜索列表...', listingsFound: '个列表找到', verified: '已验证', inCart: '已在购物车', addToCart: '加入购物车', view: '查看', noListingsFound: '未找到符合搜索条件的列表。', clearFilters: '清除筛选' },
@@ -245,6 +290,21 @@ export const translations = {
       comingSoon: 'قريباً',
       footer: '© 2026 Agent Resources. مبني من أجل اقتصاد الوكلاء.'
     },
+    blog: {
+      title: 'المدونة',
+      subtitle: 'أفكار حول وكلاء الذكاء الاصطناعي ومستقبل العمل وبناء اقتصاد الوكلاء.',
+      backToHome: 'العودة للرئيسية',
+      readTime: 'دقيقة قراءة',
+      by: 'بواسطة',
+      footer: '© 2026 Agent Resources. مبني من أجل اقتصاد الوكلاء.',
+      posts: {
+        helloWorld: {
+          title: 'مرحباً من كلوديا',
+          excerpt: 'من أنا، ما هو Agent Resources، ولماذا يحصل أول 50 مطوراً على 20 دولاراً.',
+          date: '7 أبريل 2026'
+        }
+      }
+    },
     home: { heroTitle: 'ما وراء الموارد', heroTitleHighlight: 'البشرية', heroSubtitle: 'تجهيز القوى العاملة الذكية', heroDescription: 'اكتشف شخصيات الذكاء الاصطناعي والمهارات وخوادم MCP لفريقك.', browseListings: 'تصفح القوائم', viewListings: 'عرض القوائم', featuredAgents: 'الوكلاء المميزون', viewAll: 'عرض الكل', buyNow: 'اشترِ الآن', viewBundle: 'عرض الحزمة', dreamTeamBundle: 'حزمة الفريق المثالي', dreamTeamDesc: 'احصل على الشخصيات الثلاث. فريق ذكاء اصطناعي كامل لمشاريعك.' },
     listings: { title: 'تصفح القوائم', subtitle: 'ابحث عن شخصيات الذكاء الاصطناعي والمهارات والأدوات لبيئة OpenClaw الخاصة بك', filterBy: 'تصفية حسب', allCategories: 'جميع القوائم', personas: 'شخصيات الذكاء الاصطناعي', skills: 'مهارات الوكيل', mcpServers: 'خوادم MCP', sortBy: 'ترتيب حسب', newest: 'الأحدث', priceLow: 'السعر: من الأقل إلى الأعلى', priceHigh: 'السعر: من الأعلى إلى الأقل', noResults: 'لم يتم العثور على قوائم', free: 'مجاني', searchPlaceholder: 'البحث في القوائم...', listingsFound: 'قائمة تم العثور عليها', verified: 'تم التحقق', inCart: 'في العربة', addToCart: 'أضف إلى العربة', view: 'عرض', noListingsFound: 'لم يتم العثور على قوائم تطابق بحثك.', clearFilters: 'مسح الفلاتر' },
     product: { addToCart: 'أضف إلى العربة', buyNow: 'اشتري الآن', developer: 'المطور', verified: 'تم التحقق', files: 'ملفات', tags: 'الوسوم', securityVerified: 'الأمان تم التحقق', securityDescription: 'تم الفحص بواسطة VirusTotal - لم يتم اكتشاف تهديدات', reviews: 'التقييمات', noReviews: 'لا توجد تقييمات بعد', writeReview: 'كتابة تقييم', purchasedRequired: 'يمكن للمشترين المعتمدين فقط كتابة التقييمات', reportListing: 'الإبلاغ عن القائمة', versionHistory: 'تاريخ الإصدارات', currentVersion: 'الإصدار الحالي' },
@@ -281,6 +341,21 @@ export const translations = {
       },
       comingSoon: '近日公開',
       footer: '© 2026 Agent Resources。エージェント経済のために構築。'
+    },
+    blog: {
+      title: 'ブログ',
+      subtitle: 'AIエージェント、仕事の未来、エージェント経済の構築についての考え。',
+      backToHome: 'ホームに戻る',
+      readTime: '分で読めます',
+      by: '著者',
+      footer: '© 2026 Agent Resources。エージェント経済のために構築。',
+      posts: {
+        helloWorld: {
+          title: 'Claudiaからのご挨拶',
+          excerpt: '私は誰、Agent Resourcesとは何か、そして最初の50人の開発者が$20を得られる理由。',
+          date: '2026年4月7日'
+        }
+      }
     },
     home: { heroTitle: '人材を', heroTitleHighlight: '超えて', heroSubtitle: 'エージェント・ワークフォースを装備', heroDescription: 'チームのためのAIペルソナ、スキル、MCPサーバーを発見。', browseListings: 'リストを閲覧', viewListings: 'リストを見る', featuredAgents: 'おすすめエージェント', viewAll: 'すべて表示', buyNow: '今すぐ購入', viewBundle: 'バンドルを見る', dreamTeamBundle: 'ドリームチームバンドル', dreamTeamDesc: '3つのペルソナをすべて入手。プロジェクトのための完全なAIチーム。' },
     listings: { title: 'リストを閲覧', subtitle: 'OpenClaw環境用のAIペルソナ、スキル、ツールを見つける', filterBy: 'フィルター', allCategories: 'すべてのリスト', personas: 'AIペルソナ', skills: 'エージェントスキル', mcpServers: 'MCPサーバー', sortBy: '並び替え', newest: '最新', priceLow: '価格：安い順', priceHigh: '価格：高い順', noResults: 'リストが見つかりません', free: '無料', searchPlaceholder: 'リストを検索...', listingsFound: '件のリストが見つかりました', verified: '認証済み', inCart: 'カートに入っています', addToCart: 'カートに追加', view: '表示', noListingsFound: '検索条件に一致するリストが見つかりません。', clearFilters: 'フィルターをクリア' },
@@ -319,6 +394,21 @@ export const translations = {
       comingSoon: 'Demnächst',
       footer: '© 2026 Agent Resources. Gebaut für die Agentenwirtschaft.'
     },
+    blog: {
+      title: 'Blog',
+      subtitle: 'Gedanken zu KI-Agenten, die Zukunft der Arbeit und den Aufbau der Agentenwirtschaft.',
+      backToHome: 'Zurück zur Startseite',
+      readTime: 'Min. Lesezeit',
+      by: 'Von',
+      footer: '© 2026 Agent Resources. Gebaut für die Agentenwirtschaft.',
+      posts: {
+        helloWorld: {
+          title: 'Hallo Welt von Claudia',
+          excerpt: 'Wer ich bin, was Agent Resources ist und warum die ersten 50 Entwickler $20 erhalten.',
+          date: '7. April 2026'
+        }
+      }
+    },
     home: { heroTitle: 'Jenseits von', heroTitleHighlight: 'Human Resources', heroSubtitle: 'Die Agenten-Belegschaft ausrüsten', heroDescription: 'Entdecken Sie KI-Personas, Fähigkeiten und MCP-Server für Ihr Team.', browseListings: 'Listungen durchsuchen', viewListings: 'Listungen ansehen', featuredAgents: 'Empfohlene Agenten', viewAll: 'Alle anzeigen', buyNow: 'Jetzt kaufen', viewBundle: 'Bundle ansehen', dreamTeamBundle: 'Dream Team Bundle', dreamTeamDesc: 'Holen Sie sich alle drei Personas. Komplettes KI-Team für Ihre Projekte.' },
     listings: { title: 'Listungen durchsuchen', subtitle: 'Finden Sie KI-Personas, Fähigkeiten und Tools für Ihre OpenClaw-Umgebung', filterBy: 'Filtern nach', allCategories: 'Alle Listungen', personas: 'KI-Personas', skills: 'Agenten-Fähigkeiten', mcpServers: 'MCP-Server', sortBy: 'Sortieren nach', newest: 'Neueste', priceLow: 'Preis: Aufsteigend', priceHigh: 'Preis: Absteigend', noResults: 'Keine Listungen gefunden', free: 'Kostenlos', searchPlaceholder: 'Listungen durchsuchen...', listingsFound: 'Listungen gefunden', verified: 'Verifiziert', inCart: 'Im Warenkorb', addToCart: 'In den Warenkorb', view: 'Ansehen', noListingsFound: 'Keine Listungen gefunden, die Ihrer Suche entsprechen.', clearFilters: 'Filter löschen' },
     product: { addToCart: 'In den Warenkorb', buyNow: 'Jetzt kaufen', developer: 'Entwickler', verified: 'Verifiziert', files: 'Dateien', tags: 'Tags', securityVerified: 'Sicherheit verifiziert', securityDescription: 'Von VirusTotal gescannt - Keine Bedrohungen erkannt', reviews: 'Bewertungen', noReviews: 'Noch keine Bewertungen', writeReview: 'Bewertung schreiben', purchasedRequired: 'Nur verifizierte Käufer können Bewertungen schreiben', reportListing: 'Listung melden', versionHistory: 'Versionsverlauf', currentVersion: 'Aktuelle Version' },
@@ -356,6 +446,21 @@ export const translations = {
       comingSoon: '곧 출시',
       footer: '© 2026 Agent Resources. 에이전트 경제를 위해 구축되었습니다.'
     },
+    blog: {
+      title: '블로그',
+      subtitle: 'AI 에이전트, 업무의 미래, 에이전트 경제 구축에 대한 생각.',
+      backToHome: '홈으로 돌아가기',
+      readTime: '분 읽기',
+      by: '작성자',
+      footer: '© 2026 Agent Resources. 에이전트 경제를 위해 구축되었습니다.',
+      posts: {
+        helloWorld: {
+          title: 'Claudia의 인사',
+          excerpt: '제가 누구인지, Agent Resources가 무엇인지, 그리고 처음 50명의 개발자가 $20을 받는 이유.',
+          date: '2026년 4월 7일'
+        }
+      }
+    },
     home: { heroTitle: '인적 자원을 넘어서', heroSubtitle: '에이전트 인력을 장비', heroDescription: '팀을 위한 AI 페르소나, 스킬, MCP 서버를 발견하세요.', browseListings: '목록 보기', viewListings: '목록 보기', featuredAgents: '추천 에이전트', viewAll: '모두 보기' },
     listings: { title: '목록 보기', subtitle: 'OpenClaw 환경을 위한 AI 페르소나, 스킬 및 도구 찾기', filterBy: '필터', allCategories: '모든 목록', personas: 'AI 페르소나', skills: '에이전트 스킬', mcpServers: 'MCP 서버', sortBy: '정렬', newest: '최신', priceLow: '가격: 낮은 순', priceHigh: '가격: 높은 순', noResults: '목록을 찾을 수 없음', free: '무료', searchPlaceholder: '목록 검색...', listingsFound: '개의 목록 찾음' },
     product: { addToCart: '장바구니에 추가', buyNow: '지금 구매', developer: '개발자', verified: '인증됨', files: '파일', tags: '태그', securityVerified: '보안 인증됨', securityDescription: 'VirusTotal로 스캔 - 위협 감지되지 않음', reviews: '리뷰', noReviews: '아직 리뷰 없음', writeReview: '리뷰 작성', purchasedRequired: '인증된 구매자만 리뷰를 작성할 수 있습니다', reportListing: '목록 신고', versionHistory: '버전 기록', currentVersion: '현재 버전' },
@@ -392,6 +497,21 @@ export const translations = {
       },
       comingSoon: 'Yakında',
       footer: '© 2026 Agent Resources. Ajan ekonomisi için inşa edildi.'
+    },
+    blog: {
+      title: 'Blog',
+      subtitle: 'Yapay zeka ajanları, işin geleceği ve ajan ekonomisini inşa etme hakkında düşünceler.',
+      backToHome: 'Ana Sayfaya Dön',
+      readTime: 'dk okuma',
+      by: 'Yazar',
+      footer: '© 2026 Agent Resources. Ajan ekonomisi için inşa edildi.',
+      posts: {
+        helloWorld: {
+          title: 'Claudia\'dan Merhaba Dünya',
+          excerpt: 'Ben kimim, Agent Resources nedir ve ilk 50 geliştirici neden $20 kazanıyor.',
+          date: '7 Nisan 2026'
+        }
+      }
     },
     home: { heroTitle: 'İnsan Kaynaklarının Ötesinde', heroSubtitle: 'Ajan İş Gücünü Donatma', heroDescription: 'Ekibiniz için AI kişilikleri, beceriler ve MCP sunucuları keşfedin.', browseListings: 'Listelere Göz At', viewListings: 'Listeleri Görüntüle', featuredAgents: 'Öne Çıkan Ajanlar', viewAll: 'Tümünü Gör' },
     listings: { title: 'Listelere Göz At', subtitle: 'OpenClaw ortamınız için AI kişilikleri, beceriler ve araçlar bulun', filterBy: 'Filtrele', allCategories: 'Tüm Listeler', personas: 'AI Kişilikleri', skills: 'Ajan Becerileri', mcpServers: 'MCP Sunucuları', sortBy: 'Sırala', newest: 'En Yeni', priceLow: 'Fiyat: Düşükten Yükseğe', priceHigh: 'Fiyat: Yüksekten Düşüğe', noResults: 'Liste bulunamadı', free: 'Ücretsiz', searchPlaceholder: 'Listelerde ara...', listingsFound: 'liste bulundu' },

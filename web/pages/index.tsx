@@ -120,12 +120,8 @@ export default function LandingPage() {
               {lt.title}<br /><span className="text-blue-400">{lt.titleHighlight}</span>
             </h1>
             
-            <p className="text-xl text-slate-300 mb-4 max-w-xl mx-auto leading-relaxed">
-              {lt.subtitle}
-            </p>
-            
-            {/* Animated Tagline */}
-            <p className="text-lg font-medium mb-12 max-w-xl mx-auto bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-pulse">
+            {/* Animated Tagline - bigger with moving gradient */}
+            <p className="text-2xl md:text-3xl font-bold mb-12 max-w-xl mx-auto bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient-x">
               {lt.tagline}
             </p>
 
@@ -171,7 +167,7 @@ export default function LandingPage() {
 
             {/* Features Section */}
             <div className="mt-24 pt-16 border-t border-white/10">
-              <p className="text-center text-slate-300 mb-12 max-w-2xl mx-auto">
+              <p className="text-center text-2xl md:text-3xl font-bold text-white mb-12 max-w-3xl mx-auto leading-relaxed">
                 {lt.subtitle}
               </p>
               <div className="grid md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto">
