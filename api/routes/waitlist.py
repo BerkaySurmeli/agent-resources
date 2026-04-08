@@ -21,7 +21,7 @@ def generate_developer_code():
     return f"DEV-{secrets.token_hex(4).upper()}"
 
 def send_welcome_email(email: str, code: str):
-    """Send welcome email with developer code"""
+    """Send welcome email with developer code for first 50"""
     if not settings.RESEND_API_KEY:
         print(f"[EMAIL] Would send to {email} with code {code}")
         return
@@ -75,6 +75,52 @@ def send_welcome_email(email: str, code: str):
     except Exception as e:
         print(f"[EMAIL ERROR] Failed to send email to {email}: {e}")
 
+def send_waitlist_email(email: str):
+    """Send waitlist email for 51st and beyond"""
+    if not settings.RESEND_API_KEY:
+        print(f"[EMAIL] Would send waitlist email to {email}")
+        return
+    
+    try:
+        resend.api_key = settings.RESEND_API_KEY
+        
+        html_content = """
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <!-- Logo -->
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <img src="https://shopagentresources.com/logo.svg" alt="Agent Resources" width="60" height="60" style="border-radius: 12px;"/>
+                    <div style="margin-top: 10px; font-size: 18px; font-weight: 600; color: #1f2937;">Agent Resources</div>
+                </div>
+                
+                <h1 style="color: #2563eb;">You're on the list!</h1>
+                
+                <p>Thanks for your interest in Agent Resources. We've filled all 50 early developer spots, but you're still on our waitlist.</p>
+                
+                <p>We'll notify you as soon as the marketplace is live so you can start selling your AI personas, skills, and MCP servers.</p>
+                
+                <p>Stay tuned for updates!</p>
+                
+                <p style="color: #6b7280; font-size: 14px;">
+                    — The Agent Resources Team<br>
+                    <a href="https://shopagentresources.com">shopagentresources.com</a>
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        resend.Emails.send({
+            "from": settings.FROM_EMAIL_SUPPORT,
+            "to": email,
+            "subject": "You're on the Agent Resources waitlist!",
+            "html": html_content
+        })
+        print(f"[EMAIL] Waitlist email sent to {email}")
+    except Exception as e:
+        print(f"[EMAIL ERROR] Failed to send email to {email}: {e}")
+
 @router.post("/")
 @router.post("")
 def join_waitlist(request: WaitlistRequest):
@@ -108,9 +154,11 @@ def join_waitlist(request: WaitlistRequest):
     
     session.close()
     
-    # Send welcome email only to first 50
+    # Send appropriate email
     if is_in_first_50 and developer_code:
         send_welcome_email(request.email, developer_code)
+    else:
+        send_waitlist_email(request.email)
     
     if is_in_first_50:
         return {
