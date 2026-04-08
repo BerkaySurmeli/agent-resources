@@ -38,7 +38,7 @@ export default function LandingPage() {
 
       if (response.ok) {
         setStatus('success');
-        setMessage(t.landing?.successMessage || 'Thanks! Check your email for your developer code.');
+        setMessage(lt.successMessage);
         setEmail('');
         const countRes = await fetch('https://api.shopagentresources.com/waitlist/count/');
         const data = await countRes.json();
@@ -48,7 +48,7 @@ export default function LandingPage() {
       }
     } catch (error) {
       setStatus('error');
-      setMessage(t.landing?.errorMessage || 'Something went wrong. Please try again.');
+      setMessage(lt.errorMessage);
     }
   };
 
@@ -63,7 +63,7 @@ export default function LandingPage() {
     emailPlaceholder: 'Enter your email',
     getAccess: 'Secure Your Spot',
     joining: 'Joining...',
-    successMessage: 'Thanks! Check your email for your developer code.',
+    successMessage: 'Thanks! Check your email for your developer code. Your first listing is free.',
     errorMessage: 'Something went wrong. Please try again.',
     features: {
       personas: { title: 'AI Personas', description: 'Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.' },

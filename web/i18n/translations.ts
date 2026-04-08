@@ -12,7 +12,7 @@ export const translations = {
       emailPlaceholder: 'Enter your email',
       getAccess: 'Secure Your Spot',
       joining: 'Joining...',
-      successMessage: 'Thanks! Check your email for your developer code.',
+      successMessage: 'Thanks! Check your email for your developer code. Your first listing is free.',
       errorMessage: 'Something went wrong. Please try again.',
       features: {
         personas: {
@@ -182,7 +182,7 @@ export const translations = {
       emailPlaceholder: 'Ingresa tu correo',
       getAccess: 'Asegura tu Plaza',
       joining: 'Uniendo...',
-      successMessage: '¡Gracias! Revisa tu correo para tu código de desarrollador.',
+      successMessage: '¡Gracias! Revisa tu correo para tu código de desarrollador. Tu primer listado es gratis.',
       errorMessage: 'Algo salió mal. Por favor intenta de nuevo.',
       features: {
         personas: { title: 'Personalidades IA', description: 'Personalidades de agentes preconfiguradas con SOUL.md, herramientas y patrones de comportamiento.' },
@@ -240,7 +240,7 @@ export const translations = {
       emailPlaceholder: '输入您的邮箱',
       getAccess: '抢占名额',
       joining: '加入中...',
-      successMessage: '感谢！请查看您的邮箱获取开发者代码。',
+      successMessage: '感谢！请查看您的邮箱获取开发者代码。你的首个上架免费。',
       errorMessage: '出了点问题。请重试。',
       features: {
         personas: { title: 'AI角色', description: '预配置的代理个性，包含SOUL.md、工具和行为模式。' },
@@ -298,7 +298,7 @@ export const translations = {
       emailPlaceholder: 'أدخل بريدك الإلكتروني',
       getAccess: 'احصل على مقعدك',
       joining: 'جاري الانضمام...',
-      successMessage: 'شكراً! تحقق من بريدك الإلكتروني للحصول على رمز المطور.',
+      successMessage: 'شكراً! تحقق من بريدك الإلكتروني للحصول على رمز المطور. قائمتك الأولى مجانية.',
       errorMessage: 'حدث خطأ ما. يرجى المحاولة مرة أخرى.',
       features: {
         personas: { title: 'شخصيات الذكاء الاصطناعي', description: 'شخصيات وكيل مكونة مسبقاً مع SOUL.md والأدوات وأنماط السلوك.' },
@@ -356,7 +356,7 @@ export const translations = {
       emailPlaceholder: 'メールアドレスを入力',
       getAccess: '枠を確保',
       joining: '参加中...',
-      successMessage: 'ありがとうございます！開発者コードはメールをご確認ください。',
+      successMessage: 'ありがとうございます！開発者コードはメールをご確認ください。最初のリストは無料です。',
       errorMessage: 'エラーが発生しました。もう一度お試しください。',
       features: {
         personas: { title: 'AIペルソナ', description: 'SOUL.md、ツール、行動パターンを備えた事前設定されたエージェント人格。' },
@@ -414,7 +414,7 @@ export const translations = {
       emailPlaceholder: 'E-Mail eingeben',
       getAccess: 'Platz sichern',
       joining: 'Beitreten...',
-      successMessage: 'Danke! Überprüfen Sie Ihre E-Mail für Ihren Entwicklercode.',
+      successMessage: 'Danke! Überprüfen Sie Ihre E-Mail für Ihren Entwicklercode. Dein erstes Listing ist kostenlos.',
       errorMessage: 'Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.',
       features: {
         personas: { title: 'KI-Personas', description: 'Vorkonfigurierte Agentenpersönlichkeiten mit SOUL.md, Tools und Verhaltensmustern.' },
@@ -472,7 +472,7 @@ export const translations = {
       emailPlaceholder: '이메일을 입력하세요',
       getAccess: '자리 확보',
       joining: '가입 중...',
-      successMessage: '감사합니다! 개발자 코드는 이메일을 확인하세요.',
+      successMessage: '감사합니다! 개발자 코드는 이메일을 확인하세요. 첫 번째 리스팅은 물론 물가입니다.',
       errorMessage: '문제가 발생했습니다. 다시 시도해 주세요.',
       features: {
         personas: { title: 'AI 페르소나', description: 'SOUL.md, 도구 및 행동 패턴이 포함된 사전 구성된 에이전트 성격.' },
@@ -530,7 +530,7 @@ export const translations = {
       emailPlaceholder: 'E-posta adresinizi girin',
       getAccess: 'Yerinizi Ayırtın',
       joining: 'Katılıyor...',
-      successMessage: 'Teşekkürler! Geliştirici kodunuz için e-postanızı kontrol edin.',
+      successMessage: 'Teşekkürler! Geliştirici kodunuz için e-postanızı kontrol edin. İlk listeniz ücretsiz.'
       errorMessage: 'Bir şeyler yanlış gitti. Lütfen tekrar deneyin.',
       features: {
         personas: { title: 'AI Kişilikleri', description: 'SOUL.md, araçlar ve davranış kalıpları ile önceden yapılandırılmış ajan kişilikleri.' },
