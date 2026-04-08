@@ -103,16 +103,26 @@ def get_cloudflare_analytics(hours: int = 24):
                 total_requests = sum(g.get("sum", {}).get("requests", 0) for g in groups)
                 total_bandwidth = sum(g.get("sum", {}).get("bytes", 0) for g in groups)
                 
-                # Try to get pageViews, fall back to requests if not available
-                total_pageviews = sum(g.get("sum", {}).get("pageViews", 0) for g in groups)
-                if total_pageviews == 0:
-                    # If no pageViews, estimate from requests (not perfect but better than 0)
+                # Debug: Check what fields are actually available
+                sample_group = groups[0] if groups else {}
+                sample_sum = sample_group.get("sum", {})
+                print(f"[CLOUDFLARE DEBUG] Sample group fields: {list(sample_sum.keys())}")
+                print(f"[CLOUDFLARE DEBUG] Sample pageViews: {sample_sum.get('pageViews', 'NOT_FOUND')}")
+                
+                # Try to get pageViews, but use requests as fallback
+                # pageViews is often not available on free Cloudflare plans
+                total_pageviews = sum(g.get("sum", {}).get("pageViews", 0) or 0 for g in groups)
+                
+                # If pageViews is 0 or very low compared to requests, use requests instead
+                # This indicates pageViews isn't being tracked properly
+                if total_pageviews == 0 or total_pageviews < total_requests * 0.1:
+                    print(f"[CLOUDFLARE DEBUG] pageViews ({total_pageviews}) seems incorrect, using requests ({total_requests}) instead")
                     total_pageviews = total_requests
                 
                 # Sum unique visitors across all days (this is approximate)
-                total_uniques = sum(g.get("uniq", {}).get("uniques", 0) for g in groups)
+                total_uniques = sum(g.get("uniq", {}).get("uniques", 0) or 0 for g in groups)
                 
-                print(f"[CLOUDFLARE DEBUG] Totals - requests: {total_requests}, pageviews: {total_pageviews}, uniques: {total_uniques}")
+                print(f"[CLOUDFLARE DEBUG] Final totals - requests: {total_requests}, pageviews: {total_pageviews}, uniques: {total_uniques}")
                 
                 return {
                     "requests": total_requests,
