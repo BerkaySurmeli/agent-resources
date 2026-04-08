@@ -73,6 +73,37 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 def auth_options():
     return {"message": "OK"}
 
+
+# Dependency to get current user from JWT token - defined before routes that use it
+def get_current_user_from_token(
+    request: Request,
+    session = Depends(get_session)
+) -> User:
+    """Extract and validate JWT token from Authorization header"""
+    auth_header = request.headers.get("Authorization")
+    
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
+    
+    token = auth_header.split(" ")[1]
+    
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        user = session.exec(select(User).where(User.id == user_id)).first()
+        
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        return user
+        
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
 # Routes
 @router.post("/signup", response_model=TokenResponse)
 def signup(user_data: UserSignup, session = Depends(get_session)):
@@ -312,37 +343,6 @@ def resend_verification(
             print(f"[EMAIL ERROR] {e}")
             raise HTTPException(status_code=500, detail="Failed to send verification email. Please try again later.")
 
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-
-# Dependency to get current user from JWT token
-def get_current_user_from_token(
-    request: Request,
-    session = Depends(get_session)
-) -> User:
-    """Extract and validate JWT token from Authorization header"""
-    auth_header = request.headers.get("Authorization")
-    
-    if not auth_header or not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
-    
-    token = auth_header.split(" ")[1]
-    
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("sub")
-        
-        if not user_id:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        
-        user = session.exec(select(User).where(User.id == user_id)).first()
-        
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-        
-        return user
-        
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
