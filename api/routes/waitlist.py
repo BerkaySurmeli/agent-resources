@@ -67,11 +67,11 @@ def send_welcome_email(email: str, code: str):
         """
         
         resend.Emails.send({
-            "from": settings.FROM_EMAIL_INFO,
+            "from": "Agent Resources <info@shopagentresources.com>",
             "to": email,
             "subject": "Welcome to Agent Resources - Your Developer Code Inside!",
             "html": html_content,
-            "reply_to": settings.FROM_EMAIL_SUPPORT
+            "reply_to": "Agent Resources <support@shopagentresources.com>"
         })
         print(f"[EMAIL] Welcome email sent to {email}")
     except Exception as e:
@@ -114,10 +114,11 @@ def send_waitlist_email(email: str):
         """
         
         resend.Emails.send({
-            "from": settings.FROM_EMAIL_SUPPORT,
+            "from": "Agent Resources <info@shopagentresources.com>",
             "to": email,
             "subject": "You're on the Agent Resources waitlist!",
-            "html": html_content
+            "html": html_content,
+            "reply_to": "Agent Resources <support@shopagentresources.com>"
         })
         print(f"[EMAIL] Waitlist email sent to {email}")
     except Exception as e:
