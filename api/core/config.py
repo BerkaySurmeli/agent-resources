@@ -10,8 +10,8 @@ class Settings(BaseSettings):
     
     # Resend Email API Configuration
     RESEND_API_KEY: str = ""
-    FROM_EMAIL_INFO: str = "info@shopagentresources.com"
-    FROM_EMAIL_SUPPORT: str = "support@shopagentresources.com"
+    FROM_EMAIL_INFO: str = "Agent Resources <info@shopagentresources.com>"
+    FROM_EMAIL_SUPPORT: str = "Agent Resources <support@shopagentresources.com>"
     
     # Cloudflare Analytics
     CLOUDFLARE_API_TOKEN: str = ""
