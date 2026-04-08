@@ -126,7 +126,7 @@ export default function LandingPage() {
             </p>
 
             {/* Email Signup */}
-            <div className="max-w-md mx-auto mb-4">
+            <div className="max-w-2xl mx-auto mb-4 px-4">
 
               {/* Developer Incentive - centered */}
               <p className="text-lg text-amber-400 font-medium mb-8 text-center">
