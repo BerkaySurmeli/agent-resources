@@ -532,13 +532,13 @@ export const translations = {
       titleHighlight: 'Pazar Yeri',
       subtitle: 'AI kişilikleri, beceriler ve MCP sunucuları satın alın, satın ve keşfedin.',
       tagline: 'İnsan Kaynaklarını yeniden hayal edin.',
-      incentive: '🎉 İlk 50 geliştirici ilk satışlarında $20 kazanıyor! İlk listeniz ücretsiz.'
+      incentive: '🎉 İlk 50 geliştirici ilk satışlarında $20 kazanıyor! İlk listeniz ücretsiz.',
       spotsRemaining: 'kontenjan kaldı',
       spotsClaimed: 'Tüm kontenjanlar doldu! Erken erişim için bekleme listesine katılın.',
       emailPlaceholder: 'E-posta adresinizi girin',
       getAccess: 'Yerinizi Ayırtın',
       joining: 'Katılıyor...',
-      successMessage: 'Teşekkürler! Geliştirici kodunuz için e-postanızı kontrol edin. İlk listeniz ücretsiz.'
+      successMessage: 'Teşekkürler! Geliştirici kodunuz için e-postanızı kontrol edin. İlk listeniz ücretsiz.',
       errorMessage: 'Bir şeyler yanlış gitti. Lütfen tekrar deneyin.',
       features: {
         personas: { title: 'AI Kişilikleri', description: 'SOUL.md, araçlar ve davranış kalıpları ile önceden yapılandırılmış ajan kişilikleri.' },
