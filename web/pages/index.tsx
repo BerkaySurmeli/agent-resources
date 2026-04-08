@@ -120,8 +120,8 @@ export default function LandingPage() {
               {lt.title}<br /><span className="text-blue-400">{lt.titleHighlight}</span>
             </h1>
             
-            {/* Animated Tagline - RGB style, no glow */}
-            <p className="text-2xl md:text-3xl font-bold mb-12 max-w-xl mx-auto rgb-text">
+            {/* Animated Tagline - gradient flowing through text */}
+            <p className="text-2xl md:text-3xl font-bold mb-16 max-w-xl mx-auto gradient-flow-text">
               {lt.tagline?.replace(/\.$/, '')}
             </p>
 
@@ -129,7 +129,7 @@ export default function LandingPage() {
             <div className="max-w-md mx-auto mb-4">
 
               {/* Developer Incentive - centered */}
-              <p className="text-lg text-amber-400 font-medium mb-6 text-center">
+              <p className="text-lg text-amber-400 font-medium mb-8 text-center">
                 {lt.incentive}
               </p>
               <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
@@ -138,13 +138,13 @@ export default function LandingPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={lt.emailPlaceholder}
-                  className="flex-1 px-5 py-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-[2] px-5 py-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={status === 'loading'}
                 />
                 <button
                   type="submit"
                   disabled={status === 'loading'}
-                  className="px-8 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors whitespace-nowrap"
+                  className="px-6 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors whitespace-nowrap"
                 >
                   {status === 'loading' ? lt.joining : lt.getAccess}
                 </button>

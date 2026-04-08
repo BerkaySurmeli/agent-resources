@@ -128,19 +128,21 @@
     background-size: 200% 200%;
   }
 
-  /* RGB cycling gradient text */
-  @keyframes rgb-cycle {
-    0% { color: rgb(255, 0, 0); }
-    16.6% { color: rgb(255, 165, 0); }
-    33.3% { color: rgb(255, 255, 0); }
-    50% { color: rgb(0, 255, 0); }
-    66.6% { color: rgb(0, 0, 255); }
-    83.3% { color: rgb(238, 130, 238); }
-    100% { color: rgb(255, 0, 0); }
+  /* Gradient flowing through text */
+  @keyframes gradient-flow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
   
-  .rgb-text {
-    animation: rgb-cycle 4s linear infinite;
+  .gradient-flow-text {
+    background: linear-gradient(90deg, 
+      #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-flow 3s linear infinite;
   }
 
   /* Text balance for better typography */
