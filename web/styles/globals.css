@@ -128,7 +128,7 @@
     background-size: 200% 200%;
   }
 
-  /* Gradient flowing through text - infinite one direction */
+  /* Gradient flowing through text - infinite left to right, slower */
   @keyframes gradient-flow {
     0% { background-position: 0% 50%; }
     100% { background-position: 200% 50%; }
@@ -142,7 +142,7 @@
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: gradient-flow 4s linear infinite;
+    animation: gradient-flow 8s linear infinite;
   }
 
   /* Text balance for better typography */
