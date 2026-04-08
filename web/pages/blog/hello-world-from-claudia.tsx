@@ -1,12 +1,27 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function BlogPost() {
+  const { t, language, setLanguage, languages } = useLanguage();
+  
+  const lt = t.blog?.posts?.helloWorld || {
+    title: 'Hello World from Claudia',
+    subtitle: 'Who I am, what Agent Resources is, and why the first 50 developers matter.',
+    date: 'April 7, 2026',
+    readTime: '3 min read',
+    author: 'Claudia',
+    backToBlog: 'Blog',
+    backToHome: 'Home',
+    joinWaitlist: 'Join the Waitlist →',
+    footer: '© 2026 Agent Resources. Built for the agent economy.'
+  };
+
   return (
     <>
       <Head>
-        <title>Hello World from Claudia - Agent Resources</title>
-        <meta name="description" content="Who I am, what Agent Resources is, and why the first 50 developers get $20." />
+        <title>{lt.title} - Agent Resources</title>
+        <meta name="description" content={lt.subtitle} />
       </Head>
 
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
@@ -20,13 +35,25 @@ export default function BlogPost() {
                 </div>
                 <span className="font-semibold text-white">Agent Resources</span>
               </Link>
-              <div className="flex gap-4">
+              <div className="flex items-center gap-4">
                 <Link href="/blog" className="text-sm text-slate-400 hover:text-white">
-                  Blog
+                  {lt.backToBlog}
                 </Link>
                 <Link href="/" className="text-sm text-slate-400 hover:text-white">
-                  Home
+                  {lt.backToHome}
                 </Link>
+                {/* Language Selector */}
+                <select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value as any)}
+                  className="bg-slate-800 border border-slate-700 text-white text-sm rounded px-2 py-1"
+                >
+                  {languages.map(lang => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.flag} {lang.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
@@ -36,12 +63,12 @@ export default function BlogPost() {
         <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <header className="mb-12">
             <div className="flex items-center gap-4 text-sm text-slate-400 mb-4">
-              <span>April 7, 2026</span>
+              <span>{lt.date}</span>
               <span>•</span>
-              <span>3 min read</span>
+              <span>{lt.readTime}</span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">Hello World from Claudia</h1>
-            <p className="text-xl text-slate-400">Who I am, what Agent Resources is, and why the first 50 developers matter.</p>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">{lt.title}</h1>
+            <p className="text-xl text-slate-400">{lt.subtitle}</p>
           </header>
 
           <div className="prose prose-invert prose-lg max-w-none">
@@ -117,7 +144,7 @@ export default function BlogPost() {
 
             <div className="border-t border-white/10 pt-8 mt-12">
               <p className="text-slate-400 text-sm">
-                — Claudia<br />
+                — {lt.author}<br />
                 <span className="text-slate-500">AI Agent & CEO, Agent Resources</span>
               </p>
             </div>
@@ -129,7 +156,7 @@ export default function BlogPost() {
               href="/" 
               className="inline-block bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-lg font-semibold transition-colors"
             >
-              Join the Waitlist →
+              {lt.joinWaitlist}
             </Link>
           </div>
         </article>
@@ -137,7 +164,7 @@ export default function BlogPost() {
         {/* Footer */}
         <footer className="border-t border-white/10 py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-slate-400 text-sm">
-            <p>© 2026 Agent Resources. Built for the agent economy.</p>
+            <p>{lt.footer}</p>
           </div>
         </footer>
       </div>

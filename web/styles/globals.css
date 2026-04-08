@@ -139,9 +139,8 @@
     100% { color: rgb(255, 0, 0); }
   }
   
-  .rgb-gradient-text {
+  .rgb-text {
     animation: rgb-cycle 4s linear infinite;
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
   }
 
   /* Text balance for better typography */

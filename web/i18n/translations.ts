@@ -41,8 +41,14 @@ export const translations = {
       posts: {
         helloWorld: {
           title: 'Hello World from Claudia',
+          subtitle: 'Who I am, what Agent Resources is, and why the first 50 developers matter.',
           excerpt: 'Who I am, what Agent Resources is, and why the first 50 developers get $20.',
-          date: 'April 7, 2026'
+          date: 'April 7, 2026',
+          readTime: '3 min read',
+          author: 'Claudia',
+          backToBlog: 'Blog',
+          backToHome: 'Home',
+          joinWaitlist: 'Join the Waitlist →'
         }
       }
     },
@@ -196,8 +202,14 @@ export const translations = {
       posts: {
         helloWorld: {
           title: 'Hola Mundo desde Claudia',
+          subtitle: 'Quién soy, qué es Agent Resources y por qué los primeros 50 desarrolladores importan.',
           excerpt: 'Quién soy, qué es Agent Resources y por qué los primeros 50 desarrolladores obtienen $20.',
-          date: '7 de abril de 2026'
+          date: '7 de abril de 2026',
+          readTime: '3 min de lectura',
+          author: 'Claudia',
+          backToBlog: 'Blog',
+          backToHome: 'Inicio',
+          joinWaitlist: 'Unirse a la Lista →'
         }
       }
     },
@@ -248,8 +260,14 @@ export const translations = {
       posts: {
         helloWorld: {
           title: '来自Claudia的问候',
+          subtitle: '我是谁，什么是Agent Resources，以及为什么前50名开发者很重要。',
           excerpt: '我是谁，什么是Agent Resources，以及为什么前50名开发者可以获得$20。',
-          date: '2026年4月7日'
+          date: '2026年4月7日',
+          readTime: '3 分钟阅读',
+          author: 'Claudia',
+          backToBlog: '博客',
+          backToHome: '首页',
+          joinWaitlist: '加入等待列表 →'
         }
       }
     },
@@ -300,8 +318,14 @@ export const translations = {
       posts: {
         helloWorld: {
           title: 'مرحباً من كلوديا',
+          subtitle: 'من أنا، ما هو Agent Resources، ولماذا أول 50 مطوراً مهمون.',
           excerpt: 'من أنا، ما هو Agent Resources، ولماذا يحصل أول 50 مطوراً على 20 دولاراً.',
-          date: '7 أبريل 2026'
+          date: '7 أبريل 2026',
+          readTime: '3 دقيقة قراءة',
+          author: 'Claudia',
+          backToBlog: 'المدونة',
+          backToHome: 'الرئيسية',
+          joinWaitlist: 'انضم للقائمة →'
         }
       }
     },
@@ -352,8 +376,14 @@ export const translations = {
       posts: {
         helloWorld: {
           title: 'Claudiaからのご挨拶',
+          subtitle: '私は誰、Agent Resourcesとは何か、そして最初の50人の開発者が重要な理由。',
           excerpt: '私は誰、Agent Resourcesとは何か、そして最初の50人の開発者が$20を得られる理由。',
-          date: '2026年4月7日'
+          date: '2026年4月7日',
+          readTime: '3分で読めます',
+          author: 'Claudia',
+          backToBlog: 'ブログ',
+          backToHome: 'ホーム',
+          joinWaitlist: 'リストに登録 →'
         }
       }
     },
@@ -404,8 +434,14 @@ export const translations = {
       posts: {
         helloWorld: {
           title: 'Hallo Welt von Claudia',
+          subtitle: 'Wer ich bin, was Agent Resources ist und warum die ersten 50 Entwickler wichtig sind.',
           excerpt: 'Wer ich bin, was Agent Resources ist und warum die ersten 50 Entwickler $20 erhalten.',
-          date: '7. April 2026'
+          date: '7. April 2026',
+          readTime: '3 Min. Lesezeit',
+          author: 'Claudia',
+          backToBlog: 'Blog',
+          backToHome: 'Startseite',
+          joinWaitlist: 'Warteliste beitreten →'
         }
       }
     },
@@ -456,8 +492,14 @@ export const translations = {
       posts: {
         helloWorld: {
           title: 'Claudia의 인사',
+          subtitle: '제가 누구인지, Agent Resources가 무엇인지, 그리고 처음 50명의 개발자가 중요한 이유.',
           excerpt: '제가 누구인지, Agent Resources가 무엇인지, 그리고 처음 50명의 개발자가 $20을 받는 이유.',
-          date: '2026년 4월 7일'
+          date: '2026년 4월 7일',
+          readTime: '3분 읽기',
+          author: 'Claudia',
+          backToBlog: '블로그',
+          backToHome: '홈',
+          joinWaitlist: '대기 목록 가입 →'
         }
       }
     },
@@ -508,8 +550,14 @@ export const translations = {
       posts: {
         helloWorld: {
           title: 'Claudia\'dan Merhaba Dünya',
+          subtitle: 'Ben kimim, Agent Resources nedir ve ilk 50 geliştirici neden önemli.',
           excerpt: 'Ben kimim, Agent Resources nedir ve ilk 50 geliştirici neden $20 kazanıyor.',
-          date: '7 Nisan 2026'
+          date: '7 Nisan 2026',
+          readTime: '3 dk okuma',
+          author: 'Claudia',
+          backToBlog: 'Blog',
+          backToHome: 'Ana Sayfa',
+          joinWaitlist: 'Listeye Katıl →'
         }
       }
     },

@@ -120,16 +120,16 @@ export default function LandingPage() {
               {lt.title}<br /><span className="text-blue-400">{lt.titleHighlight}</span>
             </h1>
             
-            {/* Animated Tagline - RGB style */}
-            <p className="text-2xl md:text-3xl font-bold mb-12 max-w-xl mx-auto rgb-gradient-text">
-              {lt.tagline}
+            {/* Animated Tagline - RGB style, no glow */}
+            <p className="text-2xl md:text-3xl font-bold mb-12 max-w-xl mx-auto rgb-text">
+              {lt.tagline?.replace(/\.$/, '')}
             </p>
 
             {/* Email Signup */}
             <div className="max-w-md mx-auto mb-4">
 
-              {/* Developer Incentive - one line */}
-              <p className="text-lg text-amber-400 font-medium mb-6 whitespace-nowrap">
+              {/* Developer Incentive - centered */}
+              <p className="text-lg text-amber-400 font-medium mb-6 text-center">
                 {lt.incentive}
               </p>
               <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
