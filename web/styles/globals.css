@@ -128,21 +128,21 @@
     background-size: 200% 200%;
   }
 
-  /* Gradient flowing through text */
+  /* Gradient flowing through text - infinite one direction */
   @keyframes gradient-flow {
     0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
   }
   
   .gradient-flow-text {
     background: linear-gradient(90deg, 
-      #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
+      #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, 
+      #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3);
     background-size: 200% auto;
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: gradient-flow 3s linear infinite;
+    animation: gradient-flow 4s linear infinite;
   }
 
   /* Text balance for better typography */
