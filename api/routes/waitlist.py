@@ -33,6 +33,14 @@ def send_welcome_email(email: str, code: str):
         <html>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
             <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <!-- Logo -->
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="display: inline-block; width: 60px; height: 60px; background: #2563eb; border-radius: 12px; line-height: 60px; text-align: center;">
+                        <span style="color: white; font-size: 24px; font-weight: bold;">AR</span>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 18px; font-weight: 600; color: #1f2937;">Agent Resources</div>
+                </div>
+                
                 <h1 style="color: #2563eb;">Welcome to Agent Resources!</h1>
                 
                 <p>Your spot is secured. We'll notify you when the marketplace is ready.</p>
