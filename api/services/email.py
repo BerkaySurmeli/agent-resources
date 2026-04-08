@@ -78,7 +78,7 @@ The Agent Resources Team
         
         try:
             response = resend.Emails.send({
-                "from": f"Agent Resources <{settings.FROM_EMAIL_INFO}>",
+                "from": settings.FROM_EMAIL_INFO,
                 "to": [to_email],
                 "subject": "Welcome to Agent Resources - Verify Your Email",
                 "html": html_content,
@@ -159,11 +159,12 @@ The Agent Resources Team
         
         try:
             response = resend.Emails.send({
-                "from": f"Agent Resources <{settings.FROM_EMAIL_INFO}>",
+                "from": settings.FROM_EMAIL_INFO,
                 "to": [to_email],
                 "subject": "Password Reset Request - Agent Resources",
                 "html": html_content,
-                "text": text_content
+                "text": text_content,
+                "reply_to": settings.FROM_EMAIL_SUPPORT
             })
             print(f"[EMAIL] Password reset email sent to {to_email}")
             return response
@@ -325,7 +326,7 @@ shopagentresources.com
         
         try:
             response = resend.Emails.send({
-                "from": f"Agent Resources <{settings.FROM_EMAIL_INFO}>",
+                "from": settings.FROM_EMAIL_INFO,
                 "to": [to_email],
                 "subject": "Welcome to Agent Resources - Your Developer Code Inside!",
                 "html": html_content,
