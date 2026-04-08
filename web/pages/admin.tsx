@@ -19,8 +19,6 @@ interface Metrics {
 }
 
 const TIME_RANGES = [
-  { label: 'Last 6 Hours', hours: 6 },
-  { label: 'Last 12 Hours', hours: 12 },
   { label: 'Last 24 Hours', hours: 24 },
   { label: 'Last 7 Days', hours: 168 },
   { label: 'Last 30 Days', hours: 720 },
