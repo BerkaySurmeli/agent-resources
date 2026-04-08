@@ -64,7 +64,7 @@ export default function LandingPage() {
     emailPlaceholder: 'Enter your email',
     getAccess: 'Secure Your Spot',
     joining: 'Joining...',
-    successMessage: 'Thanks! Check your email for your developer code. Your first listing is free.',
+    successMessage: "You're on the list! We'll notify you when we're live.",
     errorMessage: 'Something went wrong. Please try again.',
     features: {
       personas: { title: 'AI Personas', description: 'Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.' },
