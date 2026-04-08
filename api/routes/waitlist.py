@@ -35,9 +35,7 @@ def send_welcome_email(email: str, code: str):
             <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
                 <!-- Logo -->
                 <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="display: inline-block; width: 60px; height: 60px; background: #2563eb; border-radius: 12px; line-height: 60px; text-align: center;">
-                        <span style="color: white; font-size: 24px; font-weight: bold;">AR</span>
-                    </div>
+                    <img src="https://shopagentresources.com/logo.svg" alt="Agent Resources" width="60" height="60" style="border-radius: 12px;"/>
                     <div style="margin-top: 10px; font-size: 18px; font-weight: 600; color: #1f2937;">Agent Resources</div>
                 </div>
                 
