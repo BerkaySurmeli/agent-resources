@@ -121,15 +121,15 @@ export default function LandingPage() {
             </h1>
             
             {/* Animated Tagline - gradient flowing through text */}
-            <p className="text-2xl md:text-3xl font-bold mb-16 max-w-xl mx-auto gradient-flow-text">
+            <p className="text-2xl md:text-3xl font-bold mb-20 max-w-xl mx-auto gradient-flow-text">
               {lt.tagline?.replace(/\.$/, '')}
             </p>
 
             {/* Email Signup */}
             <div className="max-w-2xl mx-auto mb-4 px-4">
 
-              {/* Developer Incentive - centered */}
-              <p className="text-lg text-amber-400 font-medium mb-8 text-center">
+              {/* Developer Incentive - centered, closer to input */}
+              <p className="text-lg text-amber-400 font-medium mb-4 text-center">
                 {lt.incentive}
               </p>
               <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
