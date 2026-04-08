@@ -286,8 +286,8 @@ This email was sent via the Agent Resources contact form.
     <div style="background: #eff6ff; border-radius: 12px; padding: 24px; margin: 30px 0;">
         <p style="margin-top: 0; color: #0f172a; font-weight: 500;">As one of our first 50 developers, you're eligible for:</p>
         <ul style="margin-bottom: 0; padding-left: 20px; color: #334155;">
-            <li style="margin-bottom: 8px;">List your first item free</li>
-            <li>$20 bonus after your first sale</li>
+            <li style="margin-bottom: 8px;">✓ List your first item free</li>
+            <li>✓ $20 bonus after your first sale</li>
         </ul>
     </div>
 
@@ -314,8 +314,8 @@ Your Developer Code
 Use this code when creating your first listing to get $20 after your first sale!
 
 As one of our first 50 developers, you're eligible for:
-- List your first item free
-- $20 bonus after your first sale
+✓ List your first item free
+✓ $20 bonus after your first sale
 
 Stay tuned for updates!
 
