@@ -60,6 +60,7 @@ export default function LandingPage() {
     incentive: '🎉 First 50 developers get $20 when they make their first sale!',
     spotsRemaining: 'spots remaining',
     spotsClaimed: 'All spots claimed! Join the waitlist for early access.',
+    allSpotsFilled: "🎉 We've filled all 50 spots! But you can still sign up to be the first to know when we're live.",
     emailPlaceholder: 'Enter your email',
     getAccess: 'Secure Your Spot',
     joining: 'Joining...',
@@ -158,12 +159,16 @@ export default function LandingPage() {
               )}
             </div>
 
-            {/* Spots Counter */}
-            {spotsRemaining !== null && spotsRemaining > 0 && (
+            {/* Spots Counter or Waitlist Message */}
+            {spotsRemaining !== null && spotsRemaining > 0 ? (
               <p className="text-lg font-medium text-white mb-20">
                 {spotsRemaining} / 50 {lt.spotsRemaining}
               </p>
-            )}
+            ) : spotsRemaining === 0 ? (
+              <p className="text-lg font-medium text-emerald-400 mb-20 max-w-xl mx-auto">
+                {lt.allSpotsFilled}
+              </p>
+            ) : null}
 
             {/* Features Section */}
             <div className="mt-24 pt-16 border-t border-white/10">
