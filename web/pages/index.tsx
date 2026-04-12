@@ -7,7 +7,7 @@ import Logo from '../components/Logo';
 import UserMenu from '../components/UserMenu';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+const API_URL = 'https://api.shopagentresources.com';
 
 export default function LandingPage() {
   const { t, language } = useLanguage();
