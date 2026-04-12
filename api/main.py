@@ -50,4 +50,39 @@ async def health():
 @app.get("/test-auth")
 async def test_auth():
     return {"message": "Auth routes should be at /auth/signup and /auth/login"}
+
+# Temporary endpoint to create master admin - remove after use
+@app.post("/setup-admin")
+async def setup_admin():
+    """Create master admin user if none exists"""
+    from sqlmodel import select
+    from core.database import get_session
+    from models import AdminUser
+    from passlib.context import CryptContext
+    
+    pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+    session = next(get_session())
+    
+    try:
+        # Check if any admin exists
+        existing = session.exec(select(AdminUser)).first()
+        if existing:
+            return {"status": "exists", "message": "Admin user already exists", "email": existing.email}
+        
+        # Create master admin
+        admin = AdminUser(
+            email="berkaysurmeli@icloud.com",
+            password_hash=pwd_context.hash("16384bEr32768!"),
+            name="Master Admin",
+            is_master_admin=True
+        )
+        session.add(admin)
+        session.commit()
+        return {"status": "created", "message": "Master admin created", "email": admin.email}
+    except Exception as e:
+        session.rollback()
+        return {"status": "error", "message": str(e)}
+    finally:
+        session.close()
+
 # Deploy Mon Apr  6 12:14:37 PDT 2026
