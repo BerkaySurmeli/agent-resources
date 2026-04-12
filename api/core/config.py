@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "SUPER_SECRET_CHANGE_ME_2026"  # TODO: Override in production
     STRIPE_SECRET_KEY: str = "sk_test_..."  # Add your Stripe secret key
     STRIPE_PUBLISHABLE_KEY: str = "pk_test_..."  # Add your Stripe publishable key
+    STRIPE_WEBHOOK_SECRET: str = ""  # For webhook verification
     
     # Resend Email API Configuration
     RESEND_API_KEY: str = ""

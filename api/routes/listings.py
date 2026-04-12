@@ -432,6 +432,20 @@ async def create_listing(
     original_language = detect_language(name + " " + description)
     print(f"[TRANSLATION] Detected language: {original_language}")
     
+    # Calculate listing fee based on pricing rules:
+    # - Free if user has developer code (first 50)
+    # - Free if price is $0
+    # - $10 (1000 cents) otherwise
+    if current_user.developer_code:
+        # First 50 developers list free
+        listing_fee_cents = 0
+    elif price_cents == 0:
+        # Free listings are free to post
+        listing_fee_cents = 0
+    else:
+        # $10 listing fee for paid items
+        listing_fee_cents = 1000
+    
     # Create listing record
     listing = Listing(
         owner_id=current_user.id,
@@ -445,8 +459,8 @@ async def create_listing(
         file_count=file_count,
         file_size_bytes=total_size,
         original_language=original_language,
-        listing_fee_cents=LISTING_FEE_CENTS,
-        status='pending_payment' if LISTING_FEE_CENTS > 0 else 'pending_scan',
+        listing_fee_cents=listing_fee_cents,
+        status='pending_payment' if listing_fee_cents > 0 else 'pending_scan',
         virus_scan_status='pending'
     )
     

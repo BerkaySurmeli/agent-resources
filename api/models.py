@@ -35,6 +35,9 @@ class User(SQLModel, table=True):
     stripe_status: str = Field(default="pending")
     stripe_charges_enabled: bool = Field(default=False)
     stripe_payouts_enabled: bool = Field(default=False)
+    # Developer incentive tracking
+    developer_code: Optional[str] = Field(default=None)  # DEV-XXXXXXXX for first 50
+    first_sale_bonus_paid: bool = Field(default=False)  # $20 after first sale
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Relationships

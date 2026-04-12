@@ -89,6 +89,13 @@ def signup(user_data: UserSignup, session = Depends(get_session)):
         import secrets
         verification_token = secrets.token_urlsafe(32)
         
+        # Check if email is in waitlist with developer code
+        from models import WaitlistEntry
+        waitlist_entry = session.exec(
+            select(WaitlistEntry).where(WaitlistEntry.email == user_data.email)
+        ).first()
+        developer_code = waitlist_entry.developer_code if waitlist_entry else None
+        
         # Create new user (unverified)
         user = User(
             email=user_data.email,
@@ -97,7 +104,8 @@ def signup(user_data: UserSignup, session = Depends(get_session)):
             is_developer=False,
             is_verified=False,
             verification_token=verification_token,
-            verification_sent_at=datetime.utcnow()
+            verification_sent_at=datetime.utcnow(),
+            developer_code=developer_code  # Copy from waitlist if exists
         )
         session.add(user)
         session.commit()
