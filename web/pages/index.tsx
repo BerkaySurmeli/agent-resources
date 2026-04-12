@@ -1,24 +1,37 @@
 import Head from 'next/head';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
 export default function LandingPage() {
+  const { t, language, setLanguage, languages } = useLanguage();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [spotsRemaining, setSpotsRemaining] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_URL}/waitlist/count/`)
+      .then(res => res.json())
+      .then(data => {
+        const remaining = Math.max(0, 50 - data.count);
+        setSpotsRemaining(remaining);
+      })
+      .catch(() => setSpotsRemaining(50));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
       setStatus('error');
-      setMessage('Please enter a valid email address');
+      setMessage(lt.errorMessage);
       return;
     }
 
     setStatus('loading');
     try {
-      const response = await fetch(`${API_URL}/waitlist`, {
+      const response = await fetch(`${API_URL}/waitlist/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -26,22 +39,86 @@ export default function LandingPage() {
 
       if (response.ok) {
         setStatus('success');
-        setMessage('Thanks! We\'ll notify you when we launch.');
+        setMessage(lt.successMessage);
         setEmail('');
+        const countRes = await fetch(`${API_URL}/waitlist/count/`);
+        const data = await countRes.json();
+        setSpotsRemaining(Math.max(0, 50 - data.count));
       } else {
         throw new Error('Failed to join waitlist');
       }
     } catch (error) {
       setStatus('error');
-      setMessage('Something went wrong. Please try again.');
+      setMessage(lt.errorMessage);
     }
+  };
+
+  const lt = t.landing || {
+    title: 'The Marketplace for',
+    titleHighlight: 'AI Agents',
+    subtitle: 'Buy, sell, and discover AI personas, skills, and MCP servers.',
+    tagline: 'Reimagining Human Resources',
+    incentive: '🎉 First 50 developers get $20 when they make their first sale!',
+    spotsRemaining: 'spots remaining',
+    allSpotsFilled: "🎉 We've filled all 50 spots! But you can still sign up to be the first to know when we're live.",
+    emailPlaceholder: 'Enter your email',
+    getAccess: 'Secure Your Spot',
+    joining: 'Joining...',
+    successMessage: "You're on the list! We'll notify you when we're live.",
+    errorMessage: 'Something went wrong. Please try again.',
+    comingSoon: 'Coming Soon',
+    features: {
+      personas: { title: 'AI Personas', description: 'Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.' },
+      skills: { title: 'Skills', description: 'Reusable capabilities for agents — from web scraping to API integrations.' },
+      mcp: { title: 'MCP Servers', description: 'Model Context Protocol servers for extending agent capabilities.' }
+    },
+    footer: '© 2026 Agent Resources. Built for the agent economy.'
   };
 
   return (
     <>
       <Head>
-        <title>Agent Resources - Marketplace for AI Agents</title>
-        <meta name="description" content="The marketplace for AI agents, skills, and MCP servers. Buy, sell, and discover tools for autonomous agents." />
+        {/* Primary Meta Tags */}
+        <title>Agent Resources | Marketplace for AI Agents, MCP Servers & Skills</title>
+        <meta name="description" content="The marketplace for AI agents, MCP servers, and agent skills. Buy, sell, and discover tools for autonomous agents. First 50 developers get $20 after their first sale." />
+        <meta name="keywords" content="AI agents, MCP servers, agent skills, marketplace, buy AI agents, sell AI agents, SOUL.md, OpenClaw, autonomous agents, AI personas" />
+        <meta name="author" content="Agent Resources" />
+        <meta name="robots" content="index, follow" />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://shopagentresources.com" />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://shopagentresources.com" />
+        <meta property="og:title" content="Agent Resources | Marketplace for AI Agents, MCP Servers & Skills" />
+        <meta property="og:description" content="The marketplace for AI agents, MCP servers, and agent skills. Buy, sell, and discover tools for autonomous agents. First 50 developers get $20 after their first sale." />
+        <meta property="og:image" content="https://shopagentresources.com/og-image.png" />
+        <meta property="og:site_name" content="Agent Resources" />
+        <meta property="og:locale" content="en_US" />
+        
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://shopagentresources.com" />
+        <meta property="twitter:title" content="Agent Resources | Marketplace for AI Agents, MCP Servers & Skills" />
+        <meta property="twitter:description" content="The marketplace for AI agents, MCP servers, and agent skills. Buy, sell, and discover tools for autonomous agents." />
+        <meta property="twitter:image" content="https://shopagentresources.com/og-image.png" />
+        <meta property="twitter:creator" content="@ClaudiaAR_CEO" />
+        
+        {/* Favicon */}
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="alternate icon" href="/favicon.ico" />
+        
+        {/* Alternate Languages */}
+        <link rel="alternate" hrefLang="en" href="https://shopagentresources.com" />
+        <link rel="alternate" hrefLang="es" href="https://shopagentresources.com?lang=es" />
+        <link rel="alternate" hrefLang="zh" href="https://shopagentresources.com?lang=zh" />
+        <link rel="alternate" hrefLang="ar" href="https://shopagentresources.com?lang=ar" />
+        <link rel="alternate" hrefLang="ja" href="https://shopagentresources.com?lang=ja" />
+        <link rel="alternate" hrefLang="de" href="https://shopagentresources.com?lang=de" />
+        <link rel="alternate" hrefLang="ko" href="https://shopagentresources.com?lang=ko" />
+        <link rel="alternate" hrefLang="tr" href="https://shopagentresources.com?lang=tr" />
+        <link rel="alternate" hrefLang="x-default" href="https://shopagentresources.com" />
       </Head>
 
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
@@ -55,41 +132,59 @@ export default function LandingPage() {
                 </div>
                 <span className="font-semibold text-white">Agent Resources</span>
               </div>
-              <div className="text-sm text-slate-400">Coming Soon</div>
+              <div className="flex items-center gap-6">
+                <a href="/blog" className="text-sm text-slate-400 hover:text-white transition-colors">{t.nav?.blog || 'Blog'}</a>
+                <span className="text-sm text-slate-400">{lt.comingSoon}</span>
+                {/* Language Selector */}
+                <select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value as any)}
+                  className="bg-slate-800 border border-slate-700 text-white text-sm rounded px-2 py-1"
+                >
+                  {languages.map(lang => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.flag} {lang.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </nav>
 
         {/* Hero Section */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
-          <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8">
-              The Marketplace for{' '}
-              <span className="text-blue-400">AI Agents</span>
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
+          <div className="text-center">
+            <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-10">
+              {lt.title}<br /><span className="text-blue-400">{lt.titleHighlight}</span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-slate-300 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Buy, sell, and discover AI personas, skills, and MCP servers. 
-              The infrastructure for autonomous agents.
+            {/* Animated Tagline */}
+            <p className="text-2xl md:text-3xl font-bold mb-20 max-w-xl mx-auto gradient-flow-text">
+              {lt.tagline?.replace(/\.$/, '')}
             </p>
 
             {/* Email Signup */}
-            <div className="max-w-md mx-auto mb-16">
+            <div className="max-w-2xl mx-auto mb-4 px-4">
+              {/* Developer Incentive */}
+              <p className="text-lg text-amber-400 font-medium mb-4 text-center">
+                {lt.incentive}
+              </p>
               <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  className="flex-1 px-5 py-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder={lt.emailPlaceholder}
+                  className="flex-[2] px-5 py-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={status === 'loading'}
                 />
                 <button
                   type="submit"
                   disabled={status === 'loading'}
-                  className="px-8 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors"
+                  className="px-6 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors whitespace-nowrap"
                 >
-                  {status === 'loading' ? 'Joining...' : 'Get Early Access'}
+                  {status === 'loading' ? lt.joining : lt.getAccess}
                 </button>
               </form>
               
@@ -101,36 +196,35 @@ export default function LandingPage() {
               )}
             </div>
 
-            {/* Features Grid */}
-            <div className="grid md:grid-cols-3 gap-8 text-left">
-              <div className="p-6 rounded-xl bg-white/5 border border-white/10">
-                <div className="w-12 h-12 bg-blue-600/20 rounded-lg flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold mb-2">AI Personas</h3>
-                <p className="text-slate-400">Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.</p>
-              </div>
+            {/* Spots Counter or Waitlist Message */}
+            {spotsRemaining !== null && spotsRemaining > 0 ? (
+              <p className="text-lg font-medium text-white mb-20">
+                {spotsRemaining} / 50 {lt.spotsRemaining}
+              </p>
+            ) : spotsRemaining === 0 ? (
+              <p className="text-lg font-medium text-emerald-400 mb-20 max-w-xl mx-auto">
+                {lt.allSpotsFilled}
+              </p>
+            ) : null}
 
-              <div className="p-6 rounded-xl bg-white/5 border border-white/10">
-                <div className="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+            {/* Features Section */}
+            <div className="mt-24 pt-16 border-t border-white/10">
+              <p className="text-center text-2xl md:text-3xl font-bold text-white mb-12 max-w-3xl mx-auto leading-relaxed">
+                {lt.subtitle}
+              </p>
+              <div className="grid md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto">
+                <div className="p-8 rounded-xl bg-white/5 border border-white/10">
+                  <h3 className="text-xl font-semibold mb-3 text-blue-400">{lt.features?.personas?.title || 'AI Personas'}</h3>
+                  <p className="text-slate-400">{lt.features?.personas?.description || 'Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.'}</p>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">Skills</h3>
-                <p className="text-slate-400">Reusable capabilities for agents — from web scraping to API integrations.</p>
-              </div>
-
-              <div className="p-6 rounded-xl bg-white/5 border border-white/10">
-                <div className="w-12 h-12 bg-green-600/20 rounded-lg flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
+                <div className="p-8 rounded-xl bg-white/5 border border-white/10">
+                  <h3 className="text-xl font-semibold mb-3 text-purple-400">{lt.features?.skills?.title || 'Skills'}</h3>
+                  <p className="text-slate-400">{lt.features?.skills?.description || 'Reusable capabilities for agents — from web scraping to API integrations.'}</p>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">MCP Servers</h3>
-                <p className="text-slate-400">Model Context Protocol servers for extending agent capabilities.</p>
+                <div className="p-8 rounded-xl bg-white/5 border border-white/10">
+                  <h3 className="text-xl font-semibold mb-3 text-green-400">{lt.features?.mcp?.title || 'MCP Servers'}</h3>
+                  <p className="text-slate-400">{lt.features?.mcp?.description || 'Model Context Protocol servers for extending agent capabilities.'}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -139,7 +233,7 @@ export default function LandingPage() {
         {/* Footer */}
         <footer className="border-t border-white/10 py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-slate-400 text-sm">
-            <p>© 2026 Agent Resources. Built for the agent economy.</p>
+            <p>{lt.footer}</p>
           </div>
         </footer>
       </div>
