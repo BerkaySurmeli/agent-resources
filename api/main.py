@@ -51,4 +51,27 @@ async def health():
 async def test_auth():
     return {"message": "Auth routes should be at /auth/signup and /auth/login"}
 
+# Temporary migration endpoint
+@app.post("/migrate")
+async def migrate():
+    """Run database migrations"""
+    from sqlmodel import text
+    from core.database import get_session
+    
+    session = next(get_session())
+    try:
+        # Add developer_code column
+        session.exec(text("""
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS developer_code VARCHAR(20) DEFAULT NULL,
+            ADD COLUMN IF NOT EXISTS first_sale_bonus_paid BOOLEAN DEFAULT FALSE
+        """))
+        session.commit()
+        return {"status": "success", "message": "Migration complete"}
+    except Exception as e:
+        session.rollback()
+        return {"status": "error", "message": str(e)}
+    finally:
+        session.close()
+
 # Deploy Mon Apr  6 12:14:37 PDT 2026
