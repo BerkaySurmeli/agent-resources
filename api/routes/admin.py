@@ -19,9 +19,9 @@ SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = "HS256"
 ADMIN_TOKEN_EXPIRE_DAYS = 7
 
-# Cloudflare configuration
-CLOUDFLARE_API_TOKEN = "cfat_fmsXtYHYyechjVhJam4pz4OwQmPCn7havumRcjfX3cf28199"
-CLOUDFLARE_ZONE_ID = "8f1c9a67b107c9659104f8376997ba9f"
+# Cloudflare configuration - read from environment variables
+CLOUDFLARE_API_TOKEN = settings.CLOUDFLARE_API_TOKEN
+CLOUDFLARE_ZONE_ID = settings.CLOUDFLARE_ZONE_ID
 
 # Pydantic models
 class AdminLoginRequest(BaseModel):
