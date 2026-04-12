@@ -51,26 +51,27 @@ async def health():
 async def test_auth():
     return {"message": "Auth routes should be at /auth/signup and /auth/login"}
 
-# Temporary migration endpoint
-@app.post("/migrate")
-async def migrate():
-    """Run database migrations"""
-    from sqlmodel import text
+# Temporary: Verify system user for listing creation
+@app.post("/verify-system-user")
+async def verify_system_user():
+    """Verify the listings@shopagentresources.com user"""
+    from sqlmodel import select
     from core.database import get_session
+    from models import User
     
     session = next(get_session())
     try:
-        # Add developer_code column
-        session.exec(text("""
-            ALTER TABLE users 
-            ADD COLUMN IF NOT EXISTS developer_code VARCHAR(20) DEFAULT NULL,
-            ADD COLUMN IF NOT EXISTS first_sale_bonus_paid BOOLEAN DEFAULT FALSE
-        """))
-        session.commit()
-        return {"status": "success", "message": "Migration complete"}
-    except Exception as e:
-        session.rollback()
-        return {"status": "error", "message": str(e)}
+        user = session.exec(
+            select(User).where(User.email == "listings@shopagentresources.com")
+        ).first()
+        
+        if user:
+            user.is_verified = True
+            user.is_developer = True
+            session.commit()
+            return {"status": "verified", "email": user.email}
+        else:
+            return {"status": "not_found"}
     finally:
         session.close()
 
