@@ -758,3 +758,53 @@ async def get_cloudflare_metrics(
         return demo_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching metrics: {str(e)}")
+
+# Admin Waitlist Routes
+from models import WaitlistEntry
+from pydantic import BaseModel
+
+class WaitlistDeleteRequest(BaseModel):
+    email: str
+
+@router.get("/waitlist/")
+def get_waitlist_entries(
+    session = Depends(get_session),
+    admin: AdminUser = Depends(get_current_admin_from_token)
+):
+    """Get all waitlist entries with developer codes"""
+    entries = session.exec(
+        select(WaitlistEntry).order_by(WaitlistEntry.created_at.desc())
+    ).all()
+    
+    return {
+        "entries": [
+            {
+                "email": e.email,
+                "created_at": e.created_at.isoformat() if e.created_at else None,
+                "source": e.source,
+                "developer_code": e.developer_code,
+            }
+            for e in entries
+        ],
+        "total": len(entries),
+        "with_codes": len([e for e in entries if e.developer_code]),
+    }
+
+@router.post("/waitlist/delete/")
+def delete_waitlist_entry(
+    request: WaitlistDeleteRequest,
+    session = Depends(get_session),
+    admin: AdminUser = Depends(get_current_admin_from_token)
+):
+    """Delete a waitlist entry by email"""
+    entry = session.exec(
+        select(WaitlistEntry).where(WaitlistEntry.email == request.email)
+    ).first()
+    
+    if not entry:
+        raise HTTPException(status_code=404, detail="Email not found in waitlist")
+    
+    session.delete(entry)
+    session.commit()
+    
+    return {"message": f"{request.email} removed from waitlist"}

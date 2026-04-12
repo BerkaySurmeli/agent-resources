@@ -80,6 +80,13 @@ interface SaleData {
   date: string;
 }
 
+interface WaitlistEntry {
+  email: string;
+  created_at: string;
+  source: string;
+  developer_code: string | null;
+}
+
 export default function AdminDashboard() {
   const { admin, isLoading: authLoading, logout } = useAdminAuth();
   const router = useRouter();
@@ -98,6 +105,9 @@ export default function AdminDashboard() {
   const [listings, setListings] = useState<ListingData[]>([]);
   const [developers, setDevelopers] = useState<DeveloperData[]>([]);
   const [sales, setSales] = useState<SaleData[]>([]);
+  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
+  const [waitlistSearch, setWaitlistSearch] = useState('');
+  const [waitlistDeleteConfirm, setWaitlistDeleteConfirm] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<CloudflareMetrics | null>(null);
   const [loading, setLoading] = useState(false);
   const [metricsLoading, setMetricsLoading] = useState(false);
@@ -176,6 +186,15 @@ export default function AdminDashboard() {
       if (salesRes.ok) {
         const salesData = await salesRes.json();
         setSales(salesData);
+      }
+
+      // Fetch waitlist
+      const waitlistRes = await fetch(`${API_URL}/admin/waitlist/`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (waitlistRes.ok) {
+        const waitlistData = await waitlistRes.json();
+        setWaitlist(waitlistData.entries || []);
       }
 
       // Fetch Cloudflare metrics
@@ -268,6 +287,42 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDeleteWaitlistEntry = async (email: string) => {
+    if (!confirm(`Are you sure you want to delete ${email} from the waitlist?`)) {
+      return;
+    }
+
+    const token = getAdminToken();
+    try {
+      const res = await fetch(`${API_URL}/admin/waitlist/delete/`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      });
+
+      if (res.ok) {
+        // Refresh waitlist
+        const waitlistRes = await fetch(`${API_URL}/admin/waitlist/`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (waitlistRes.ok) {
+          const waitlistData = await waitlistRes.json();
+          setWaitlist(waitlistData.entries || []);
+        }
+        setWaitlistDeleteConfirm(null);
+      } else {
+        const error = await res.json();
+        alert(error.detail || 'Failed to delete waitlist entry');
+      }
+    } catch (err) {
+      console.error('Failed to delete waitlist entry:', err);
+      alert('Failed to delete waitlist entry');
+    }
+  };
+
   const handleLogout = () => {
     logout();
     router.push('/admin/login');
@@ -313,6 +368,7 @@ export default function AdminDashboard() {
     { id: 'developers', label: 'Developers', icon: '💻' },
     { id: 'listings', label: 'Listings', icon: '📋' },
     { id: 'sales', label: 'Sales', icon: '💰' },
+    { id: 'waitlist', label: 'Waitlist', icon: '📧' },
     { id: 'metrics', label: 'Website Metrics', icon: '📈' },
   ];
 
@@ -558,6 +614,126 @@ export default function AdminDashboard() {
                     s.date
                   ])}
                 />
+              </div>
+            )}
+
+            {/* Waitlist Section */}
+            {activeSection === 'waitlist' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-slate-900">Waitlist ({waitlist.length})</h2>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="text"
+                      placeholder="Search emails..."
+                      value={waitlistSearch}
+                      onChange={(e) => setWaitlistSearch(e.target.value)}
+                      className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+                    <p className="text-sm text-slate-500">Total Entries</p>
+                    <p className="text-2xl font-bold text-slate-900">{waitlist.length}</p>
+                  </div>
+                  <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+                    <p className="text-sm text-slate-500">With Developer Codes</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {waitlist.filter(e => e.developer_code).length}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+                    <p className="text-sm text-slate-500">Spots Remaining</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {Math.max(0, 50 - waitlist.filter(e => e.developer_code).length)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Duplicates Warning */}
+                {(() => {
+                  const emailCounts = waitlist.reduce((acc, entry) => {
+                    acc[entry.email] = (acc[entry.email] || 0) + 1;
+                    return acc;
+                  }, {} as Record<string, number>);
+                  const duplicates = Object.entries(emailCounts).filter(([_, count]) => count > 1);
+                  if (duplicates.length > 0) {
+                    return (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <p className="text-yellow-800 font-medium">⚠️ Duplicate Emails Found</p>
+                        <p className="text-yellow-700 text-sm">
+                          {duplicates.map(([email, count]) => `${email} (${count} times)`).join(', ')}
+                        </p>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
+                {/* Waitlist Table */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-slate-50 border-b border-slate-200">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Developer Code</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Source</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {waitlist
+                        .filter(entry => entry.email.toLowerCase().includes(waitlistSearch.toLowerCase()))
+                        .map((entry, index) => (
+                        <tr key={index} className="hover:bg-slate-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{entry.email}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {entry.developer_code ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {entry.developer_code}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400">-</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{entry.source || 'website'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                            {entry.created_at ? new Date(entry.created_at).toLocaleDateString() : '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                            {waitlistDeleteConfirm === entry.email ? (
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={() => handleDeleteWaitlistEntry(entry.email)}
+                                  className="text-red-600 hover:text-red-900 font-medium"
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  onClick={() => setWaitlistDeleteConfirm(null)}
+                                  className="text-slate-400 hover:text-slate-600"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setWaitlistDeleteConfirm(entry.email)}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 

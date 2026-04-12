@@ -161,6 +161,7 @@ class WaitlistEntry(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     email: str = Field(unique=True, index=True)
     source: str = Field(default="website")  # where they signed up
+    developer_code: Optional[str] = Field(default=None)  # DEV-XXXXXXXX for first 50
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
