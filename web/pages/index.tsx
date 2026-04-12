@@ -7,17 +7,37 @@ import Logo from '../components/Logo';
 import UserMenu from '../components/UserMenu';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
+// Server-side data fetching for waitlist count
+export async function getServerSideProps() {
+  try {
+    const res = await fetch('https://api.shopagentresources.com/waitlist/count/');
+    const data = await res.json();
+    return {
+      props: {
+        initialSpotsRemaining: Math.max(0, 50 - data.count),
+      },
+    };
+  } catch (error) {
+    return {
+      props: {
+        initialSpotsRemaining: 50,
+      },
+    };
+  }
+}
+
 const API_URL = 'https://api.shopagentresources.com';
 
-export default function LandingPage() {
+export default function LandingPage({ initialSpotsRemaining }: { initialSpotsRemaining: number }) {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const isRTL = language === 'ar';
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
-  const [spotsRemaining, setSpotsRemaining] = useState<number | null>(null);
+  const [spotsRemaining, setSpotsRemaining] = useState<number>(initialSpotsRemaining);
 
+  // Refresh spots remaining on client side
   useEffect(() => {
     fetch(`${API_URL}/waitlist/count/`)
       .then(res => res.json())
@@ -25,7 +45,10 @@ export default function LandingPage() {
         const remaining = Math.max(0, 50 - data.count);
         setSpotsRemaining(remaining);
       })
-      .catch(() => setSpotsRemaining(50));
+      .catch(() => {
+        // Keep server-fetched value on error
+        console.error('Failed to fetch waitlist count');
+      });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -242,15 +265,15 @@ export default function LandingPage() {
             </div>
 
             {/* Spots Counter or Waitlist Message */}
-            {spotsRemaining !== null && spotsRemaining > 0 ? (
+            {spotsRemaining > 0 ? (
               <p className="text-lg font-medium text-white mb-20">
                 {spotsRemaining} / 50 {lt.spotsRemaining}
               </p>
-            ) : spotsRemaining === 0 ? (
+            ) : (
               <p className="text-lg font-medium text-emerald-400 mb-20 max-w-xl mx-auto">
                 {lt.allSpotsFilled}
               </p>
-            ) : null}
+            )}
 
             {/* Features Section */}
             <div className="mt-24 pt-16 border-t border-white/10">
