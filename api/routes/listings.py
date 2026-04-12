@@ -1082,3 +1082,84 @@ async def toggle_listing_status(
             }
     
     return {"message": "No product associated with this listing"}
+
+
+# Public browse endpoint - no auth required
+@router.get("/browse", response_model=List[ListingResponse])
+def browse_listings(
+    category: Optional[str] = Query(None, description="Filter by category"),
+    search: Optional[str] = Query(None, description="Search in name/description"),
+    sort_by: str = Query("newest", description="Sort: newest, price_asc, price_desc, popular"),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    session = Depends(get_session)
+):
+    """Browse all approved listings (public endpoint)"""
+    from sqlmodel import or_, desc, asc, func
+    
+    # Base query - only approved listings
+    query = select(Listing).where(Listing.status == 'approved')
+    
+    # Apply category filter
+    if category and category != 'all':
+        query = query.where(Listing.category == category)
+    
+    # Apply search filter
+    if search:
+        search_term = f"%{search}%"
+        query = query.where(
+            or_(
+                Listing.name.ilike(search_term),
+                Listing.description.ilike(search_term)
+            )
+        )
+    
+    # Apply sorting
+    if sort_by == 'newest':
+        query = query.order_by(desc(Listing.created_at))
+    elif sort_by == 'price_asc':
+        query = query.order_by(asc(Listing.price_cents))
+    elif sort_by == 'price_desc':
+        query = query.order_by(desc(Listing.price_cents))
+    elif sort_by == 'popular':
+        # For now, sort by download count (would need to add this field)
+        query = query.order_by(desc(Listing.created_at))
+    
+    # Apply pagination
+    query = query.offset(offset).limit(limit)
+    
+    listings = session.exec(query).all()
+    
+    # Format response
+    result = []
+    for listing in listings:
+        # Get owner name
+        owner = session.get(User, listing.owner_id)
+        
+        # Get reviews
+        reviews = session.exec(
+            select(Review).where(Review.product_id == listing.id)
+        ).all()
+        avg_rating = sum(r.rating for r in reviews) / len(reviews) if reviews else 0
+        
+        result.append({
+            "id": str(listing.id),
+            "name": listing.name,
+            "slug": listing.slug,
+            "description": listing.description[:200] + "..." if len(listing.description) > 200 else listing.description,
+            "category": listing.category,
+            "category_tags": listing.category_tags,
+            "price_cents": listing.price_cents,
+            "owner_id": str(listing.owner_id),
+            "owner_name": owner.name if owner else "Unknown",
+            "created_at": listing.created_at.isoformat() if listing.created_at else None,
+            "updated_at": listing.updated_at.isoformat() if listing.updated_at else None,
+            "is_active": listing.status == 'approved',
+            "is_verified": listing.virus_scan_status == 'clean',
+            "review_count": len(reviews),
+            "average_rating": round(avg_rating, 1),
+            "status": listing.status,
+            "virus_scan_status": listing.virus_scan_status,
+        })
+    
+    return result
