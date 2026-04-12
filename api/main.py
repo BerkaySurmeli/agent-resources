@@ -51,28 +51,4 @@ async def health():
 async def test_auth():
     return {"message": "Auth routes should be at /auth/signup and /auth/login"}
 
-# Temporary: Verify system user for listing creation
-@app.post("/verify-system-user")
-async def verify_system_user():
-    """Verify the listings@shopagentresources.com user"""
-    from sqlmodel import select
-    from core.database import get_session
-    from models import User
-    
-    session = next(get_session())
-    try:
-        user = session.exec(
-            select(User).where(User.email == "listings@shopagentresources.com")
-        ).first()
-        
-        if user:
-            user.is_verified = True
-            user.is_developer = True
-            session.commit()
-            return {"status": "verified", "email": user.email}
-        else:
-            return {"status": "not_found"}
-    finally:
-        session.close()
-
 # Deploy Mon Apr  6 12:14:37 PDT 2026
