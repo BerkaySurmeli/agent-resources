@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
+import Logo from '../components/Logo';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
@@ -37,15 +38,7 @@ const FadeIn = ({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
   );
 };
 
-// AR Logo component
-const Logo = ({ className = '' }: { className?: string }) => (
-  <div className={`flex items-center gap-3 ${className}`} aria-label="Agent Resources Home">
-    <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center" aria-hidden="true">
-      <span className="text-white font-bold text-lg">AR</span>
-    </div>
-    <span className="font-semibold text-white">Agent Resources</span>
-  </div>
-);
+
 
 export default function Home() {
   const { t } = useLanguage();

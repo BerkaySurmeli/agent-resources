@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import { useCart } from '../context/CartContext';
 import CartIcon from '../components/CartIcon';
+import Logo from '../components/Logo';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
@@ -213,11 +214,8 @@ export default function Browse() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">AR</span>
-            </div>
-            <span className="font-semibold text-slate-900">Agent Resources</span>
+          <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+            <Logo variant="full" size="md" className="text-slate-900" />
           </Link>
           <div className="flex items-center gap-6">
             <CartIcon />

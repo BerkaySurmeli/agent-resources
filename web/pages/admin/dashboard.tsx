@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import { useRouter } from 'next/router';
+import Logo from '../../components/Logo';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
@@ -326,10 +327,8 @@ export default function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center gap-4">
-              <Link href="/" className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">AR</span>
-                </div>
+              <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+                <Logo variant="icon" size="md" />
                 <span className="font-semibold text-slate-900">Admin Dashboard</span>
               </Link>
             </div>
