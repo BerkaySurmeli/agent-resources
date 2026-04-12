@@ -10,6 +10,7 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const router = useRouter();
   const isAdminRoute = router.pathname.startsWith('/admin');
+  const isLandingPage = router.pathname === '/';
 
   // Admin routes have their own layout - don't show main navbar/footer
   if (isAdminRoute) {
@@ -18,6 +19,11 @@ export default function Layout({ children }: LayoutProps) {
         {children}
       </div>
     );
+  }
+
+  // Landing page has its own layout - don't wrap with navbar/footer
+  if (isLandingPage) {
+    return <>{children}</>;
   }
 
   return (
