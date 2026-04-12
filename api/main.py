@@ -57,21 +57,22 @@ async def setup_admin():
     """Create master admin user if none exists"""
     from sqlmodel import select
     from core.database import get_session
-    from models import AdminUser
+    from models import AdminUser, User
     from passlib.context import CryptContext
     
     pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
     session = next(get_session())
     
     try:
-        # Check if any admin exists
-        existing = session.exec(select(AdminUser)).first()
+        # Check if admin exists
+        admin_email = "admin@shopagentresources.com"
+        existing = session.exec(select(AdminUser).where(AdminUser.email == admin_email)).first()
         if existing:
             return {"status": "exists", "message": "Admin user already exists", "email": existing.email}
         
-        # Create master admin
+        # Create master admin with different email
         admin = AdminUser(
-            email="berkaysurmeli@icloud.com",
+            email=admin_email,
             password_hash=pwd_context.hash("16384bEr32768!"),
             name="Master Admin",
             is_master_admin=True
