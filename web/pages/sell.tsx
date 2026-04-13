@@ -474,6 +474,7 @@ export default function Sell() {
                     onClick={() => setStep(3)}
                     disabled={!formData.name || !formData.description || !formData.price}
                     className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-500 transition-colors disabled:opacity-50"
+                  >
                     Continue
                   </button>
                 </div>
