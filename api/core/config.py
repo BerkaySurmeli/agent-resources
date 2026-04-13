@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     CLOUDFLARE_API_TOKEN: str = ""  # Get from Cloudflare dashboard → API Tokens
     CLOUDFLARE_ZONE_ID: str = ""    # Get from Cloudflare dashboard → Zone overview
     
+    # Frontend URL for redirects
+    FRONTEND_URL: str = "https://web-azyrb0ssf-agent-resources.vercel.app"
+    
     class Config:
         env_file = ".env"
     
