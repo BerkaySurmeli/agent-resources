@@ -31,6 +31,7 @@ app.add_middleware(
         "https://web-e51fjhuko-agent-resources.vercel.app",
         "https://web-azyrb0ssf-agent-resources.vercel.app",
         "https://web-q8917c722-agent-resources.vercel.app",
+        "https://web-e64yjq3jw-agent-resources.vercel.app",
         "https://agent-resources-api-dev-production.up.railway.app"
     ],
     allow_credentials=True,
