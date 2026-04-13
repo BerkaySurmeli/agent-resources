@@ -56,7 +56,7 @@ export default function Browse() {
       params.append('sort_by', sortBy === 'price-low' ? 'price_asc' : sortBy === 'price-high' ? 'price_desc' : sortBy);
       params.append('limit', '50');
       
-      const res = await fetch(`${API_URL}/listings/browse?${params}`);
+      const res = await fetch(`${API_URL}/listings/public?${params}`);
       if (res.ok) {
         const data = await res.json();
         setListings(data);
