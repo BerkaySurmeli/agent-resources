@@ -1082,3 +1082,164 @@ async def toggle_listing_status(
             }
     
     return {"message": "No product associated with this listing"}
+
+
+@router.get("/{slug}/download-skill")
+async def download_skill_package(
+    slug: str,
+    session = Depends(get_session),
+    current_user = Depends(get_current_user_from_token)
+):
+    """Generate and download a listing as an OpenClaw skill package"""
+    from fastapi.responses import StreamingResponse
+    import io
+    
+    # Get listing
+    listing = session.exec(
+        select(Listing).where(Listing.slug == slug, Listing.status == 'approved')
+    ).first()
+    
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    # Check if user has purchased this (or it's free)
+    from models import Transaction
+    has_purchased = session.exec(
+        select(Transaction).where(
+            Transaction.buyer_id == current_user.id,
+            Transaction.product_id == listing.product_id,
+            Transaction.status == 'completed'
+        )
+    ).first()
+    
+    is_free = listing.price_cents == 0
+    
+    if not has_purchased and not is_free:
+        raise HTTPException(status_code=403, detail="Purchase required to download")
+    
+    # Generate skill package
+    zip_buffer = io.BytesIO()
+    
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        # Generate SKILL.md
+        skill_md = f'''---
+name: {listing.slug}
+description: {listing.description[:100] if listing.description else "AI agent from Agent Resources"}
+metadata:
+  {{
+    "openclaw":
+      {{
+        "emoji": "🤖",
+        "source": "Agent Resources",
+        "installed_at": "{datetime.utcnow().isoformat()}"
+      }}
+  }}
+---
+
+# {listing.name}
+
+{listing.description or "AI agent from Agent Resources"}
+
+## Tags
+{', '.join(listing.category_tags or [])}
+
+## Source
+Installed from [Agent Resources](https://shopagentresources.com/listings/{listing.slug})
+'''
+        zip_file.writestr('SKILL.md', skill_md)
+        
+        # Add SOUL.md if exists (from listing files)
+        listing_dir = os.path.join(UPLOAD_DIR, str(listing.id))
+        if os.path.exists(listing_dir):
+            for root, dirs, files in os.walk(listing_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arcname = os.path.relpath(file_path, listing_dir)
+                    zip_file.write(file_path, arcname)
+        
+        # Add README if not present
+        if not any(name.endswith('README.md') for name in zip_file.namelist()):
+            readme = f'''# {listing.name}
+
+{listing.description or ""}
+
+## Installation
+
+This skill was installed from Agent Resources.
+
+## Usage
+
+Refer to the SOUL.md file for detailed usage instructions.
+'''
+            zip_file.writestr('README.md', readme)
+    
+    zip_buffer.seek(0)
+    
+    return StreamingResponse(
+        zip_buffer,
+        media_type='application/zip',
+        headers={
+            'Content-Disposition': f'attachment; filename="{listing.slug}-skill.zip"'
+        }
+    )
+
+
+@router.post("/{slug}/deploy-to-openclaw")
+async def deploy_to_openclaw(
+    slug: str,
+    session = Depends(get_session),
+    current_user = Depends(get_current_user_from_token)
+):
+    """Generate deployment manifest for OpenClaw auto-install"""
+    
+    # Get listing
+    listing = session.exec(
+        select(Listing).where(Listing.slug == slug, Listing.status == 'approved')
+    ).first()
+    
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    # Check purchase
+    from models import Transaction
+    has_purchased = session.exec(
+        select(Transaction).where(
+            Transaction.buyer_id == current_user.id,
+            Transaction.product_id == listing.product_id,
+            Transaction.status == 'completed'
+        )
+    ).first()
+    
+    is_free = listing.price_cents == 0
+    
+    if not has_purchased and not is_free:
+        raise HTTPException(status_code=403, detail="Purchase required")
+    
+    # Generate deployment manifest
+    manifest = {
+        "version": "1.0.0",
+        "name": listing.slug,
+        "display_name": listing.name,
+        "description": listing.description,
+        "source": {
+            "type": "agent-resources",
+            "listing_id": str(listing.id),
+            "slug": listing.slug,
+            "url": f"https://shopagentresources.com/listings/{listing.slug}"
+        },
+        "install": {
+            "method": "skill",
+            "destination": f"~/.openclaw/skills/{listing.slug}",
+            "files": [
+                "SKILL.md",
+                "SOUL.md", 
+                "README.md"
+            ]
+        },
+        "openclaw": {
+            "min_version": "0.1.0",
+            "auto_enable": True
+        }
+    }
+    
+    return manifest
