@@ -1,253 +1,146 @@
-"""Email service using Resend API"""
-import resend
+"""Email service for sending purchase confirmations and notifications"""
+
+import httpx
 from core.config import settings
 
-# Initialize Resend with API key
-if settings.RESEND_API_KEY:
-    resend.api_key = settings.RESEND_API_KEY
+RESEND_API_KEY = settings.RESEND_API_KEY
+FROM_EMAIL = settings.FROM_EMAIL_INFO
 
-
-class EmailService:
-    """Service for sending emails via Resend API"""
+async def send_purchase_confirmation(to_email: str, buyer_name: str, item_name: str, download_url: str):
+    """Send purchase confirmation email with download link"""
+    if not RESEND_API_KEY:
+        print(f"[EMAIL] Skipping purchase confirmation - no API key configured")
+        return
     
-    @staticmethod
-    def send_verification_email(to_email: str, name: str, token: str) -> dict:
-        """Send email verification email to user"""
-        if not settings.RESEND_API_KEY:
-            print("[EMAIL ERROR] Resend API key not configured")
-            raise Exception("Email service not configured. Please contact support.")
-        
-        verification_url = f"https://shopagentresources.com/verify-email?token={token}"
-        
-        html_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Your Email</title>
-</head>
-<body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <div style="width: 60px; height: 60px; background: #2563eb; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-            <span style="color: white; font-weight: bold; font-size: 24px;">AR</span>
-        </div>
-        <h1 style="color: #0f172a; margin: 0;">Welcome to Agent Resources</h1>
-    </div>
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
+                json={
+                    "from": f"Agent Resources <{FROM_EMAIL}>",
+                    "to": [to_email],
+                    "subject": f"Your purchase: {item_name}",
+                    "html": f"""
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #1e293b;">Thank you for your purchase!</h2>
+                        <p>Hi {buyer_name},</p>
+                        <p>You've successfully purchased <strong>{item_name}</strong>.</p>
+                        <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                            <h3 style="margin-top: 0;">Download Your Files</h3>
+                            <a href="{download_url}" 
+                               style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; 
+                                      text-decoration: none; border-radius: 6px; font-weight: 500;">
+                                Download Now
+                            </a>
+                        </div>
+                        <h3>Installation Instructions</h3>
+                        <ol>
+                            <li>Download the ZIP file</li>
+                            <li>Extract to your OpenClaw skills folder: <code>~/.openclaw/skills/</code></li>
+                            <li>Restart OpenClaw or run: <code>openclaw reload</code></li>
+                        </ol>
+                        <p>Need help? Reply to this email or contact support.</p>
+                        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+                        <p style="color: #64748b; font-size: 12px;">
+                            Agent Resources - The marketplace for AI agents<br>
+                            <a href="https://shopagentresources.com">shopagentresources.com</a>
+                        </p>
+                    </div>
+                    """
+                }
+            )
+            
+            if response.status_code == 200:
+                print(f"[EMAIL] Purchase confirmation sent to {to_email}")
+            else:
+                print(f"[EMAIL] Failed to send email: {response.text}")
+    except Exception as e:
+        print(f"[EMAIL] Error sending purchase confirmation: {e}")
 
-    <div style="background: #f8fafc; border-radius: 12px; padding: 30px; margin-bottom: 20px;">
-        <p style="margin-top: 0;">Hi {name},</p>
-        <p>Welcome to Agent Resources! Please verify your email address to start buying and selling AI agents.</p>
-
-        <div style="text-align: center; margin: 30px 0;">
-            <a href="{verification_url}" style="display: inline-block; background: #2563eb; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 500;">
-                Verify Email Address
-            </a>
-        </div>
-
-        <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">
-            This link will expire in 24 hours. If you didn't create an account, you can safely ignore this email.
-        </p>
-    </div>
-
-    <div style="text-align: center; font-size: 14px; color: #64748b;">
-        <p>Best regards,<br>The Agent Resources Team</p>
-        <p style="margin-top: 20px;">
-            <a href="https://shopagentresources.com" style="color: #2563eb;">shopagentresources.com</a>
-        </p>
-    </div>
-</body>
-</html>
-"""
-        
-        text_content = f"""
-Hi {name},
-
-Welcome to Agent Resources! Please verify your email address to start buying and selling AI agents.
-
-Click the link below to verify your email:
-{verification_url}
-
-This link will expire in 24 hours.
-
-If you didn't create an account, you can safely ignore this email.
-
-Best regards,
-The Agent Resources Team
-"""
-        
-        try:
-            response = resend.Emails.send({
-                "from": f"Agent Resources <{settings.FROM_EMAIL_INFO}>",
-                "to": [to_email],
-                "subject": "Welcome to Agent Resources - Verify Your Email",
-                "html": html_content,
-                "text": text_content
-            })
-            print(f"[EMAIL] Verification email sent to {to_email}")
-            return response
-        except Exception as e:
-            print(f"[EMAIL ERROR] Failed to send verification email: {e}")
-            raise
+async def send_listing_approved_email(to_email: str, seller_name: str, listing_name: str, listing_url: str):
+    """Send email when listing is approved"""
+    if not RESEND_API_KEY:
+        print(f"[EMAIL] Skipping listing approval email - no API key configured")
+        return
     
-    @staticmethod
-    def send_password_reset_email(to_email: str, name: str, token: str) -> dict:
-        """Send password reset email to user"""
-        if not settings.RESEND_API_KEY:
-            print("[EMAIL ERROR] Resend API key not configured")
-            raise Exception("Email service not configured. Please contact support.")
-        
-        reset_url = f"https://shopagentresources.com/reset-password?token={token}"
-        
-        html_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Your Password</title>
-</head>
-<body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <div style="width: 60px; height: 60px; background: #2563eb; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-            <span style="color: white; font-weight: bold; font-size: 24px;">AR</span>
-        </div>
-        <h1 style="color: #0f172a; margin: 0;">Reset Your Password</h1>
-    </div>
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
+                json={
+                    "from": f"Agent Resources <{FROM_EMAIL}>",
+                    "to": [to_email],
+                    "subject": f"Your listing is now live: {listing_name}",
+                    "html": f"""
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #1e293b;">Your listing is approved!</h2>
+                        <p>Hi {seller_name},</p>
+                        <p>Great news! Your listing <strong>{listing_name}</strong> has passed security review and is now live on Agent Resources.</p>
+                        <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                            <a href="{listing_url}" 
+                               style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; 
+                                      text-decoration: none; border-radius: 6px; font-weight: 500;">
+                                View Your Listing
+                            </a>
+                        </div>
+                        <p>Your listing is now available to thousands of OpenClaw users.</p>
+                        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+                        <p style="color: #64748b; font-size: 12px;">
+                            Agent Resources - The marketplace for AI agents<br>
+                            <a href="https://shopagentresources.com">shopagentresources.com</a>
+                        </p>
+                    </div>
+                    """
+                }
+            )
+            
+            if response.status_code == 200:
+                print(f"[EMAIL] Listing approval email sent to {to_email}")
+            else:
+                print(f"[EMAIL] Failed to send email: {response.text}")
+    except Exception as e:
+        print(f"[EMAIL] Error sending listing approval email: {e}")
 
-    <div style="background: #f8fafc; border-radius: 12px; padding: 30px; margin-bottom: 20px;">
-        <p style="margin-top: 0;">Hi {name},</p>
-        <p>We received a request to reset your password for your Agent Resources account.</p>
-
-        <div style="text-align: center; margin: 30px 0;">
-            <a href="{reset_url}" style="display: inline-block; background: #2563eb; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 500;">
-                Reset Password
-            </a>
-        </div>
-
-        <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">
-            This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.
-        </p>
-    </div>
-
-    <div style="text-align: center; font-size: 14px; color: #64748b;">
-        <p>Best regards,<br>The Agent Resources Team</p>
-        <p style="margin-top: 20px;">
-            <a href="https://shopagentresources.com" style="color: #2563eb;">shopagentresources.com</a>
-        </p>
-    </div>
-</body>
-</html>
-"""
-        
-        text_content = f"""
-Hi {name},
-
-We received a request to reset your password for your Agent Resources account.
-
-Click the link below to reset your password:
-{reset_url}
-
-This link will expire in 1 hour.
-
-If you didn't request a password reset, you can safely ignore this email.
-
-Best regards,
-The Agent Resources Team
-"""
-        
-        try:
-            response = resend.Emails.send({
-                "from": f"Agent Resources <{settings.FROM_EMAIL_INFO}>",
-                "to": [to_email],
-                "subject": "Password Reset Request - Agent Resources",
-                "html": html_content,
-                "text": text_content
-            })
-            print(f"[EMAIL] Password reset email sent to {to_email}")
-            return response
-        except Exception as e:
-            print(f"[EMAIL ERROR] Failed to send password reset email: {e}")
-            raise
+async def send_sale_notification(to_email: str, seller_name: str, item_name: str, amount: str, buyer_email: str):
+    """Send email to seller when someone buys their item"""
+    if not RESEND_API_KEY:
+        print(f"[EMAIL] Skipping sale notification - no API key configured")
+        return
     
-    @staticmethod
-    def send_contact_form(name: str, from_email: str, category: str, subject: str, message: str) -> dict:
-        """Send contact form submission to support team"""
-        if not settings.RESEND_API_KEY:
-            print("[EMAIL ERROR] Resend API key not configured")
-            raise Exception("Email service not configured.")
-        
-        html_content = f"""<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Contact Form Submission</title>
-</head>
-<body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #f8fafc; border-radius: 12px; padding: 30px; margin-bottom: 20px;">
-        <h2 style="color: #0f172a; margin-top: 0;">New Contact Form Submission</h2>
-        
-        <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-                <td style="padding: 8px 0; color: #64748b; width: 100px;">Category:</td>
-                <td style="padding: 8px 0; font-weight: 500;">{category}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px 0; color: #64748b;">From:</td>
-                <td style="padding: 8px 0; font-weight: 500;">{name} &lt;{from_email}&gt;</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px 0; color: #64748b;">Subject:</td>
-                <td style="padding: 8px 0; font-weight: 500;">{subject}</td>
-            </tr>
-        </table>
-        
-        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-        
-        <h3 style="color: #0f172a; margin-top: 0;">Message:</h3>
-        <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; white-space: pre-wrap;">{message}</div>
-        
-        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-        
-        <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">
-            This email was sent via the Agent Resources contact form.<br>
-            Reply directly to this email to respond to {name}.
-        </p>
-    </div>
-</body>
-</html>"""
-        
-        text_content = f"""New Contact Form Submission
-
-Category: {category}
-From: {name} <{from_email}>
-Subject: {subject}
-
-Message:
-{message}
-
----
-This email was sent via the Agent Resources contact form.
-"""
-        
-        try:
-            response = resend.Emails.send({
-                "from": f"Agent Resources Contact Form <{settings.FROM_EMAIL_SUPPORT}>",
-                "to": [settings.FROM_EMAIL_SUPPORT],
-                "reply_to": from_email,
-                "subject": f"[{category}] {subject}",
-                "html": html_content,
-                "text": text_content
-            })
-            print(f"[EMAIL] Contact form email sent to support from {from_email}")
-            return response
-        except Exception as e:
-            print(f"[EMAIL ERROR] Failed to send contact form email: {e}")
-            raise
-
-
-# Convenience function for backward compatibility
-def send_verification_email(to_email: str, name: str, token: str) -> dict:
-    """Send verification email via Resend API"""
-    return EmailService.send_verification_email(to_email, name, token)
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
+                json={
+                    "from": f"Agent Resources <{FROM_EMAIL}>",
+                    "to": [to_email],
+                    "subject": f"You made a sale: {item_name}",
+                    "html": f"""
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #1e293b;">You made a sale!</h2>
+                        <p>Hi {seller_name},</p>
+                        <p>Someone just purchased <strong>{item_name}</strong>.</p>
+                        <div style="background: #dcfce7; border: 1px solid #86efac; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                            <p style="margin: 0; font-size: 24px; font-weight: bold; color: #166534;">{amount}</p>
+                            <p style="margin: 5px 0 0 0; color: #166534; font-size: 14px;">Your earnings</p>
+                        </div>
+                        <p>Payouts are processed to your connected Stripe account within 2 business days.</p>
+                        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+                        <p style="color: #64748b; font-size: 12px;">
+                            Agent Resources - The marketplace for AI agents<br>
+                            <a href="https://shopagentresources.com">shopagentresources.com</a>
+                        </p>
+                    </div>
+                    """
+                }
+            )
+            
+            if response.status_code == 200:
+                print(f"[EMAIL] Sale notification sent to {to_email}")
+            else:
+                print(f"[EMAIL] Failed to send email: {response.text}")
+    except Exception as e:
+        print(f"[EMAIL] Error sending sale notification: {e}")

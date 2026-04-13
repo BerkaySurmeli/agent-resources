@@ -28,6 +28,53 @@ VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "")
 VIRUSTOTAL_BASE_URL = "https://www.virustotal.com/api/v3"
 VIRUSTOTAL_RATE_LIMIT = 4  # requests per minute (free tier)
 
+# File structure requirements for each category
+CATEGORY_REQUIREMENTS = {
+    'skill': {
+        'required_files': ['skill.md'],
+        'recommended_files': ['readme.md', 'examples/'],
+        'description': 'Agent Skill - A specific capability or workflow'
+    },
+    'persona': {
+        'required_files': ['skill.md', 'persona.md'],  # Either one is acceptable
+        'recommended_files': ['readme.md', 'avatar.png', 'knowledge/'],
+        'description': 'AI Persona - A complete AI worker with personality'
+    },
+    'mcp_server': {
+        'required_files': ['mcp.json', 'manifest.json'],  # Either one is acceptable
+        'recommended_files': ['readme.md', 'src/', 'config/'],
+        'description': 'MCP Server - Infrastructure for agent connections'
+    }
+}
+
+def validate_file_structure(files: List[UploadFile], category: str) -> tuple[bool, List[str], List[str]]:
+    """
+    Validate uploaded files against category requirements.
+    Returns: (is_valid, missing_required, missing_recommended)
+    """
+    if category not in CATEGORY_REQUIREMENTS:
+        return True, [], []
+    
+    requirements = CATEGORY_REQUIREMENTS[category]
+    filenames = [f.filename.lower() if f.filename else '' for f in files]
+    
+    # Check for required files (at least one must match)
+    has_required = False
+    for req_file in requirements['required_files']:
+        if any(f.endswith(req_file) or f.endswith('/' + req_file) for f in filenames):
+            has_required = True
+            break
+    
+    missing_required = [] if has_required else requirements['required_files']
+    
+    # Check for recommended files
+    missing_recommended = []
+    for rec_file in requirements['recommended_files']:
+        if not any(f.endswith(rec_file.rstrip('/')) or f.endswith('/' + rec_file.rstrip('/')) for f in filenames):
+            missing_recommended.append(rec_file)
+    
+    return has_required, missing_required, missing_recommended
+
 # Rate limiter for VirusTotal
 class RateLimiter:
     def __init__(self, max_calls: int, period: float):
@@ -434,13 +481,23 @@ async def create_listing(
             required_file_missing = True
             required_file_name = "mcp.json or manifest.json"
     
-    if required_file_missing:
-        # Log what files were received for debugging
+    # Run comprehensive file structure validation
+    is_valid, missing_required, missing_recommended = validate_file_structure(files, category)
+    
+    if not is_valid:
         received_files = [f.filename for f in files if f.filename]
-        print(f"[DEBUG] {required_file_name} not found for category '{category}'. Received files: {received_files}")
-        # Clean up and error
+        requirements = CATEGORY_REQUIREMENTS.get(category, {})
+        required_str = ' or '.join(requirements.get('required_files', ['required file']))
+        print(f"[DEBUG] File validation failed for category '{category}'. Missing: {missing_required}. Received: {received_files}")
         shutil.rmtree(listing_dir, ignore_errors=True)
-        raise HTTPException(status_code=400, detail=f"{required_file_name} is required for {category} listings. Received {len(files)} files: {received_files}")
+        raise HTTPException(
+            status_code=400, 
+            detail=f"{required_str} is required for {category} listings. Received {len(files)} files: {received_files}"
+        )
+    
+    # Log recommendations (non-blocking)
+    if missing_recommended:
+        print(f"[VALIDATION] Recommendations for {category} listing: Consider adding {', '.join(missing_recommended)}")
     
     # Create ZIP file with flattened structure (remove outer folder)
     zip_path = f"{listing_dir}.zip"
@@ -564,6 +621,20 @@ async def create_listing(
                 
                 listing.product_id = product.id
                 session.commit()
+                
+                # Send approval email to seller
+                from services.email import send_listing_approved_email
+                import asyncio
+                
+                frontend_url = settings.FRONTEND_URL or "https://shopagentresources.com"
+                listing_url = f"{frontend_url}/listings/{listing.slug}"
+                
+                asyncio.create_task(send_listing_approved_email(
+                    to_email=current_user.email,
+                    seller_name=current_user.name or current_user.email.split('@')[0],
+                    listing_name=listing.name,
+                    listing_url=listing_url
+                ))
                 
                 return {
                     "id": str(listing.id),

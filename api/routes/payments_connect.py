@@ -210,11 +210,30 @@ def stripe_webhook(request: Request):
                 db_session.add(transaction)
                 db_session.commit()
                 
-                # Check if this is seller's first sale for developer bonus
+                # Send email notifications
+                from services.email import send_purchase_confirmation, send_sale_notification
+                import asyncio
+                
+                # Get product and seller details
+                product = db_session.get(Product, UUID(listing_id))
                 seller = db_session.get(User, UUID(seller_id))
+                
+                if product and seller:
+                    # Calculate amounts
+                    amount_dollars = session['amount_total'] / 100
+                    seller_amount = (session['amount_total'] - platform_fee_cents) / 100
+                    
+                    # Send notifications asynchronously
+                    asyncio.create_task(send_sale_notification(
+                        to_email=seller.email,
+                        seller_name=seller.name or seller.email.split('@')[0],
+                        item_name=product.name,
+                        amount=f"${seller_amount:.2f}",
+                        buyer_email=customer_email
+                    ))
+                
+                # Check if this is seller's first sale for developer bonus
                 if seller and seller.developer_code and not seller.first_sale_bonus_paid:
-                    # This is their first sale - mark bonus as pending
-                    # Actual payout would be handled by admin or automated job
                     seller.first_sale_bonus_paid = True
                     db_session.commit()
                     
