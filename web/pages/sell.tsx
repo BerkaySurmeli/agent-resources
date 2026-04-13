@@ -433,7 +433,7 @@ export default function Sell() {
                       <span className="text-sm font-medium text-slate-700">
                         {formData.files.length} files • {(totalSize / 1024).toFixed(1)} KB
                       </span>
-                      {hasSkillMd && (
+                      {hasRequiredFile() && (
                         <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
                           ✓ {formData.category === 'mcp_server' ? 'Manifest' : formData.category === 'persona' ? 'SKILL.md/PERSONA.md' : 'SKILL.md'} found
                         </span>
@@ -465,8 +465,8 @@ export default function Sell() {
                     <li className={formData.files.length > 0 ? 'text-green-600' : 'text-slate-500'}>
                       {formData.files.length > 0 ? '✓' : '○'} Add at least one file
                     </li>
-                    <li className={hasSkillMd ? 'text-green-600' : 'text-slate-500'}>
-                      {hasSkillMd ? '✓' : '○'} {formData.category === 'mcp_server' ? 'mcp.json or manifest.json' : formData.category === 'persona' ? 'SKILL.md or PERSONA.md' : 'SKILL.md'} is required
+                    <li className={hasRequiredFile() ? 'text-green-600' : 'text-slate-500'}>
+                      {hasRequiredFile() ? '✓' : '○'} {formData.category === 'mcp_server' ? 'mcp.json or manifest.json' : formData.category === 'persona' ? 'SKILL.md or PERSONA.md' : 'SKILL.md'} is required
                     </li>
                     <li className={formData.termsAccepted ? 'text-green-600' : 'text-slate-500'}>
                       {formData.termsAccepted ? '✓' : '○'} Accept the <Link href="/terms" target="_blank" className="underline">Terms and Conditions</Link>
