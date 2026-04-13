@@ -758,3 +758,32 @@ async def get_cloudflare_metrics(
         return demo_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching metrics: {str(e)}")
+
+
+@router.post("/run-migration")
+async def run_migration(request: Request, session=Depends(get_session)):
+    """Run database migrations - adds missing columns"""
+    from sqlalchemy import text
+    
+    try:
+        # Check if column exists
+        result = session.execute(text("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'became_developer_at'
+        """))
+        
+        if result.fetchone():
+            return {"status": "already_exists", "message": "Column 'became_developer_at' already exists"}
+        
+        # Add the column
+        session.execute(text("""
+            ALTER TABLE users 
+            ADD COLUMN became_developer_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
+        """))
+        session.commit()
+        
+        return {"status": "success", "message": "Added 'became_developer_at' column to users table"}
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Migration failed: {str(e)}")
