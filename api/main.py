@@ -40,7 +40,8 @@ app.add_middleware(
         "http://localhost:3000",
         "https://web-e51fjhuko-agent-resources.vercel.app",
         "https://web-hhkpzwdqj-agent-resources.vercel.app",
-        "https://web-q8917c722-agent-resources.vercel.app"
+        "https://web-q8917c722-agent-resources.vercel.app",
+        "https://web-e64yjq3jw-agent-resources.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
