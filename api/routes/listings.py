@@ -388,6 +388,8 @@ async def create_listing(
     file_count = 0
     total_size = 0
     has_skill_md = False
+    has_persona_md = False
+    has_mcp_manifest = False
     
     for file in files:
         if file.filename:
@@ -404,17 +406,41 @@ async def create_listing(
             file_count += 1
             total_size += len(content)
             
-            # Check for SKILL.md (handle both 'SKILL.md' and 'folder/SKILL.md')
-            if file.filename and file.filename.lower().endswith('skill.md'):
+            # Check for required files based on category
+            filename_lower = file.filename.lower()
+            if filename_lower.endswith('skill.md'):
                 has_skill_md = True
+            elif filename_lower.endswith('persona.md'):
+                has_persona_md = True
+            elif filename_lower.endswith('mcp.json') or filename_lower.endswith('manifest.json'):
+                has_mcp_manifest = True
     
-    if not has_skill_md:
+    # Validate required files based on category
+    required_file_missing = False
+    required_file_name = ""
+    
+    if category == 'skill':
+        if not has_skill_md:
+            required_file_missing = True
+            required_file_name = "SKILL.md"
+    elif category == 'persona':
+        # Personas can have either SKILL.md or PERSONA.md
+        if not has_skill_md and not has_persona_md:
+            required_file_missing = True
+            required_file_name = "SKILL.md or PERSONA.md"
+    elif category == 'mcp_server':
+        # MCP servers need a manifest file
+        if not has_mcp_manifest:
+            required_file_missing = True
+            required_file_name = "mcp.json or manifest.json"
+    
+    if required_file_missing:
         # Log what files were received for debugging
         received_files = [f.filename for f in files if f.filename]
-        print(f"[DEBUG] SKILL.md not found. Received files: {received_files}")
+        print(f"[DEBUG] {required_file_name} not found for category '{category}'. Received files: {received_files}")
         # Clean up and error
         shutil.rmtree(listing_dir, ignore_errors=True)
-        raise HTTPException(status_code=400, detail=f"SKILL.md is required. Received {len(files)} files: {received_files}")
+        raise HTTPException(status_code=400, detail=f"{required_file_name} is required for {category} listings. Received {len(files)} files: {received_files}")
     
     # Create ZIP file
     zip_path = f"{listing_dir}.zip"
