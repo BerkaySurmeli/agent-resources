@@ -473,7 +473,7 @@ export default function ListingDetail() {
                             const url = window.URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
-                            a.download = `${listing.slug}-skill.zip`;
+                            a.download = `${listing.slug}-${listing.category === 'mcp_server' ? 'mcp' : listing.category === 'persona' ? 'persona' : 'skill'}.zip`;
                             document.body.appendChild(a);
                             a.click();
                             window.URL.revokeObjectURL(url);
@@ -500,7 +500,7 @@ export default function ListingDetail() {
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                           </svg>
-                          Download Skill Package
+                          Download {listing.category === 'mcp_server' ? 'MCP Server' : listing.category === 'persona' ? 'Persona' : 'Skill'} Package
                         </>
                       )}
                     </button>

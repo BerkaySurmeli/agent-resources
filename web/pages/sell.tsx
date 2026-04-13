@@ -92,6 +92,28 @@ export default function Sell() {
     setIsDragging(false);
   };
 
+  // Auto-detect category from files
+  const detectCategoryFromFiles = (files: File[]): string | null => {
+    const filenames = files.map(f => f.name.toLowerCase());
+    
+    // Check for MCP manifest
+    if (filenames.some(name => name.endsWith('mcp.json') || name.endsWith('manifest.json'))) {
+      return 'mcp_server';
+    }
+    
+    // Check for PERSONA.md
+    if (filenames.some(name => name.endsWith('persona.md'))) {
+      return 'persona';
+    }
+    
+    // Check for SKILL.md
+    if (filenames.some(name => name.endsWith('skill.md'))) {
+      return 'skill';
+    }
+    
+    return null;
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
@@ -110,13 +132,35 @@ export default function Sell() {
     
     // Also get files directly
     const droppedFiles = Array.from(e.dataTransfer.files);
-    setFormData(prev => ({ ...prev, files: [...prev.files, ...droppedFiles] }));
+    
+    // Auto-detect category if not already set or if current category doesn't match files
+    const detectedCategory = detectCategoryFromFiles(droppedFiles);
+    if (detectedCategory && formData.category !== detectedCategory) {
+      setFormData(prev => ({ 
+        ...prev, 
+        files: [...prev.files, ...droppedFiles],
+        category: detectedCategory
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, files: [...prev.files, ...droppedFiles] }));
+    }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
-      setFormData(prev => ({ ...prev, files: [...prev.files, ...selectedFiles] }));
+      
+      // Auto-detect category if not already set or if current category doesn't match files
+      const detectedCategory = detectCategoryFromFiles(selectedFiles);
+      if (detectedCategory && formData.category !== detectedCategory) {
+        setFormData(prev => ({ 
+          ...prev, 
+          files: [...prev.files, ...selectedFiles],
+          category: detectedCategory
+        }));
+      } else {
+        setFormData(prev => ({ ...prev, files: [...prev.files, ...selectedFiles] }));
+      }
     }
   };
 
@@ -146,6 +190,24 @@ export default function Sell() {
       default:
         return hasSkillMd;
     }
+  };
+  
+  // Check if files match the selected category (for warning display)
+  const getCategoryMismatchWarning = (): string | null => {
+    if (formData.files.length === 0) return null;
+    
+    const detected = detectCategoryFromFiles(formData.files);
+    if (!detected) return null;
+    
+    if (detected !== formData.category) {
+      const categoryNames: Record<string, string> = {
+        'skill': 'Agent Skill',
+        'persona': 'AI Persona',
+        'mcp_server': 'MCP Server'
+      };
+      return `Your files look like a ${categoryNames[detected]}, but you selected ${categoryNames[formData.category]}. The category has been auto-updated.`;
+    }
+    return null;
   };
   
   const totalSize = formData.files.reduce((acc, f) => acc + f.size, 0);
@@ -378,14 +440,30 @@ export default function Sell() {
               <div className="space-y-6">
                 <h2 className="text-xl font-semibold text-slate-900">Upload Your Files</h2>
                 <p className="text-slate-600">
-                  Drop a folder containing your SKILL.md and any supporting files.
-                  Buyers will download this as a ZIP file and extract it to their OpenClaw skills folder.
+                  {formData.category === 'mcp_server' 
+                    ? 'Drop a folder containing your mcp.json or manifest.json and any supporting files.' 
+                    : formData.category === 'persona' 
+                      ? 'Drop a folder containing your SKILL.md or PERSONA.md and any supporting files.' 
+                      : 'Drop a folder containing your SKILL.md and any supporting files.'}
+                  Buyers will download this as a ZIP file.
                 </p>
 
                 {/* Error Display */}
                 {error && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                     <p className="text-red-700 text-sm">{error}</p>
+                  </div>
+                )}
+                
+                {/* Category Mismatch Warning */}
+                {getCategoryMismatchWarning() && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <p className="text-amber-700 text-sm">{getCategoryMismatchWarning()}</p>
+                    </div>
                   </div>
                 )}
                 
