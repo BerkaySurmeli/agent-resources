@@ -35,7 +35,13 @@ async def forward_https(request: Request, call_next):
 # CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://shopagentresources.com", "http://localhost:3000", "https://web-e51fjhuko-agent-resources.vercel.app", "https://web-hhkpzwdqj-agent-resources.vercel.app"],
+    allow_origins=[
+        "https://shopagentresources.com",
+        "http://localhost:3000",
+        "https://web-e51fjhuko-agent-resources.vercel.app",
+        "https://web-hhkpzwdqj-agent-resources.vercel.app",
+        "https://web-q8917c722-agent-resources.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
