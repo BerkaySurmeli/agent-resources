@@ -25,7 +25,13 @@ app = FastAPI(
 # CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://shopagentresources.com", "http://localhost:3000", "https://web-e51fjhuko-agent-resources.vercel.app"],
+    allow_origins=[
+        "https://shopagentresources.com",
+        "http://localhost:3000",
+        "https://web-e51fjhuko-agent-resources.vercel.app",
+        "https://web-azyrb0ssf-agent-resources.vercel.app",
+        "https://agent-resources-api-dev-production.up.railway.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
