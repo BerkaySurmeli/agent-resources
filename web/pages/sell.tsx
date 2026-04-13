@@ -71,10 +71,10 @@ export default function Sell() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-slate-600 mb-4">Please sign in to list an item</p>
-          <Link href="/login" className="text-blue-600 hover:underline">
+          <p className="text-slate-400 mb-4">Please sign in to list an item</p>
+          <Link href="/login" className="text-blue-400 hover:text-blue-300">
             Sign In
           </Link>
         </div>
@@ -84,28 +84,28 @@ export default function Sell() {
 
   if (!user.isVerified) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-6">
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-semibold text-slate-900 mb-4">Email Verification Required</h1>
-          <p className="text-slate-600 mb-6">
+          <h1 className="text-2xl font-semibold text-white mb-4">Email Verification Required</h1>
+          <p className="text-slate-400 mb-6">
             You must verify your email address before creating a listing. 
             Please check your inbox for the verification link.
           </p>
           <div className="space-y-3">
             <Link
               href="/dashboard"
-              className="block w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
+              className="block w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-500 transition-colors"
             >
               Go to Dashboard
             </Link>
             <button
               onClick={() => window.location.reload()}
-              className="block w-full bg-slate-100 text-slate-700 py-3 rounded-xl font-medium hover:bg-slate-200 transition-colors"
+              className="block w-full bg-white/10 text-white py-3 rounded-xl font-medium hover:bg-white/20 transition-colors"
             >
               I've verified my email
             </button>
@@ -326,18 +326,18 @@ export default function Sell() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       <Head>
         <title>List an Item | Agent Resources</title>
       </Head>
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
+      <nav className="fixed top-0 left-0 right-0 bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="group flex items-center gap-3">
-            <Logo variant="full" size="md" textClassName="text-slate-900 group-hover:text-blue-600 transition-colors" />
+            <Logo variant="full" size="md" textClassName="text-white group-hover:text-blue-400 transition-colors" />
           </Link>
-          <Link href="/dashboard" className="text-slate-600 hover:text-slate-900 transition-colors">
+          <Link href="/dashboard" className="text-slate-400 hover:text-white transition-colors">
             Dashboard
           </Link>
         </div>
@@ -345,27 +345,27 @@ export default function Sell() {
 
       <main className="pt-24 pb-12 px-6">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-semibold text-slate-900 mb-2">List an Item</h1>
-          <p className="text-slate-600 mb-8">Create and publish your AI persona, skill, or MCP server</p>
+          <h1 className="text-3xl font-semibold text-white mb-2">List an Item</h1>
+          <p className="text-slate-400 mb-8">Create and publish your AI persona, skill, or MCP server</p>
 
           {/* Progress */}
           <div className="flex items-center gap-4 mb-8">
             {[1, 2, 3].map((s) => (
               <div key={s} className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${
-                  s <= step ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500'
+                  s <= step ? 'bg-blue-600 text-white' : 'bg-white/10 text-slate-400'
                 }`}>
                   {s}
                 </div>
-                {s < 3 && <div className={`w-12 h-1 ${s < step ? 'bg-blue-600' : 'bg-slate-200'}`} />}
+                {s < 3 && <div className={`w-12 h-1 ${s < step ? 'bg-blue-600' : 'bg-white/10'}`} />}
               </div>
             ))}
           </div>
 
-          <div className="bg-slate-50 rounded-2xl p-8">
+          <div className="bg-white/5 rounded-2xl p-8 border border-white/10">
             {step === 1 && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-slate-900">What are you selling?</h2>
+                <h2 className="text-xl font-semibold text-white">What are you selling?</h2>
                 
                 <div className="space-y-4">
                   {categories.map(cat => (
@@ -374,19 +374,19 @@ export default function Sell() {
                       onClick={() => setFormData(prev => ({ ...prev, category: cat.id }))}
                       className={`w-full p-6 rounded-xl border-2 text-left transition-all ${
                         formData.category === cat.id
-                          ? 'border-blue-600 bg-blue-50'
-                          : 'border-slate-200 bg-white hover:border-blue-300'
+                          ? 'border-blue-500 bg-blue-500/10'
+                          : 'border-white/10 bg-white/5 hover:border-blue-400/50'
                       }`}
                     >
-                      <h3 className="font-semibold text-slate-900 mb-1">{cat.name}</h3>
-                      <p className="text-slate-600 text-sm">{cat.description}</p>
+                      <h3 className="font-semibold text-white mb-1">{cat.name}</h3>
+                      <p className="text-slate-400 text-sm">{cat.description}</p>
                     </button>
                   ))}
                 </div>
 
                 <button
                   onClick={() => setStep(2)}
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-500 transition-colors"
                 >
                   Continue
                 </button>
@@ -395,55 +395,55 @@ export default function Sell() {
 
             {step === 2 && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-slate-900">Tell us about your listing</h2>
+                <h2 className="text-xl font-semibold text-white">Tell us about your listing</h2>
                 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Name
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500 placeholder-slate-500"
                     placeholder="e.g., Social Media Manager"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Description
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                     rows={4}
-                    className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500 placeholder-slate-500"
                     placeholder="Describe what your listing does and how it helps users..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Price (USD)
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
                     <input
                       type="number"
                       value={formData.price}
                       onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                      className="w-full pl-8 pr-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
+                      className="w-full pl-8 pr-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500 placeholder-slate-500"
                       placeholder="49"
                     />
                   </div>
-                  <p className="text-sm text-slate-500 mt-1">
+                  <p className="text-sm text-slate-400 mt-1">
                     No commission for free listings. Paid listings: 15% platform fee.
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Tags
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -453,8 +453,8 @@ export default function Sell() {
                         onClick={() => toggleTag(tag)}
                         className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
                           formData.tags.includes(tag)
-                            ? 'bg-blue-100 text-blue-700 border border-blue-300'
-                            : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
+                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
+                            : 'bg-white/5 text-slate-400 border border-white/10 hover:border-white/30'
                         }`}
                       >
                         {tag}
@@ -466,15 +466,14 @@ export default function Sell() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setStep(1)}
-                    className="px-6 py-3 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+                    className="px-6 py-3 rounded-lg border border-white/10 text-slate-300 hover:bg-white/5"
                   >
                     Back
                   </button>
                   <button
                     onClick={() => setStep(3)}
                     disabled={!formData.name || !formData.description || !formData.price}
-                    className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
-                  >
+                    className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-500 transition-colors disabled:opacity-50"
                     Continue
                   </button>
                 </div>
@@ -483,8 +482,8 @@ export default function Sell() {
 
             {step === 3 && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-slate-900">Upload Your Files</h2>
-                <p className="text-slate-600">
+                <h2 className="text-xl font-semibold text-white">Upload Your Files</h2>
+                <p className="text-slate-400">
                   {formData.category === 'mcp_server' 
                     ? 'Drop a folder containing your mcp.json or manifest.json and any supporting files.' 
                     : formData.category === 'persona' 
@@ -495,40 +494,40 @@ export default function Sell() {
 
                 {/* Error Display */}
                 {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <p className="text-red-700 text-sm">{error}</p>
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                    <p className="text-red-400 text-sm">{error}</p>
                   </div>
                 )}
                 
                 {/* Category Mismatch Warning */}
                 {getCategoryMismatchWarning() && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
                     <div className="flex items-start gap-3">
-                      <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
-                      <p className="text-amber-700 text-sm">{getCategoryMismatchWarning()}</p>
+                      <p className="text-yellow-400 text-sm">{getCategoryMismatchWarning()}</p>
                     </div>
                   </div>
                 )}
                 
                 {/* File Structure Guide */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-blue-900 mb-2">
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-blue-300 mb-2">
                     Required File Structure for {categories.find(c => c.id === formData.category)?.name}
                   </h3>
                   <div className="space-y-2">
                     <div>
-                      <p className="text-xs text-blue-700 font-medium">Required:</p>
-                      <p className="text-xs text-blue-600">{fileStructureGuide[formData.category]?.required.join(', ')}</p>
+                      <p className="text-xs text-blue-400 font-medium">Required:</p>
+                      <p className="text-xs text-blue-300">{fileStructureGuide[formData.category]?.required.join(', ')}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-blue-700 font-medium">Optional:</p>
-                      <p className="text-xs text-blue-600">{fileStructureGuide[formData.category]?.optional.join(', ')}</p>
+                      <p className="text-xs text-blue-400 font-medium">Optional:</p>
+                      <p className="text-xs text-blue-300">{fileStructureGuide[formData.category]?.optional.join(', ')}</p>
                     </div>
                     <details className="mt-2">
-                      <summary className="text-xs text-blue-700 cursor-pointer hover:text-blue-800">View example structure</summary>
-                      <pre className="mt-2 p-2 bg-blue-100 rounded text-xs text-blue-800 overflow-x-auto">
+                      <summary className="text-xs text-blue-400 cursor-pointer hover:text-blue-300">View example structure</summary>
+                      <pre className="mt-2 p-2 bg-blue-500/10 rounded text-xs text-blue-300 overflow-x-auto">
                         {fileStructureGuide[formData.category]?.example}
                       </pre>
                     </details>
@@ -543,8 +542,8 @@ export default function Sell() {
                   onClick={() => fileInputRef.current?.click()}
                   className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
                     isDragging 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-slate-300 hover:border-blue-400'
+                      ? 'border-blue-500 bg-blue-500/10' 
+                      : 'border-white/20 hover:border-blue-400'
                   }`}
                 >
                   <input
@@ -555,18 +554,18 @@ export default function Sell() {
                     onChange={handleFileSelect}
                     className="hidden"
                   />
-                  <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-12 h-12 bg-white/5 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
                   </div>
-                  <p className="font-medium text-slate-900 mb-1">Drop a folder here</p>
-                  <p className="text-sm text-slate-500 mb-4">
+                  <p className="font-medium text-white mb-1">Drop a folder here</p>
+                  <p className="text-sm text-slate-400 mb-4">
                     We keep folder paths and flatten the outer wrapper automatically
                   </p>
                   <button
                     type="button"
-                    className="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50"
+                    className="bg-white/10 border border-white/10 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/20"
                   >
                     Choose folder
                   </button>
@@ -574,21 +573,21 @@ export default function Sell() {
 
                 {/* File List with ZIP Preview */}
                 {formData.files.length > 0 && (
-                  <div className="bg-white rounded-lg border border-slate-200 p-4">
+                  <div className="bg-white/5 rounded-lg border border-white/10 p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-slate-700">
+                      <span className="text-sm font-medium text-slate-300">
                         {formData.files.length} files • {(totalSize / 1024).toFixed(1)} KB
                       </span>
                       {hasRequiredFile() && (
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                        <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full">
                           ✓ {formData.category === 'mcp_server' ? 'Manifest' : formData.category === 'persona' ? 'SKILL.md/PERSONA.md' : 'SKILL.md'} found
                         </span>
                       )}
                     </div>
                     
                     {/* ZIP Structure Preview */}
-                    <div className="mb-3 p-3 bg-slate-50 rounded-lg">
-                      <p className="text-xs font-medium text-slate-600 mb-2">ZIP Structure Preview:</p>
+                    <div className="mb-3 p-3 bg-white/5 rounded-lg">
+                      <p className="text-xs font-medium text-slate-400 mb-2">ZIP Structure Preview:</p>
                       <ul className="space-y-1 max-h-32 overflow-y-auto text-xs font-mono">
                         {formData.files.map((file, index) => {
                           // Show flattened path (remove outer folder if present)
@@ -598,27 +597,27 @@ export default function Sell() {
                             : file.name;
                           return (
                             <li key={index} className="flex items-center gap-2">
-                              <span className="text-slate-400">📄</span>
-                              <span className="text-slate-600 truncate">{displayPath}</span>
-                              <span className="text-slate-400 ml-auto">({(file.size / 1024).toFixed(1)} KB)</span>
+                              <span className="text-slate-500">📄</span>
+                              <span className="text-slate-400 truncate">{displayPath}</span>
+                              <span className="text-slate-500 ml-auto">({(file.size / 1024).toFixed(1)} KB)</span>
                             </li>
                           );
                         })}
                       </ul>
                       {formData.files.some(f => f.name.includes('/')) && (
-                        <p className="text-xs text-amber-600 mt-2">
+                        <p className="text-xs text-yellow-400 mt-2">
                           ⚠️ Files in subfolders will be flattened in the ZIP (outer folder removed)
                         </p>
                       )}
                     </div>
                     
-                    <ul className="space-y-2 max-h-32 overflow-y-auto border-t border-slate-100 pt-3">
+                    <ul className="space-y-2 max-h-32 overflow-y-auto border-t border-white/10 pt-3">
                       {formData.files.map((file, index) => (
                         <li key={index} className="flex items-center justify-between text-sm">
-                          <span className="text-slate-600 truncate">{file.name}</span>
+                          <span className="text-slate-400 truncate">{file.name}</span>
                           <button
                             onClick={() => removeFile(index)}
-                            className="text-red-500 hover:text-red-700 ml-2"
+                            className="text-red-400 hover:text-red-300 ml-2"
                           >
                             ×
                           </button>
@@ -629,32 +628,32 @@ export default function Sell() {
                 )}
 
                 {/* Validation Messages */}
-                <div className="bg-slate-100 rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-slate-700 mb-2">Validation</h3>
+                <div className="bg-white/5 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-slate-300 mb-2">Validation</h3>
                   <ul className="space-y-1 text-sm">
-                    <li className={formData.name ? 'text-green-600' : 'text-slate-500'}>
+                    <li className={formData.name ? 'text-green-400' : 'text-slate-500'}>
                       {formData.name ? '✓' : '○'} Name is required
                     </li>
-                    <li className={formData.files.length > 0 ? 'text-green-600' : 'text-slate-500'}>
+                    <li className={formData.files.length > 0 ? 'text-green-400' : 'text-slate-500'}>
                       {formData.files.length > 0 ? '✓' : '○'} Add at least one file
                     </li>
-                    <li className={hasRequiredFile() ? 'text-green-600' : 'text-slate-500'}>
+                    <li className={hasRequiredFile() ? 'text-green-400' : 'text-slate-500'}>
                       {hasRequiredFile() ? '✓' : '○'} {formData.category === 'mcp_server' ? 'mcp.json or manifest.json' : formData.category === 'persona' ? 'SKILL.md or PERSONA.md' : 'SKILL.md'} is required
                     </li>
-                    <li className={formData.termsAccepted ? 'text-green-600' : 'text-slate-500'}>
-                      {formData.termsAccepted ? '✓' : '○'} Accept the <Link href="/terms" target="_blank" className="underline">Terms and Conditions</Link>
+                    <li className={formData.termsAccepted ? 'text-green-400' : 'text-slate-500'}>
+                      {formData.termsAccepted ? '✓' : '○'} Accept the <Link href="/terms" target="_blank" className="underline text-blue-400">Terms and Conditions</Link>
                     </li>
                   </ul>
                 </div>
 
                 {/* License */}
-                <div className="bg-slate-100 rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-slate-700 mb-2">License</h3>
-                  <div className="bg-amber-900/20 border border-amber-800/30 rounded-lg p-3 mb-3">
-                    <span className="text-xs font-medium text-amber-200 px-2 py-1 bg-amber-900/40 rounded">
+                <div className="bg-white/5 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-slate-300 mb-2">License</h3>
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-3">
+                    <span className="text-xs font-medium text-amber-300 px-2 py-1 bg-amber-500/20 rounded">
                       MIT-0 · MIT NO ATTRIBUTION
                     </span>
-                    <p className="text-sm text-slate-600 mt-2">
+                    <p className="text-sm text-slate-400 mt-2">
                       All items published on Agent Resources are licensed under MIT-0. 
                       Free to use, modify, and redistribute. No attribution required.
                     </p>
@@ -664,23 +663,23 @@ export default function Sell() {
                       type="checkbox"
                       checked={formData.termsAccepted}
                       onChange={(e) => setFormData(prev => ({ ...prev, termsAccepted: e.target.checked }))}
-                      className="mt-1 w-4 h-4 text-blue-600 rounded border-slate-300"
+                      className="mt-1 w-4 h-4 text-blue-600 rounded border-white/20 bg-white/5"
                     />
-                    <span className="text-sm text-slate-700">
+                    <span className="text-sm text-slate-300">
                       I have the rights to this item and agree to publish it under MIT-0
                     </span>
                   </label>
                 </div>
 
                 {/* Security Notice */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
                   <div className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <div>
-                      <p className="text-sm font-medium text-yellow-800">Security Scan Required</p>
-                      <p className="text-sm text-yellow-700 mt-1">
+                      <p className="text-sm font-medium text-yellow-300">Security Scan Required</p>
+                      <p className="text-sm text-yellow-200/70 mt-1">
                         Your files will be automatically scanned by VirusTotal and OpenClaw's security analyzer. 
                         This process typically takes a few minutes. You'll be notified when your listing is approved.
                       </p>
@@ -690,12 +689,12 @@ export default function Sell() {
 
                 {/* Submit */}
                 {submitting ? (
-                  <div className="bg-slate-100 rounded-lg p-4">
+                  <div className="bg-white/5 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-slate-700">Uploading...</span>
+                      <span className="text-sm font-medium text-slate-300">Uploading...</span>
                       <span className="text-sm text-slate-500">{uploadProgress}%</span>
                     </div>
-                    <div className="w-full bg-slate-200 rounded-full h-2">
+                    <div className="w-full bg-white/10 rounded-full h-2">
                       <div 
                         className="bg-blue-600 h-2 rounded-full transition-all"
                         style={{ width: `${uploadProgress}%` }}
@@ -706,14 +705,14 @@ export default function Sell() {
                   <div className="flex gap-3">
                     <button
                       onClick={() => setStep(2)}
-                      className="px-6 py-3 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+                      className="px-6 py-3 rounded-lg border border-white/10 text-slate-300 hover:bg-white/5"
                     >
                       Back
                     </button>
                     <button
                       onClick={handleSubmit}
                       disabled={formData.files.length === 0 || !formData.termsAccepted || !hasRequiredFile()}
-                      className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                      className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-500 transition-colors disabled:opacity-50"
                     >
                       Submit for Security Review
                     </button>
