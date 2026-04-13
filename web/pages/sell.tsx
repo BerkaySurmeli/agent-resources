@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import Logo from '../components/Logo';
 
 import { API_URL } from '../lib/api';
 
@@ -329,6 +330,18 @@ export default function Sell() {
       <Head>
         <title>List an Item | Agent Resources</title>
       </Head>
+
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <Logo variant="full" size="md" className="text-slate-900 hover:text-blue-600 transition-colors" />
+          </Link>
+          <Link href="/dashboard" className="text-slate-600 hover:text-slate-900 transition-colors">
+            Dashboard
+          </Link>
+        </div>
+      </nav>
 
       <main className="pt-24 pb-12 px-6">
         <div className="max-w-4xl mx-auto">

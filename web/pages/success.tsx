@@ -106,7 +106,7 @@ export default function SuccessPage() {
 
       <nav className="fixed top-0 inset-x-0 bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3 hover:text-blue-400 transition-colors">
             <Logo variant="full" size="md" className="text-white" />
           </Link>
         </div>
