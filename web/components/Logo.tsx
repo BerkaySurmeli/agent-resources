@@ -4,79 +4,45 @@ interface LogoProps {
   variant?: 'icon' | 'full';
   className?: string;
   size?: 'sm' | 'md' | 'lg';
+  textClassName?: string;
 }
 
 const sizes = {
-  sm: { icon: 32, full: { width: 144, height: 32 } },
-  md: { icon: 40, full: { width: 180, height: 40 } },
-  lg: { icon: 48, full: { width: 216, height: 48 } },
+  sm: { icon: 32, text: 'text-sm' },
+  md: { icon: 40, text: 'text-base' },
+  lg: { icon: 48, text: 'text-lg' },
 };
 
-export function Logo({ variant = 'full', className = '', size = 'md' }: LogoProps) {
+export function Logo({ variant = 'full', className = '', size = 'md', textClassName = '' }: LogoProps) {
   const sizeConfig = sizes[size];
   
   if (variant === 'icon') {
     return (
-      <svg 
-        viewBox="0 0 40 40" 
-        width={sizeConfig.icon} 
-        height={sizeConfig.icon}
-        className={className}
+      <div 
+        className={`bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30 ${className}`}
+        style={{ width: sizeConfig.icon, height: sizeConfig.icon }}
         aria-label="Agent Resources"
       >
-        <rect width="40" height="40" rx="8" fill="#2563eb"/>
-        <text 
-          x="50%" 
-          y="50%" 
-          dominantBaseline="central" 
-          textAnchor="middle" 
-          fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
-          fontSize="18" 
-          fontWeight="700" 
-          fill="white"
-        >
-          AR
-        </text>
-      </svg>
+        <span className="text-white font-bold text-lg">AR</span>
+      </div>
     );
   }
   
   return (
-    <svg 
-      viewBox="0 0 180 40" 
-      width={sizeConfig.full.width} 
-      height={sizeConfig.full.height}
-      className={className}
-      aria-label="Agent Resources"
-    >
-      {/* Icon */}
-      <rect x="0" y="0" width="40" height="40" rx="8" fill="#2563eb"/>
-      <text 
-        x="20" 
-        y="20" 
-        dominantBaseline="central" 
-        textAnchor="middle" 
-        fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
-        fontSize="18" 
-        fontWeight="700" 
-        fill="white"
+    <div className={`flex items-center gap-3 ${className}`}>
+      {/* Beveled Icon with gradient and shadow */}
+      <div 
+        className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30"
+        style={{ width: sizeConfig.icon, height: sizeConfig.icon }}
       >
-        AR
-      </text>
+        <span className="text-white font-bold text-lg">AR</span>
+      </div>
       
       {/* Text */}
-      <text 
-        x="52" 
-        y="20" 
-        dominantBaseline="central" 
-        fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
-        fontSize="16" 
-        fontWeight="600" 
-        fill="currentColor"
-      >
+      <span className={`font-semibold ${sizeConfig.text} ${textClassName}`}>
         Agent Resources
-      </text>
-    </svg>
+      </span>
+    </div>
   );
 }
 

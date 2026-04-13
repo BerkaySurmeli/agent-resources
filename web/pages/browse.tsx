@@ -108,8 +108,8 @@ export default function Browse() {
       {/* Navigation */}
       <nav className="fixed top-0 inset-x-0 bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-            <Logo variant="full" size="md" className="text-white hover:text-blue-400 transition-colors" />
+          <Link href="/" className="group flex items-center gap-3">
+            <Logo variant="full" size="md" textClassName="text-white group-hover:text-blue-400 transition-colors" />
           </Link>
           <div className="flex items-center gap-6">
             <Link href="/cart" className="relative text-slate-400 hover:text-white transition-colors">
