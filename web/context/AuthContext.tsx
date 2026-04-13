@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+import { API_URL } from '../lib/api';
 
 export interface User {
   id: string;

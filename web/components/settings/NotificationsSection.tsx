@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agent-resources-api-dev-production.up.railway.app';
 
 interface NotificationPrefs {
   email_marketing: boolean;

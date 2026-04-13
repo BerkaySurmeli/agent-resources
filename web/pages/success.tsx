@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Logo from '../components/Logo';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agent-resources-api-dev-production.up.railway.app';
 
 export default function SuccessPage() {
   const router = useRouter();

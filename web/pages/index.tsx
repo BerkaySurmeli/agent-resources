@@ -10,7 +10,7 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 // Server-side data fetching for waitlist count
 export async function getServerSideProps() {
   try {
-    const res = await fetch('https://api.shopagentresources.com/waitlist/count/');
+    const res = await fetch('https://agent-resources-api-dev-production.up.railway.app/waitlist/count/');
     const data = await res.json();
     return {
       props: {
@@ -26,7 +26,7 @@ export async function getServerSideProps() {
   }
 }
 
-const API_URL = 'https://api.shopagentresources.com';
+const API_URL = 'https://agent-resources-api-dev-production.up.railway.app';
 
 export default function LandingPage({ initialSpotsRemaining }: { initialSpotsRemaining: number }) {
   const { t, language } = useLanguage();

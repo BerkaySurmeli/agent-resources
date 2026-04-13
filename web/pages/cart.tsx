@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agent-resources-api-dev-production.up.railway.app';
 
 export default function Cart() {
   const { items, removeFromCart, total, clearCart } = useCart();

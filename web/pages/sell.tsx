@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+import { API_URL } from '../lib/api';
 
 const categories = [
   { id: 'persona', name: 'AI Persona', description: 'A complete AI worker with specific skills and personality' },

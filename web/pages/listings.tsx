@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agent-resources-api-dev-production.up.railway.app';
 
 const getCategoryColor = (category: string) => {
   switch (category) {

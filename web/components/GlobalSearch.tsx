@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '../context/LanguageContext';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agent-resources-api-dev-production.up.railway.app';
 
 interface SearchResult {
   type: 'product' | 'developer';
