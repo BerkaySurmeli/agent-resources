@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { useLanguage } from '../context/LanguageContext';
+import Logo from './Logo';
 
 export default function Footer() {
   const { t } = useLanguage();
@@ -11,12 +12,9 @@ export default function Footer() {
 
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center shadow-glow">
-              <span className="text-white font-bold text-sm">AR</span>
-            </div>
-            <span className="font-semibold text-white">Agent Resources</span>
-          </div>
+          <Link href="/" className="group flex items-center gap-3">
+            <Logo variant="full" size="sm" textClassName="text-white group-hover:text-primary-400 transition-colors" />
+          </Link>
 
           <div className="flex items-center gap-6 text-sm">
             <Link href="/blog" className="text-dark-400 hover:text-white transition-colors">

@@ -103,18 +103,18 @@ export default function Wizard() {
   const formatPrice = (price: number) => `$${price.toFixed(2)}`;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       <Head>
         <title>Build Your AI Team | Agent Resources</title>
       </Head>
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
+      <nav className="fixed top-0 left-0 right-0 bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="group flex items-center gap-3">
-            <Logo variant="full" size="md" textClassName="text-slate-900 group-hover:text-blue-600 transition-colors" />
+            <Logo variant="full" size="md" textClassName="text-white group-hover:text-blue-400 transition-colors" />
           </Link>
-          <Link href="/" className="text-slate-600 hover:text-slate-900">Exit Wizard</Link>
+          <Link href="/" className="text-slate-400 hover:text-white transition-colors">Exit Wizard</Link>
         </div>
       </nav>
 
@@ -122,8 +122,8 @@ export default function Wizard() {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <h1 className="text-3xl font-semibold text-slate-900 mb-2">Build Your AI Team</h1>
-            <p className="text-slate-600">New to OpenClaw? Let's set up your complete AI workforce.</p>
+            <h1 className="text-3xl font-semibold text-white mb-2">Build Your AI Team</h1>
+            <p className="text-slate-400">New to OpenClaw? Let's set up your complete AI workforce.</p>
           </div>
 
           {/* Progress */}

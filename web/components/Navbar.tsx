@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import UserMenu from './UserMenu';
-import GlobalSearch from './GlobalSearch';
 import LanguageSwitcher from './LanguageSwitcher';
 
 export default function Navbar() {
@@ -20,11 +19,6 @@ export default function Navbar() {
           </div>
           <span className="font-semibold text-white hidden sm:block group-hover:text-primary-400 transition-colors">Agent Resources</span>
         </Link>
-
-        {/* Search - Desktop */}
-        <div className="hidden lg:block flex-1 max-w-md ms-8 me-8">
-          <GlobalSearch />
-        </div>
 
         {/* Main Navigation */}
         <div className="hidden md:flex items-center gap-1">

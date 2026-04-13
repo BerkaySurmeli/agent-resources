@@ -194,18 +194,18 @@ export default function ListingDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
       </div>
     );
   }
 
   if (error || !listing) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Listing not found</h1>
-          <Link href="/listings" className="text-blue-600 hover:underline">
+          <h1 className="text-2xl font-bold text-white mb-4">Listing not found</h1>
+          <Link href="/listings" className="text-blue-400 hover:text-blue-300">
             Browse all listings
           </Link>
         </div>
@@ -221,18 +221,18 @@ export default function ListingDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       <Head>
         <title>{listing.name} | Agent Resources</title>
       </Head>
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
+      <nav className="fixed top-0 left-0 right-0 bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <Logo variant="full" size="md" className="text-slate-900" />
+          <Link href="/" className="group flex items-center gap-3">
+            <Logo variant="full" size="md" textClassName="text-white group-hover:text-blue-400 transition-colors" />
           </Link>
-          <Link href="/listings" className="text-slate-600 hover:text-slate-900">← Back to listings</Link>
+          <Link href="/listings" className="text-slate-400 hover:text-white transition-colors">← Back to listings</Link>
         </div>
       </nav>
 
