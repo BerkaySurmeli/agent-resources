@@ -51,43 +51,4 @@ async def health():
 async def test_auth():
     return {"message": "Auth routes should be at /auth/signup and /auth/login"}
 
-# Temporary: Approve listings for testing
-@app.post("/approve-listing/{listing_id}")
-async def approve_listing_temp(listing_id: str):
-    """Temporarily approve a listing for testing"""
-    from sqlmodel import select
-    from core.database import get_session
-    from models import Listing, Product
-    from uuid import UUID
-    
-    session = next(get_session())
-    try:
-        listing = session.get(Listing, UUID(listing_id))
-        if not listing:
-            return {"error": "Listing not found"}
-        
-        listing.status = 'approved'
-        listing.virus_scan_status = 'clean'
-        
-        # Create product
-        product = Product(
-            name=listing.name,
-            slug=listing.slug,
-            description=listing.description,
-            category=listing.category,
-            price_cents=listing.price_cents,
-            developer_id=listing.owner_id,
-            is_active=True,
-            is_verified=True
-        )
-        session.add(product)
-        session.commit()
-        session.refresh(product)
-        listing.product_id = product.id
-        session.commit()
-        
-        return {"status": "approved", "slug": listing.slug}
-    finally:
-        session.close()
-
 # Deploy Mon Apr  6 12:14:37 PDT 2026
