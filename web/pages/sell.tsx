@@ -127,7 +127,27 @@ export default function Sell() {
     }));
   };
 
+  // Check for required files based on category
   const hasSkillMd = formData.files.some(f => f.name.toLowerCase().endsWith('skill.md'));
+  const hasPersonaMd = formData.files.some(f => f.name.toLowerCase().endsWith('persona.md'));
+  const hasMcpManifest = formData.files.some(f => 
+    f.name.toLowerCase().endsWith('mcp.json') || f.name.toLowerCase().endsWith('manifest.json')
+  );
+  
+  // Determine if required file is present based on category
+  const hasRequiredFile = () => {
+    switch (formData.category) {
+      case 'skill':
+        return hasSkillMd;
+      case 'persona':
+        return hasSkillMd || hasPersonaMd;
+      case 'mcp_server':
+        return hasMcpManifest;
+      default:
+        return hasSkillMd;
+    }
+  };
+  
   const totalSize = formData.files.reduce((acc, f) => acc + f.size, 0);
 
   const handleSubmit = async () => {
@@ -150,9 +170,12 @@ export default function Sell() {
         throw new Error('Please accept the Terms and Conditions');
       }
 
-      // Validate skill.md for skill category
-      if (formData.category === 'skill' && !hasSkillMd) {
-        throw new Error('Please include a skill.md file for skills');
+      // Validate required files based on category
+      if (!hasRequiredFile()) {
+        const requiredFile = formData.category === 'skill' ? 'SKILL.md' : 
+                            formData.category === 'persona' ? 'SKILL.md or PERSONA.md' : 
+                            'mcp.json or manifest.json';
+        throw new Error(`Please include a ${requiredFile} file for ${formData.category} listings`);
       }
       
       // Create FormData
@@ -412,7 +435,7 @@ export default function Sell() {
                       </span>
                       {hasSkillMd && (
                         <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                          ✓ SKILL.md found
+                          ✓ {formData.category === 'mcp_server' ? 'Manifest' : formData.category === 'persona' ? 'SKILL.md/PERSONA.md' : 'SKILL.md'} found
                         </span>
                       )}
                     </div>
@@ -443,7 +466,7 @@ export default function Sell() {
                       {formData.files.length > 0 ? '✓' : '○'} Add at least one file
                     </li>
                     <li className={hasSkillMd ? 'text-green-600' : 'text-slate-500'}>
-                      {hasSkillMd ? '✓' : '○'} SKILL.md is required
+                      {hasSkillMd ? '✓' : '○'} {formData.category === 'mcp_server' ? 'mcp.json or manifest.json' : formData.category === 'persona' ? 'SKILL.md or PERSONA.md' : 'SKILL.md'} is required
                     </li>
                     <li className={formData.termsAccepted ? 'text-green-600' : 'text-slate-500'}>
                       {formData.termsAccepted ? '✓' : '○'} Accept the <Link href="/terms" target="_blank" className="underline">Terms and Conditions</Link>
@@ -516,7 +539,7 @@ export default function Sell() {
                     </button>
                     <button
                       onClick={handleSubmit}
-                      disabled={formData.files.length === 0 || !formData.termsAccepted || (formData.category === 'skill' && !hasSkillMd)}
+                      disabled={formData.files.length === 0 || !formData.termsAccepted || !hasRequiredFile()}
                       className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
                     >
                       Submit for Security Review
