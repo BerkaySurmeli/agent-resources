@@ -70,13 +70,13 @@ export default function Browse() {
     }
   };
 
-  const toggleFavorite = (id: string) => {
+  const toggleFavorite = (slug: string) => {
     setFavorites(prev => 
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+      prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug]
     );
   };
 
-  const isInCart = (id: string) => cartItems.some(item => item.id === id);
+  const isInCart = (slug: string) => cartItems.some(item => item.slug === slug);
 
   const filteredListings = useMemo(() => {
     let result = listings;
@@ -221,10 +221,10 @@ export default function Browse() {
                         )}
                       </div>
                       <button
-                        onClick={() => toggleFavorite(listing.id)}
+                        onClick={() => toggleFavorite(listing.slug)}
                         className="text-slate-400 hover:text-red-400 transition-colors"
                       >
-                        <svg className={`w-6 h-6 ${favorites.includes(listing.id) ? 'fill-red-500 text-red-500' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className={`w-6 h-6 ${favorites.includes(listing.slug) ? 'fill-red-500 text-red-500' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                         </svg>
                       </button>
@@ -264,20 +264,19 @@ export default function Browse() {
                       </div>
                       <button
                         onClick={() => addToCart({
-                          id: listing.id,
                           slug: listing.slug,
                           name: listing.name,
                           price: listing.price_cents / 100,
                           category: listing.category
                         })}
-                        disabled={isInCart(listing.id)}
+                        disabled={isInCart(listing.slug)}
                         className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                          isInCart(listing.id)
+                          isInCart(listing.slug)
                             ? 'bg-green-600 text-white cursor-default'
                             : 'bg-blue-600 hover:bg-blue-500 text-white'
                         }`}
                       >
-                        {isInCart(listing.id) ? 'In Cart' : 'Add to Cart'}
+                        {isInCart(listing.slug) ? 'In Cart' : 'Add to Cart'}
                       </button>
                     </div>
                   </div>
