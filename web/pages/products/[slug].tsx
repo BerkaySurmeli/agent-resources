@@ -431,18 +431,40 @@ export default function ProductDetail() {
               <p className="text-slate-500 mt-4 text-sm">One-time purchase. Yours forever.</p>
             </div>
             
-            <div className="md:w-80 bg-slate-50 rounded-2xl p-6">
-              <h3 className="font-semibold text-slate-900 mb-4">What's Included</h3>
-              <ul className="space-y-3">
-                {product.includes.map((item: string) => (
-                  <li key={item} className="flex items-start gap-3 text-sm text-slate-600">
-                    <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    {item}
-                  </li>
-                ))}
-              </ul>
+            <div className="md:w-80 space-y-6">
+              {/* What's Included */}
+              <div className="bg-slate-50 rounded-2xl p-6">
+                <h3 className="font-semibold text-slate-900 mb-4">What's Included</h3>
+                <ul className="space-y-3">
+                  {product.includes.map((item: string) => (
+                    <li key={item} className="flex items-start gap-3 text-sm text-slate-600">
+                      <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              {/* Installation Instructions */}
+              <div className="bg-blue-50 rounded-2xl p-6">
+                <h3 className="font-semibold text-blue-900 mb-4">Installation</h3>
+                <div className="space-y-3 text-sm text-blue-800">
+                  <p>1. Download the ZIP file after purchase</p>
+                  <p>2. Extract to your OpenClaw skills folder:</p>
+                  <code className="block bg-blue-100 p-2 rounded text-xs font-mono">
+                    ~/.openclaw/skills/
+                  </code>
+                  <p>3. Restart OpenClaw or run:</p>
+                  <code className="block bg-blue-100 p-2 rounded text-xs font-mono">
+                    openclaw reload
+                  </code>
+                  <p className="text-xs text-blue-600 mt-2">
+                    The {product.category === 'mcp_server' ? 'MCP Server' : product.category === 'persona' ? 'Persona' : 'Skill'} will be available immediately.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

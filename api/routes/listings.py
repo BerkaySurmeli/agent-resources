@@ -442,13 +442,30 @@ async def create_listing(
         shutil.rmtree(listing_dir, ignore_errors=True)
         raise HTTPException(status_code=400, detail=f"{required_file_name} is required for {category} listings. Received {len(files)} files: {received_files}")
     
-    # Create ZIP file
+    # Create ZIP file with flattened structure (remove outer folder)
     zip_path = f"{listing_dir}.zip"
+    
+    # Check if all files are in a single subfolder and get the folder name
+    entries = os.listdir(listing_dir)
+    subdirs = [e for e in entries if os.path.isdir(os.path.join(listing_dir, e))]
+    files_in_root = [e for e in entries if os.path.isfile(os.path.join(listing_dir, e))]
+    
+    # If there's exactly one subfolder and no files in root, flatten it
+    flatten_prefix = None
+    if len(subdirs) == 1 and len(files_in_root) == 0:
+        flatten_prefix = subdirs[0]
+        print(f"[ZIP] Flattening outer folder: {flatten_prefix}")
+    
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(listing_dir):
             for file in files:
                 file_path = os.path.join(root, file)
                 arcname = os.path.relpath(file_path, listing_dir)
+                
+                # Remove outer folder prefix if flattening
+                if flatten_prefix and arcname.startswith(flatten_prefix + '/'):
+                    arcname = arcname[len(flatten_prefix) + 1:]
+                
                 zipf.write(file_path, arcname)
     
     # Clean up directory, keep only ZIP

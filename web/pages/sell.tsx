@@ -12,6 +12,38 @@ const categories = [
   { id: 'mcp_server', name: 'MCP Server', description: 'Infrastructure that connects agents to external systems' },
 ];
 
+// File structure requirements for each category
+const fileStructureGuide: Record<string, { required: string[], optional: string[], example: string }> = {
+  persona: {
+    required: ['PERSONA.md or SKILL.md'],
+    optional: ['README.md', 'avatar.png', 'system-prompt.txt', 'knowledge/'],
+    example: `my-persona/
+├── PERSONA.md          # Required: Role definition, capabilities, communication style
+├── README.md           # Optional: User-facing description
+├── avatar.png          # Optional: Persona avatar image
+└── knowledge/          # Optional: Reference documents
+    └── guidelines.pdf`
+  },
+  skill: {
+    required: ['SKILL.md'],
+    optional: ['README.md', 'examples/', 'templates/'],
+    example: `my-skill/
+├── SKILL.md            # Required: Skill definition, usage, parameters
+├── README.md           # Optional: User guide
+└── examples/           # Optional: Example prompts and outputs
+    └── example1.md`
+  },
+  mcp_server: {
+    required: ['mcp.json or manifest.json'],
+    optional: ['README.md', 'src/', 'config/'],
+    example: `my-mcp-server/
+├── mcp.json            # Required: MCP manifest with server info
+├── README.md           # Optional: Setup instructions
+└── src/                # Optional: Server source code
+    └── server.js`
+  }
+};
+
 const tags = [
   'Executive', 'Finance', 'Growth', 'HR', 'Legal', 'Marketing',
   'Ops', 'Personal', 'Product', 'Productivity', 'Research', 'Sales', 'Support'
@@ -467,6 +499,29 @@ export default function Sell() {
                   </div>
                 )}
                 
+                {/* File Structure Guide */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-blue-900 mb-2">
+                    Required File Structure for {categories.find(c => c.id === formData.category)?.name}
+                  </h3>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-xs text-blue-700 font-medium">Required:</p>
+                      <p className="text-xs text-blue-600">{fileStructureGuide[formData.category]?.required.join(', ')}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-blue-700 font-medium">Optional:</p>
+                      <p className="text-xs text-blue-600">{fileStructureGuide[formData.category]?.optional.join(', ')}</p>
+                    </div>
+                    <details className="mt-2">
+                      <summary className="text-xs text-blue-700 cursor-pointer hover:text-blue-800">View example structure</summary>
+                      <pre className="mt-2 p-2 bg-blue-100 rounded text-xs text-blue-800 overflow-x-auto">
+                        {fileStructureGuide[formData.category]?.example}
+                      </pre>
+                    </details>
+                  </div>
+                </div>
+
                 {/* File Drop Zone */}
                 <div
                   onDragOver={handleDragOver}
@@ -504,7 +559,7 @@ export default function Sell() {
                   </button>
                 </div>
 
-                {/* File List */}
+                {/* File List with ZIP Preview */}
                 {formData.files.length > 0 && (
                   <div className="bg-white rounded-lg border border-slate-200 p-4">
                     <div className="flex items-center justify-between mb-3">
@@ -517,7 +572,34 @@ export default function Sell() {
                         </span>
                       )}
                     </div>
-                    <ul className="space-y-2 max-h-48 overflow-y-auto">
+                    
+                    {/* ZIP Structure Preview */}
+                    <div className="mb-3 p-3 bg-slate-50 rounded-lg">
+                      <p className="text-xs font-medium text-slate-600 mb-2">ZIP Structure Preview:</p>
+                      <ul className="space-y-1 max-h-32 overflow-y-auto text-xs font-mono">
+                        {formData.files.map((file, index) => {
+                          // Show flattened path (remove outer folder if present)
+                          const pathParts = file.name.split('/');
+                          const displayPath = pathParts.length > 1 
+                            ? pathParts.slice(1).join('/')  // Remove outer folder
+                            : file.name;
+                          return (
+                            <li key={index} className="flex items-center gap-2">
+                              <span className="text-slate-400">📄</span>
+                              <span className="text-slate-600 truncate">{displayPath}</span>
+                              <span className="text-slate-400 ml-auto">({(file.size / 1024).toFixed(1)} KB)</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      {formData.files.some(f => f.name.includes('/')) && (
+                        <p className="text-xs text-amber-600 mt-2">
+                          ⚠️ Files in subfolders will be flattened in the ZIP (outer folder removed)
+                        </p>
+                      )}
+                    </div>
+                    
+                    <ul className="space-y-2 max-h-32 overflow-y-auto border-t border-slate-100 pt-3">
                       {formData.files.map((file, index) => (
                         <li key={index} className="flex items-center justify-between text-sm">
                           <span className="text-slate-600 truncate">{file.name}</span>
