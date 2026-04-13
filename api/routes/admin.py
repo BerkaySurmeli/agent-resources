@@ -3,7 +3,7 @@ from sqlmodel import select, func
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from core.database import get_session
-from models import User, Product, Transaction, Review, AdminUser
+from models import User, Product, Transaction, Review, AdminUser, Listing
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from fastapi import Request
@@ -808,3 +808,57 @@ def delete_waitlist_entry(
     session.commit()
     
     return {"message": f"{request.email} removed from waitlist"}
+
+
+@router.post("/listings/approve/{listing_id}")
+def approve_listing(
+    listing_id: str,
+    session = Depends(get_session),
+    admin: AdminUser = Depends(get_current_admin_from_token)
+):
+    """Manually approve a listing (bypass virus scan)"""
+    from uuid import UUID
+    
+    try:
+        listing_uuid = UUID(listing_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid listing ID")
+    
+    listing = session.get(Listing, listing_uuid)
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    # Update listing status
+    listing.status = 'approved'
+    listing.virus_scan_status = 'clean'
+    
+    # Create or update product
+    if not listing.product_id:
+        product = Product(
+            name=listing.name,
+            slug=listing.slug,
+            description=listing.description,
+            category=listing.category,
+            price_cents=listing.price_cents,
+            developer_id=listing.owner_id,
+            is_active=True,
+            is_verified=True
+        )
+        session.add(product)
+        session.commit()
+        session.refresh(product)
+        listing.product_id = product.id
+    else:
+        product = session.get(Product, listing.product_id)
+        if product:
+            product.is_active = True
+            product.is_verified = True
+    
+    session.commit()
+    
+    return {
+        "message": "Listing approved successfully",
+        "listing_id": str(listing.id),
+        "slug": listing.slug,
+        "status": listing.status
+    }
