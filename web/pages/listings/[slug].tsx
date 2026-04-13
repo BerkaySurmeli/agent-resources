@@ -77,14 +77,37 @@ export default function ListingDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [hasPurchased, setHasPurchased] = useState(false);
   const [versions, setVersions] = useState<any[]>([]);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (slug) {
       fetchListing();
       fetchReviews();
       fetchVersions();
+      if (user) {
+        checkPurchaseStatus();
+      }
     }
-  }, [slug]);
+  }, [slug, user]);
+
+  const checkPurchaseStatus = async () => {
+    try {
+      const token = localStorage.getItem('ar-token');
+      if (!token) return;
+      
+      const res = await fetch(`${API_URL}/auth/purchases`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const purchases = await res.json();
+        const purchased = purchases.some((p: any) => p.product_slug === slug);
+        setHasPurchased(purchased);
+      }
+    } catch (err) {
+      console.error('Failed to check purchase status:', err);
+    }
+  };
 
   const fetchListing = async () => {
     try {
@@ -435,20 +458,111 @@ export default function ListingDetail() {
                   <span className="text-4xl font-bold text-slate-900">{formatPrice(listing.price_cents)}</span>
                 </div>
 
-                <button
-                  onClick={() => {
-                    addToCart({
-                      slug: listing.slug,
-                      name: listing.name,
-                      price: Math.round(listing.price_cents) / 100,
-                      category: listing.category
-                    });
-                    router.push('/cart');
-                  }}
-                  className="w-full bg-blue-600 text-white py-4 rounded-xl font-medium hover:bg-blue-700 transition-colors mb-4"
-                >
-                  Buy Now
-                </button>
+                {hasPurchased ? (
+                  <>
+                    <button
+                      onClick={async () => {
+                        setDownloading(true);
+                        try {
+                          const token = localStorage.getItem('ar-token');
+                          const res = await fetch(`${API_URL}/listings/${listing.slug}/download-skill`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                          });
+                          if (res.ok) {
+                            const blob = await res.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `${listing.slug}-skill.zip`;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                          } else {
+                            alert('Failed to download. Please try again.');
+                          }
+                        } catch (err) {
+                          alert('Download failed. Please try again.');
+                        } finally {
+                          setDownloading(false);
+                        }
+                      }}
+                      disabled={downloading}
+                      className="w-full bg-green-600 text-white py-4 rounded-xl font-medium hover:bg-green-700 transition-colors mb-3 flex items-center justify-center gap-2"
+                    >
+                      {downloading ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Downloading...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          Download Skill Package
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const token = localStorage.getItem('ar-token');
+                          const res = await fetch(`${API_URL}/onboarding/generate-complete-package`, {
+                            method: 'POST',
+                            headers: { 
+                              'Authorization': `Bearer ${token}`,
+                              'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                              listing_slugs: [listing.slug],
+                              include_openclaw: true
+                            })
+                          });
+                          if (res.ok) {
+                            const blob = await res.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'openclaw-complete-setup.zip';
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                          } else {
+                            alert('Failed to generate package. Please try again.');
+                          }
+                        } catch (err) {
+                          alert('Failed to generate package. Please try again.');
+                        }
+                      }}
+                      className="w-full bg-blue-600 text-white py-4 rounded-xl font-medium hover:bg-blue-700 transition-colors mb-4 flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      Deploy to OpenClaw
+                    </button>
+                    <p className="text-sm text-slate-500 text-center">
+                      Includes OpenClaw installer + auto-setup
+                    </p>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => {
+                      addToCart({
+                        slug: listing.slug,
+                        name: listing.name,
+                        price: Math.round(listing.price_cents) / 100,
+                        category: listing.category
+                      });
+                      router.push('/cart');
+                    }}
+                    className="w-full bg-blue-600 text-white py-4 rounded-xl font-medium hover:bg-blue-700 transition-colors mb-4"
+                  >
+                    Buy Now
+                  </button>
+                )}
 
                 <p className="text-sm text-slate-500 text-center mb-4">
                   One-time purchase. Yours forever.
