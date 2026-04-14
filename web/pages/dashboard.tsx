@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import Navbar from '../components/Navbar';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agent-resources-api-dev-production.up.railway.app';
 
@@ -174,12 +175,14 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       <Head>
         <title>Your Dashboard | Agent Resources</title>
       </Head>
 
-      <main className="pt-8 pb-12">
+      <Navbar />
+
+      <main className="pt-24 pb-12 px-6">
         <div className="max-w-6xl mx-auto">
           {/* Email Verification Banner */}
           {user && !user.isVerified && (

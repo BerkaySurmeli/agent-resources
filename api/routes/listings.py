@@ -631,6 +631,7 @@ async def get_my_listings(
             description=l.description,
             category=l.category,
             price_cents=l.price_cents,
+            version=l.version or '1.0.0',
             status=l.status,
             file_count=l.file_count,
             file_size_bytes=l.file_size_bytes,
@@ -640,7 +641,9 @@ async def get_my_listings(
             rejection_reason=l.rejection_reason,
             product_id=str(l.product_id) if l.product_id else None,
             translation_status=l.translation_status,
-            virus_scan_status=l.virus_scan_status
+            translation_progress=l.translation_progress or 0,
+            virus_scan_status=l.virus_scan_status,
+            scan_progress=l.scan_progress or 0
         )
         for l in listings
     ]
