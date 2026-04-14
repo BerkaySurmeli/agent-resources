@@ -73,7 +73,7 @@ class DynamicCORSMiddleware:
             await response(scope, receive, send)
             return
         
-        # Wrap send to add CORS headers
+        # Wrap send to add CORS headers and cache control
         async def wrapped_send(message):
             if message["type"] == "http.response.start":
                 headers = list(message.get("headers", []))
@@ -81,6 +81,9 @@ class DynamicCORSMiddleware:
                     headers.append((b"access-control-allow-origin", origin.encode()))
                     if self.allow_credentials:
                         headers.append((b"access-control-allow-credentials", b"true"))
+                # Add cache control to prevent caching of API responses
+                headers.append((b"cache-control", b"no-store, no-cache, must-revalidate, max-age=0"))
+                headers.append((b"pragma", b"no-cache"))
                 message["headers"] = headers
             await send(message)
         
