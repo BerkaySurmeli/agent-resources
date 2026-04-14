@@ -13,6 +13,7 @@ interface Listing {
   description: string;
   category: string;
   price_cents: number;
+  version: string;
   status: string;
   file_count: number;
   file_size_bytes: number;
@@ -22,6 +23,9 @@ interface Listing {
   rejection_reason: string | null;
   product_id: string | null;
   translation_status?: string;
+  translation_progress?: number;
+  virus_scan_status?: string;
+  scan_progress?: number;
 }
 
 interface DashboardStats {
@@ -294,16 +298,52 @@ export default function Dashboard() {
                           {formatPrice(listing.price_cents)}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="space-y-1">
+                          <div className="space-y-2">
+                            {/* Main Status */}
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[listing.status] || 'bg-gray-500/20 text-gray-400'}`}>
                               {(t.common as Record<string, string>)[`status${listing.status.replace(/_/g, '').replace(/\b\w/g, l => l.toUpperCase())}`] || listing.status}
                             </span>
-                            {listing.status === 'approved' && listing.translation_status && (
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${translationStatusColors[listing.translation_status] || 'bg-gray-500/20 text-gray-400'}`}>
-                                {translationStatusLabels[listing.translation_status] || listing.translation_status}
+                            
+                            {/* Virus Scan Progress */}
+                            {listing.virus_scan_status === 'scanning' && (
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="text-yellow-400">Scanning...</span>
+                                  <span className="text-yellow-400">{listing.scan_progress || 0}%</span>
+                                </div>
+                                <div className="w-full bg-gray-700 rounded-full h-1.5">
+                                  <div 
+                                    className="bg-yellow-500 h-1.5 rounded-full transition-all duration-300" 
+                                    style={{ width: `${listing.scan_progress || 0}%` }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Translation Progress */}
+                            {listing.translation_status === 'translating' && (
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="text-blue-400">Translating...</span>
+                                  <span className="text-blue-400">{listing.translation_progress || 0}%</span>
+                                </div>
+                                <div className="w-full bg-gray-700 rounded-full h-1.5">
+                                  <div 
+                                    className="bg-blue-500 h-1.5 rounded-full transition-all duration-300" 
+                                    style={{ width: `${listing.translation_progress || 0}%` }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Translation Complete Badge */}
+                            {listing.status === 'approved' && listing.translation_status === 'completed' && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
+                                ✓ Translated
                               </span>
                             )}
                           </div>
+                          
                           {listing.status === 'rejected' && listing.rejection_reason && (
                             <p className="text-xs text-red-400 mt-1">{listing.rejection_reason}</p>
                           )}

@@ -60,6 +60,7 @@ export default function Sell() {
     category: 'persona',
     description: '',
     price: '',
+    version: '1.0.0',
     tags: [] as string[],
     files: [] as File[],
     termsAccepted: false,
@@ -279,6 +280,7 @@ export default function Sell() {
       data.append('description', formData.description);
       data.append('category', formData.category);
       data.append('price_cents', String(parseInt(formData.price) * 100));
+      data.append('version', formData.version || '1.0.0');
       data.append('tags', JSON.stringify(formData.tags));
       
       // Add files
@@ -423,23 +425,41 @@ export default function Sell() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Price (USD)
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
-                    <input
-                      type="number"
-                      value={formData.price}
-                      onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                      className="w-full pl-8 pr-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500 placeholder-slate-500"
-                      placeholder="49"
-                    />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Price (USD)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                      <input
+                        type="number"
+                        value={formData.price}
+                        onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                        className="w-full pl-8 pr-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500 placeholder-slate-500"
+                        placeholder="49"
+                      />
+                    </div>
+                    <p className="text-sm text-slate-400 mt-1">
+                      10% platform fee on sales
+                    </p>
                   </div>
-                  <p className="text-sm text-slate-400 mt-1">
-                    No commission for free listings. Paid listings: 15% platform fee.
-                  </p>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Version
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.version}
+                      onChange={(e) => setFormData(prev => ({ ...prev, version: e.target.value }))}
+                      className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500 placeholder-slate-500"
+                      placeholder="1.0.0"
+                    />
+                    <p className="text-sm text-slate-400 mt-1">
+                      Semver format (e.g., 1.0.0)
+                    </p>
+                  </div>
                 </div>
 
                 <div>

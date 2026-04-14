@@ -191,9 +191,13 @@ class Listing(SQLModel, table=True):
     category_tags: List[str] = Field(sa_column=Column(ARRAY(TEXT), default=[]))
     price_cents: int
     
+    # Version
+    version: str = Field(default='1.0.0')  # Semver version
+    
     # Translation support
     original_language: str = Field(default='en')  # Language the listing was created in
     translation_status: str = Field(default='pending')  # pending, translating, completed, failed
+    translation_progress: int = Field(default=0)  # 0-100%
     
     # File storage
     file_path: str  # Path to stored ZIP file
@@ -203,6 +207,7 @@ class Listing(SQLModel, table=True):
     # Security scan
     status: str = Field(default='pending_payment')
     virus_scan_status: str = Field(default='pending')  # pending, scanning, clean, infected, failed
+    scan_progress: int = Field(default=0)  # 0-100%
     scan_started_at: Optional[datetime] = Field(default=None)
     scan_completed_at: Optional[datetime] = Field(default=None)
     scan_results: Dict = Field(default={}, sa_column=Column(JSON))

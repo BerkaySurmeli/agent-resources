@@ -298,6 +298,7 @@ class ListingResponse(BaseModel):
     description: str
     category: str
     price_cents: int
+    version: str
     status: str
     file_count: int
     file_size_bytes: int
@@ -307,7 +308,9 @@ class ListingResponse(BaseModel):
     rejection_reason: Optional[str]
     product_id: Optional[str]
     translation_status: Optional[str]
+    translation_progress: int
     virus_scan_status: Optional[str]
+    scan_progress: int
 
 
 class DashboardStats(BaseModel):
@@ -351,6 +354,7 @@ async def create_listing(
     description: str = Form(...),
     category: str = Form(...),
     price_cents: int = Form(...),
+    version: str = Form("1.0.0"),  # Semver version
     tags: str = Form("[]"),  # JSON string
     files: List[UploadFile] = File(...),
     session = Depends(get_session),
@@ -467,13 +471,16 @@ async def create_listing(
         category=cat,
         category_tags=tag_list,
         price_cents=price_cents,
+        version=version,
         file_path=zip_path,
         file_count=file_count,
         file_size_bytes=total_size,
         original_language=original_language,
         listing_fee_cents=LISTING_FEE_CENTS,
         status='pending_payment' if LISTING_FEE_CENTS > 0 else 'pending_scan',
-        virus_scan_status='pending'
+        virus_scan_status='pending',
+        scan_progress=0,
+        translation_progress=0
     )
     
     session.add(listing)
