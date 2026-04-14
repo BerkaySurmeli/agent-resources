@@ -131,9 +131,9 @@ export default function Dashboard() {
         console.log('Listings fetched:', listingsData.length, listingsData);
         setListings(listingsData);
       } else {
-        const errorData = await listingsRes.json().catch(() => ({}));
-        console.error('Listings fetch error:', errorData);
-        setError(`Failed to fetch listings: ${errorData.detail || 'Unknown error'}`);
+        const errorText = await listingsRes.text();
+        console.error('Listings fetch error:', listingsRes.status, errorText);
+        setError(`Failed to fetch listings: ${listingsRes.status} ${errorText.substring(0, 100)}`);
       }
       
       // Fetch stats
