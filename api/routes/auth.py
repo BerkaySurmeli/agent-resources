@@ -92,16 +92,20 @@ def get_current_user_from_token(
         user_id = payload.get("sub")
         
         if not user_id:
+            print(f"[AUTH DEBUG] No user_id in token payload")
             raise HTTPException(status_code=401, detail="Invalid token")
         
+        print(f"[AUTH DEBUG] Token valid for user_id: {user_id}")
         user = session.exec(select(User).where(User.id == user_id)).first()
         
         if not user:
+            print(f"[AUTH DEBUG] User not found: {user_id}")
             raise HTTPException(status_code=401, detail="User not found")
         
         return user
         
-    except JWTError:
+    except JWTError as e:
+        print(f"[AUTH DEBUG] JWTError: {e}")
         raise HTTPException(status_code=401, detail="Invalid token")
 
 # Routes

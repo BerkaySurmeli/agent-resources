@@ -34,7 +34,8 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# Debug: Log Cloudflare config on startup
+# Debug: Log config on startup
+print(f"[CONFIG DEBUG] SECRET_KEY set: {bool(settings.SECRET_KEY)}")
+print(f"[CONFIG DEBUG] SECRET_KEY length: {len(settings.SECRET_KEY)}")
 print(f"[CONFIG DEBUG] CLOUDFLARE_API_TOKEN set: {bool(settings.CLOUDFLARE_API_TOKEN)}")
 print(f"[CONFIG DEBUG] CLOUDFLARE_ZONE_ID set: {bool(settings.CLOUDFLARE_ZONE_ID)}")
-print(f"[CONFIG DEBUG] CLOUDFLARE_ZONE_ID value: {settings.CLOUDFLARE_ZONE_ID}")
