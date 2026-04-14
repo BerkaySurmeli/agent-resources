@@ -11,6 +11,7 @@ import ReviewsSection from '../components/settings/ReviewsSection';
 import ListingsSection from '../components/settings/ListingsSection';
 import NotificationsSection from '../components/settings/NotificationsSection';
 import PayoutSection from '../components/settings/PayoutSection';
+import Navbar from '../components/Navbar';
 
 type SettingsTab = 'profile' | 'account' | 'purchases' | 'reviews' | 'listings' | 'notifications' | 'payouts';
 
@@ -144,7 +145,9 @@ export default function Settings() {
         <title>{t.settings.title} | Agent Resources</title>
       </Head>
 
-      <main className="pt-20 pb-12">
+      <Navbar />
+
+      <main className="pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Page Header */}
           <div className="mb-8">

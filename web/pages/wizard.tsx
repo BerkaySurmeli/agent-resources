@@ -2,7 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
-import Logo from '../components/Logo';
+import Navbar from '../components/Navbar';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agent-resources-api-dev-production.up.railway.app';
 
@@ -180,16 +180,9 @@ export default function Wizard() {
       </Head>
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-50">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="group flex items-center gap-3">
-            <Logo variant="full" size="md" textClassName="text-white group-hover:text-blue-400 transition-colors" />
-          </Link>
-          <Link href="/" className="text-slate-400 hover:text-white transition-colors">Exit Wizard</Link>
-        </div>
-      </nav>
+      <Navbar />
 
-      <main className="pt-24 pb-12 px-6">
+      <main className="pt-20 pb-12 px-6">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">

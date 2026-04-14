@@ -2,7 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import Logo from '../components/Logo';
+import Navbar from '../components/Navbar';
 
 export default function LandingPage() {
   const { t, language, setLanguage, languages } = useLanguage();
@@ -124,31 +124,7 @@ export default function LandingPage() {
 
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
         {/* Navigation */}
-        <nav className="border-b border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <Logo variant="full" size="md" textClassName="text-white" />
-              <div className="flex items-center gap-6">
-                <Link href="/listings" className="text-sm text-slate-400 hover:text-white transition-colors">{t.nav?.listings || 'Listings'}</Link>
-                <Link href="/wizard" className="text-sm text-slate-400 hover:text-white transition-colors">{t.nav?.wizard || 'Build Your Team'}</Link>
-                <Link href="/blog" className="text-sm text-slate-400 hover:text-white transition-colors">{t.nav?.blog || 'Blog'}</Link>
-                <Link href="/dashboard" className="text-sm text-slate-400 hover:text-white transition-colors">{t.nav?.dashboard || 'Dashboard'}</Link>
-                {/* Language Selector */}
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value as any)}
-                  className="bg-slate-800 border border-slate-700 text-white text-sm rounded px-2 py-1"
-                >
-                  {languages.map(lang => (
-                    <option key={lang.code} value={lang.code}>
-                      {lang.flag} {lang.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-        </nav>
+        <Navbar />
 
         {/* Hero Section */}
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">

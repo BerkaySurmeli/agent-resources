@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import Navbar from '../components/Navbar';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agent-resources-api-dev-production.up.railway.app';
 
@@ -69,7 +70,9 @@ export default function Cart() {
         <title>Cart | Agent Resources</title>
       </Head>
 
-      <main className="pt-24 pb-12 px-6">
+      <Navbar />
+
+      <main className="pt-20 pb-12 px-6">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-semibold text-white mb-8">Shopping Cart</h1>
 
