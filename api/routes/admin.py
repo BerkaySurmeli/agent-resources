@@ -862,3 +862,47 @@ def approve_listing(
         "slug": listing.slug,
         "status": listing.status
     }
+
+
+# Temporary endpoint to create/reset admin - remove after use
+@router.post("/setup-admin")
+def setup_admin(
+    setup_key: str = Header(...),
+    email: str = "admin@shopagentresources.com",
+    password: str = "admin123!",
+    name: str = "Admin"
+):
+    """Create or reset admin user - requires setup key from environment"""
+    from core.config import settings
+    
+    # Verify setup key
+    expected_key = getattr(settings, 'ADMIN_SETUP_KEY', 'dev-setup-key-12345')
+    if setup_key != expected_key:
+        raise HTTPException(status_code=403, detail="Invalid setup key")
+    
+    from sqlmodel import Session
+    from core.database import engine
+    from uuid import uuid4
+    
+    with Session(engine) as session:
+        # Check if admin exists
+        admin = session.exec(select(AdminUser).where(AdminUser.email == email)).first()
+        
+        if admin:
+            # Reset password
+            admin.password_hash = pwd_context.hash(password)
+            admin.name = name
+            session.commit()
+            return {"message": f"Admin {email} password reset successfully"}
+        else:
+            # Create new admin
+            admin = AdminUser(
+                id=uuid4(),
+                email=email,
+                password_hash=pwd_context.hash(password),
+                name=name,
+                is_master_admin=True
+            )
+            session.add(admin)
+            session.commit()
+            return {"message": f"Admin {email} created successfully"}
