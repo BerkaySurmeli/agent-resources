@@ -63,6 +63,15 @@ const getCategoryColor = (category: string) => {
   }
 };
 
+const getCategoryColorDark = (category: string) => {
+  switch (category) {
+    case 'persona': return 'bg-blue-500/20 text-blue-400';
+    case 'skill': return 'bg-purple-500/20 text-purple-400';
+    case 'mcp_server': return 'bg-green-500/20 text-green-400';
+    default: return 'bg-gray-500/20 text-gray-400';
+  }
+};
+
 export default function ListingDetail() {
   const router = useRouter();
   const { slug } = router.query;
@@ -260,7 +269,7 @@ export default function ListingDetail() {
             {/* Left Column */}
             <div>
               {/* Category Badge */}
-              <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full mb-4 ${getCategoryColor(listing.category)}`}>
+              <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full mb-4 ${getCategoryColorDark(listing.category)}`}>
                 {getCategoryName(listing.category)}
               </span>
               
@@ -270,7 +279,7 @@ export default function ListingDetail() {
               {/* Developer Info */}
               <Link 
                 href={listing.seller ? `/developers/${listing.seller.id}` : '#'}
-                className="flex items-center gap-3 mb-8 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
+                className="flex items-center gap-3 mb-8 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors border border-white/10"
               >
                 {listing.seller?.avatar_url ? (
                   <img 
@@ -284,11 +293,11 @@ export default function ListingDetail() {
                   </div>
                 )}
                 <div>
-                  <p className="font-medium text-slate-900">{listing.seller?.name || 'Developer'}</p>
+                  <p className="font-medium text-white">{listing.seller?.name || 'Developer'}</p>
                   {listing.is_verified && (
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-500">Verified</span>
-                      <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                      <span className="text-sm text-slate-400">Verified</span>
+                      <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
                     </div>
@@ -315,10 +324,10 @@ export default function ListingDetail() {
               {/* Tags */}
               {listing.tags && listing.tags.length > 0 && (
                 <div className="mb-8">
-                  <h3 className="text-sm font-medium text-slate-900 mb-2">Tags</h3>
+                  <h3 className="text-sm font-medium text-slate-300 mb-2">Tags</h3>
                   <div className="flex flex-wrap gap-2">
                     {listing.tags.map((tag, i) => (
-                      <span key={i} className="px-2 py-1 bg-slate-100 text-slate-600 text-sm rounded">
+                      <span key={i} className="px-2 py-1 bg-white/10 text-slate-300 text-sm rounded">
                         {tag}
                       </span>
                     ))}
@@ -328,24 +337,24 @@ export default function ListingDetail() {
 
               {/* Security Info */}
               {listing.scan_results?.virustotal?.status === 'clean' && (
-                <div className="mb-8 p-4 bg-green-50 rounded-xl">
-                  <div className="flex items-center gap-2 text-green-700">
+                <div className="mb-8 p-4 bg-green-500/10 rounded-xl border border-green-500/20">
+                  <div className="flex items-center gap-2 text-green-400">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                     <span className="font-medium">Security Verified</span>
                   </div>
-                  <p className="text-sm text-green-600 mt-1">
+                  <p className="text-sm text-green-300/70 mt-1">
                     Scanned by VirusTotal - No threats detected
                   </p>
                 </div>
               )}
 
               {/* Reviews Section */}
-              <div className="border-t border-slate-200 pt-8">
+              <div className="border-t border-white/10 pt-8">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-xl font-semibold text-slate-900">Reviews</h2>
+                    <h2 className="text-xl font-semibold text-white">Reviews</h2>
                     {reviewStats.total > 0 && (
                       <div className="flex items-center gap-2 mt-1">
                         <div className="flex items-center">
@@ -360,8 +369,8 @@ export default function ListingDetail() {
                             </svg>
                           ))}
                         </div>
-                        <span className="text-slate-600">{reviewStats.average.toFixed(1)} out of 5</span>
-                        <span className="text-slate-400">({reviewStats.total} reviews)</span>
+                        <span className="text-slate-300">{reviewStats.average.toFixed(1)} out of 5</span>
+                        <span className="text-slate-500">({reviewStats.total} reviews)</span>
                       </div>
                     )}
                   </div>
@@ -377,11 +386,11 @@ export default function ListingDetail() {
 
                 {/* Review Form */}
                 {showReviewForm && (
-                  <div className="bg-slate-50 rounded-xl p-6 mb-6">
-                    <h3 className="font-semibold text-slate-900 mb-4">Write a Review</h3>
+                  <div className="bg-white/5 rounded-xl p-6 mb-6 border border-white/10">
+                    <h3 className="font-semibold text-white mb-4">Write a Review</h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Rating</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Rating</label>
                         <div className="flex items-center gap-2">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <button
@@ -390,7 +399,7 @@ export default function ListingDetail() {
                               className="p-1"
                             >
                               <svg
-                                className={`w-8 h-8 ${star <= newReview.rating ? 'text-yellow-400' : 'text-slate-200'}`}
+                                className={`w-8 h-8 ${star <= newReview.rating ? 'text-yellow-400' : 'text-slate-600'}`}
                                 fill="currentColor"
                                 viewBox="0 0 20 20"
                               >
@@ -401,12 +410,12 @@ export default function ListingDetail() {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Review</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Review</label>
                         <textarea
                           value={newReview.comment}
                           onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
                           rows={4}
-                          className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
+                          className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                           placeholder="Share your experience with this product..."
                         />
                       </div>
@@ -420,7 +429,7 @@ export default function ListingDetail() {
                         </button>
                         <button
                           onClick={() => setShowReviewForm(false)}
-                          className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+                          className="px-4 py-2 rounded-lg border border-white/20 text-slate-300 hover:bg-white/5"
                         >
                           Cancel
                         </button>
@@ -435,17 +444,17 @@ export default function ListingDetail() {
                     <p className="text-slate-500">No reviews yet.</p>
                   ) : (
                     reviews.map((review) => (
-                      <div key={review.id} className="border-b border-slate-100 pb-4 last:border-0">
+                      <div key={review.id} className="border-b border-white/10 pb-4 last:border-0">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-slate-900">{review.user_name}</span>
+                            <span className="font-medium text-white">{review.user_name}</span>
                             {review.is_verified_purchase && (
-                              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                              <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded">
                                 Verified Purchase
                               </span>
                             )}
                           </div>
-                          <span className="text-sm text-slate-400">
+                          <span className="text-sm text-slate-500">
                             {new Date(review.created_at).toLocaleDateString()}
                           </span>
                         </div>
@@ -453,7 +462,7 @@ export default function ListingDetail() {
                           {[...Array(5)].map((_, i) => (
                             <svg
                               key={i}
-                              className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-slate-200'}`}
+                              className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-slate-600'}`}
                               fill="currentColor"
                               viewBox="0 0 20 20"
                             >
@@ -461,7 +470,7 @@ export default function ListingDetail() {
                             </svg>
                           ))}
                         </div>
-                        <p className="text-slate-700">{review.comment}</p>
+                        <p className="text-slate-300">{review.comment}</p>
                       </div>
                     ))
                   )}
@@ -471,9 +480,9 @@ export default function ListingDetail() {
 
             {/* Right Column - Pricing */}
             <div className="md:sticky md:top-24 h-fit">
-              <div className="bg-slate-50 rounded-2xl p-8">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
                 <div className="flex items-baseline gap-3 mb-6">
-                  <span className="text-4xl font-bold text-slate-900">{formatPrice(listing.price_cents)}</span>
+                  <span className="text-4xl font-bold text-white">{formatPrice(listing.price_cents)}</span>
                 </div>
 
                 {hasPurchased ? (
@@ -561,7 +570,7 @@ export default function ListingDetail() {
                       </svg>
                       Deploy to OpenClaw
                     </button>
-                    <p className="text-sm text-slate-500 text-center">
+                    <p className="text-sm text-slate-400 text-center">
                       Includes OpenClaw installer + auto-setup
                     </p>
                   </>
@@ -582,7 +591,7 @@ export default function ListingDetail() {
                   </button>
                 )}
 
-                <p className="text-sm text-slate-500 text-center mb-4">
+                <p className="text-sm text-slate-400 text-center mb-4">
                   One-time purchase. Yours forever.
                 </p>
 
@@ -592,14 +601,14 @@ export default function ListingDetail() {
                     const body = `I would like to report the following listing:\n\nName: ${listing?.name}\nSlug: ${listing?.slug}\n\nReason for report:\n`;
                     window.location.href = `mailto:info@shopagentresources.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
                   }}
-                  className="w-full text-slate-500 text-sm hover:text-red-600 transition-colors"
+                  className="w-full text-slate-400 text-sm hover:text-red-400 transition-colors"
                 >
                   Report this listing
                 </button>
 
-                <div className="mt-6 pt-6 border-t border-slate-200">
-                  <h3 className="font-semibold text-slate-900 mb-3">What's included:</h3>
-                  <ul className="space-y-2 text-sm text-slate-600">
+                <div className="mt-6 pt-6 border-t border-white/10">
+                  <h3 className="font-semibold text-white mb-3">What's included:</h3>
+                  <ul className="space-y-2 text-sm text-slate-400">
                     <li className="flex items-center gap-2">
                       <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
