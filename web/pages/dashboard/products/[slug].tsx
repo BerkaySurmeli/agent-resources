@@ -20,6 +20,7 @@ interface ProductDetail {
   category: string;
   price_cents: number;
   category_tags: string[];
+  status?: string;
   is_active: boolean;
   is_verified: boolean;
   download_count: number;
@@ -211,10 +212,10 @@ export default function ManageProduct() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-slate-600 mb-4">Please sign in to manage your product</p>
-          <Link href="/login" className="text-blue-600 hover:underline">
+          <p className="text-slate-400 mb-4">Please sign in to manage your product</p>
+          <Link href="/login" className="text-blue-400 hover:text-blue-300">
             Sign in →
           </Link>
         </div>
@@ -224,18 +225,18 @@ export default function ManageProduct() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
       </div>
     );
   }
 
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Product not found</h1>
-          <Link href="/dashboard" className="text-blue-600 hover:underline">
+          <h1 className="text-2xl font-bold text-white mb-4">Product not found</h1>
+          <Link href="/dashboard" className="text-blue-400 hover:text-blue-300">
             Back to dashboard
           </Link>
         </div>
@@ -243,20 +244,23 @@ export default function ManageProduct() {
     );
   }
 
+  const isScanning = product.status === 'scanning' || product.status === 'pending_scan';
+  const isApproved = product.status === 'approved';
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       <Head>
         <title>Manage {product.name} | Agent Resources</title>
       </Head>
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
+      <nav className="fixed top-0 left-0 right-0 bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <Logo variant="full" size="md" className="text-slate-900" />
+          <Link href="/" className="group flex items-center gap-3">
+            <Logo variant="full" size="md" textClassName="text-white group-hover:text-blue-400 transition-colors" />
           </Link>
           <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-slate-600 hover:text-slate-900">← Back to Dashboard</Link>
+            <Link href="/dashboard" className="text-slate-400 hover:text-white transition-colors">← Back to Dashboard</Link>
           </div>
         </div>
       </nav>
@@ -266,30 +270,38 @@ export default function ManageProduct() {
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-semibold text-slate-900">Manage Product</h1>
+              <h1 className="text-3xl font-semibold text-white">Manage Product</h1>
               {product.is_verified && (
-                <span className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                <span className="flex items-center gap-1 px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   Verified
                 </span>
               )}
+              {isScanning && (
+                <span className="flex items-center gap-1 px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-sm font-medium animate-pulse">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Scanning...
+                </span>
+              )}
             </div>
-            <p className="text-slate-600">Edit details, view metrics, and manage reviews</p>
+            <p className="text-slate-400">Edit details, view metrics, and manage reviews</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {/* Left Column - Product Details */}
             <div className="md:col-span-2 space-y-6">
               {/* Product Info Card */}
-              <div className="bg-white border border-slate-200 rounded-xl p-6">
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-slate-900">Product Details</h2>
+                  <h2 className="text-lg font-semibold text-white">Product Details</h2>
                   {!isEditing && (
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                      className="text-blue-400 hover:text-blue-300 text-sm font-medium"
                     >
                       Edit
                     </button>
@@ -299,38 +311,38 @@ export default function ManageProduct() {
                 {isEditing ? (
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">Name</label>
                       <input
                         type="text"
                         value={editForm.name}
                         onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
+                        className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
                       <textarea
                         value={editForm.description}
                         onChange={(e) => setEditForm({...editForm, description: e.target.value})}
                         rows={4}
-                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
+                        className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Price (cents)</label>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">Price (cents)</label>
                       <input
                         type="number"
                         value={editForm.price_cents}
                         onChange={(e) => setEditForm({...editForm, price_cents: parseInt(e.target.value) || 0})}
-                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
+                        className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500"
                       />
-                      <p className="text-sm text-slate-500 mt-1">Current: {formatPrice(editForm.price_cents)}</p>
+                      <p className="text-sm text-slate-400 mt-1">Current: {formatPrice(editForm.price_cents)}</p>
                     </div>
                     <div className="flex gap-3">
                       <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-500 disabled:opacity-50"
                       >
                         {saving ? 'Saving...' : 'Save Changes'}
                       </button>
@@ -343,7 +355,7 @@ export default function ManageProduct() {
                             price_cents: product.price_cents
                           });
                         }}
-                        className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+                        className="px-4 py-2 rounded-lg border border-white/10 text-slate-300 hover:bg-white/5"
                       >
                         Cancel
                       </button>
@@ -352,38 +364,38 @@ export default function ManageProduct() {
                 ) : (
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm text-slate-500">Name</p>
-                      <p className="font-medium text-slate-900">{product.name}</p>
+                      <p className="text-sm text-slate-400">Name</p>
+                      <p className="font-medium text-white">{product.name}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-slate-500">Description</p>
-                      <p className="text-slate-700">{product.description}</p>
+                      <p className="text-sm text-slate-400">Description</p>
+                      <p className="text-slate-300">{product.description}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-slate-500">Category</p>
-                      <p className="font-medium text-slate-900">{getCategoryName(product.category)}</p>
+                      <p className="text-sm text-slate-400">Category</p>
+                      <p className="font-medium text-white">{getCategoryName(product.category)}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-slate-500">Price</p>
-                      <p className="font-medium text-slate-900">{formatPrice(product.price_cents)}</p>
+                      <p className="text-sm text-slate-400">Price</p>
+                      <p className="font-medium text-white">{formatPrice(product.price_cents)}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-slate-500">Tags</p>
+                      <p className="text-sm text-slate-400">Tags</p>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {product.category_tags?.map((tag, i) => (
-                          <span key={i} className="px-2 py-1 bg-slate-100 text-slate-600 text-sm rounded">
+                          <span key={i} className="px-2 py-1 bg-white/10 text-slate-300 text-sm rounded">
                             {tag}
                           </span>
                         ))}
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm text-slate-500">Status</p>
-                      <p className="font-medium text-slate-900">
+                      <p className="text-sm text-slate-400">Status</p>
+                      <p className="font-medium">
                         {product.is_active ? (
-                          <span className="text-green-600">Active</span>
+                          <span className="text-green-400">Active</span>
                         ) : (
-                          <span className="text-red-600">Inactive</span>
+                          <span className="text-red-400">Inactive</span>
                         )}
                       </p>
                     </div>
@@ -392,8 +404,8 @@ export default function ManageProduct() {
               </div>
 
               {/* Reviews Section */}
-              <div className="bg-white border border-slate-200 rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-slate-900 mb-4">
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">
                   Reviews ({reviews.length})
                 </h2>
                 {reviews.length === 0 ? (
@@ -401,12 +413,12 @@ export default function ManageProduct() {
                 ) : (
                   <div className="space-y-4">
                     {reviews.map((review) => (
-                      <div key={review.id} className="border-b border-slate-100 pb-4 last:border-0">
+                      <div key={review.id} className="border-b border-white/10 pb-4 last:border-0">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-slate-900">{review.user_name}</span>
                             {review.is_verified_purchase && (
-                              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                              <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded">
                                 Verified Purchase
                               </span>
                             )}
@@ -415,7 +427,7 @@ export default function ManageProduct() {
                             {[...Array(5)].map((_, i) => (
                               <svg
                                 key={i}
-                                className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-slate-200'}`}
+                                className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-slate-600'}`}
                                 fill="currentColor"
                                 viewBox="0 0 20 20"
                               >
@@ -424,8 +436,8 @@ export default function ManageProduct() {
                             ))}
                           </div>
                         </div>
-                        <p className="text-slate-700">{review.comment}</p>
-                        <p className="text-sm text-slate-400 mt-2">
+                        <p className="text-slate-300">{review.comment}</p>
+                        <p className="text-sm text-slate-500 mt-2">
                           {new Date(review.created_at).toLocaleDateString()}
                         </p>
                       </div>
@@ -439,54 +451,58 @@ export default function ManageProduct() {
             <div className="space-y-6">
               {stats && (
                 <>
-                  <div className="bg-slate-50 rounded-xl p-6">
-                    <p className="text-sm text-slate-500 mb-1">Total Sales</p>
-                    <p className="text-3xl font-bold text-slate-900">{stats.total_sales}</p>
+                  <div className="bg-white/5 rounded-xl p-6">
+                    <p className="text-sm text-slate-400 mb-1">Total Sales</p>
+                    <p className="text-3xl font-bold text-white">{stats.total_sales}</p>
                   </div>
-                  <div className="bg-slate-50 rounded-xl p-6">
-                    <p className="text-sm text-slate-500 mb-1">Total Revenue</p>
-                    <p className="text-3xl font-bold text-green-600">{formatPrice(stats.total_revenue_cents)}</p>
+                  <div className="bg-white/5 rounded-xl p-6">
+                    <p className="text-sm text-slate-400 mb-1">Total Revenue</p>
+                    <p className="text-3xl font-bold text-green-400">{formatPrice(stats.total_revenue_cents)}</p>
                   </div>
-                  <div className="bg-slate-50 rounded-xl p-6">
-                    <p className="text-sm text-slate-500 mb-1">Downloads</p>
-                    <p className="text-3xl font-bold text-blue-600">{product.download_count}</p>
+                  <div className="bg-white/5 rounded-xl p-6">
+                    <p className="text-sm text-slate-400 mb-1">Downloads</p>
+                    <p className="text-3xl font-bold text-blue-400">{product.download_count}</p>
                   </div>
-                  <div className="bg-slate-50 rounded-xl p-6">
-                    <p className="text-sm text-slate-500 mb-1">Average Rating</p>
+                  <div className="bg-white/5 rounded-xl p-6">
+                    <p className="text-sm text-slate-400 mb-1">Average Rating</p>
                     <div className="flex items-center gap-2">
-                      <p className="text-3xl font-bold text-yellow-500">{stats.average_rating.toFixed(1)}</p>
-                      <span className="text-slate-400">/ 5</span>
+                      <p className="text-3xl font-bold text-yellow-400">{stats.average_rating.toFixed(1)}</p>
+                      <span className="text-slate-500">/ 5</span>
                     </div>
-                    <p className="text-sm text-slate-400 mt-1">{stats.total_reviews} reviews</p>
+                    <p className="text-sm text-slate-500 mt-1">{stats.total_reviews} reviews</p>
                   </div>
                 </>
               )}
 
-              {/* Public View Link */}
-              <Link
-                href={`/listings/${product.slug}`}
-                className="block w-full bg-blue-600 text-white text-center py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
-              >
-                View Public Page
-              </Link>
+              {/* Public View Link - Only show for approved listings */}
+              {isApproved && (
+                <Link
+                  href={`/listings/${product.slug}`}
+                  className="block w-full bg-blue-600 text-white text-center py-3 rounded-xl font-medium hover:bg-blue-500 transition-colors"
+                >
+                  View Public Page
+                </Link>
+              )}
 
-              {/* Pause/Resume Button */}
-              <button
-                onClick={handleToggleStatus}
-                disabled={togglingStatus}
-                className={`block w-full text-center py-3 rounded-xl font-medium transition-colors ${
-                  product.is_active
-                    ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                    : 'bg-green-100 text-green-700 hover:bg-green-200'
-                }`}
-              >
-                {togglingStatus ? 'Updating...' : product.is_active ? 'Pause Listing' : 'Resume Listing'}
-              </button>
+              {/* Pause/Resume Button - Only show for approved listings */}
+              {isApproved && (
+                <button
+                  onClick={handleToggleStatus}
+                  disabled={togglingStatus}
+                  className={`block w-full text-center py-3 rounded-xl font-medium transition-colors ${
+                    product.is_active
+                      ? 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30'
+                      : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                  }`}
+                >
+                  {togglingStatus ? 'Updating...' : product.is_active ? 'Pause Listing' : 'Resume Listing'}
+                </button>
+              )}
 
               {/* Delete Button */}
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="block w-full bg-red-100 text-red-700 text-center py-3 rounded-xl font-medium hover:bg-red-200 transition-colors"
+                className="block w-full bg-red-500/20 text-red-400 text-center py-3 rounded-xl font-medium hover:bg-red-500/30 transition-colors"
               >
                 Delete Listing
               </button>
@@ -498,10 +514,10 @@ export default function ManageProduct() {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-8 max-w-md mx-4">
-            <h2 className="text-xl font-semibold text-slate-900 mb-4">Delete Listing?</h2>
-            <p className="text-slate-600 mb-6">
-              This will permanently delete <strong>{product.name}</strong>. This action cannot be undone.
+          <div className="bg-slate-900 border border-white/10 rounded-2xl p-8 max-w-md mx-4">
+            <h2 className="text-xl font-semibold text-white mb-4">Delete Listing?</h2>
+            <p className="text-slate-400 mb-6">
+              This will permanently delete <strong className="text-white">{product.name}</strong>. This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
