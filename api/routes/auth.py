@@ -73,6 +73,37 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 def auth_options():
     return {"message": "OK"}
 
+
+# Dependency to get current user from JWT token - defined before routes that use it
+def get_current_user_from_token(
+    request: Request,
+    session = Depends(get_session)
+) -> User:
+    """Extract and validate JWT token from Authorization header"""
+    auth_header = request.headers.get("Authorization")
+    
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
+    
+    token = auth_header.split(" ")[1]
+    
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        user = session.exec(select(User).where(User.id == user_id)).first()
+        
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        return user
+        
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
 # Routes
 @router.post("/signup", response_model=TokenResponse)
 def signup(user_data: UserSignup, session = Depends(get_session)):
@@ -211,9 +242,58 @@ def validate_token(
         raise HTTPException(status_code=401, detail="Invalid token")
 
 @router.post("/become-developer")
-def become_developer(session = Depends(get_session)):
-    # Toggle is_developer flag
-    raise HTTPException(status_code=501, detail="Not implemented")
+def become_developer(
+    request: Request,
+    session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Register user as a developer and send welcome email with developer code"""
+    import secrets
+    import string
+    from services.email import send_developer_welcome_email
+    
+    # Check if user is already a developer
+    if current_user.is_developer:
+        raise HTTPException(status_code=400, detail="User is already a developer")
+    
+    # Generate unique developer code
+    code_prefix = "DEV-"
+    code_suffix = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+    developer_code = f"{code_prefix}{code_suffix}"
+    
+    # Check if code already exists (unlikely but possible)
+    existing = session.exec(select(User).where(User.developer_code == developer_code)).first()
+    while existing:
+        code_suffix = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+        developer_code = f"{code_prefix}{code_suffix}"
+        existing = session.exec(select(User).where(User.developer_code == developer_code)).first()
+    
+    # Update user as developer
+    current_user.is_developer = True
+    current_user.developer_code = developer_code
+    current_user.became_developer_at = datetime.utcnow()
+    
+    try:
+        session.commit()
+        
+        # Send welcome email with developer code
+        try:
+            send_developer_welcome_email(current_user.email, current_user.name or "Developer", developer_code)
+        except Exception as e:
+            print(f"[EMAIL ERROR] Failed to send developer welcome email: {e}")
+            # Don't fail the request if email fails, but log it
+        
+        return {
+            "message": "Successfully registered as a developer",
+            "developer_code": developer_code,
+            "benefits": [
+                "List your first item free",
+                "$20 bonus after your first sale"
+            ]
+        }
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to register as developer: {str(e)}")
 
 @router.get("/verify-email")
 def verify_email(token: str, session = Depends(get_session)):
@@ -271,37 +351,6 @@ def resend_verification(
             print(f"[EMAIL ERROR] {e}")
             raise HTTPException(status_code=500, detail="Failed to send verification email. Please try again later.")
 
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-
-# Dependency to get current user from JWT token
-def get_current_user_from_token(
-    request: Request,
-    session = Depends(get_session)
-) -> User:
-    """Extract and validate JWT token from Authorization header"""
-    auth_header = request.headers.get("Authorization")
-    
-    if not auth_header or not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
-    
-    token = auth_header.split(" ")[1]
-    
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("sub")
-        
-        if not user_id:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        
-        user = session.exec(select(User).where(User.id == user_id)).first()
-        
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-        
-        return user
-        
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 

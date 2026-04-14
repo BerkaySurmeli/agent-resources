@@ -31,13 +31,13 @@ class User(SQLModel, table=True):
     is_verified: bool = Field(default=False)
     verification_token: Optional[str] = Field(default=None, index=True)
     verification_sent_at: Optional[datetime] = Field(default=None)
+    # Developer fields
+    developer_code: Optional[str] = Field(default=None, unique=True, index=True)
+    became_developer_at: Optional[datetime] = Field(default=None)
     stripe_connect_id: Optional[str] = Field(default=None, unique=True)
     stripe_status: str = Field(default="pending")
     stripe_charges_enabled: bool = Field(default=False)
     stripe_payouts_enabled: bool = Field(default=False)
-    # Developer incentive tracking
-    developer_code: Optional[str] = Field(default=None)  # DEV-XXXXXXXX for first 50
-    first_sale_bonus_paid: bool = Field(default=False)  # $20 after first sale
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Relationships
@@ -164,7 +164,7 @@ class WaitlistEntry(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     email: str = Field(unique=True, index=True)
     source: str = Field(default="website")  # where they signed up
-    developer_code: Optional[str] = Field(default=None)  # DEV-XXXXXXXX for first 50
+    developer_code: Optional[str] = Field(default=None, unique=True)  # Developer incentive code
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 

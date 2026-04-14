@@ -3,7 +3,7 @@ from sqlmodel import select, func
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from core.database import get_session
-from models import User, Product, Transaction, Review, AdminUser, Listing
+from models import User, Product, Transaction, Review, AdminUser
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from fastapi import Request
@@ -759,109 +759,34 @@ async def get_cloudflare_metrics(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching metrics: {str(e)}")
 
-# Admin Waitlist Routes
-from models import WaitlistEntry
-from pydantic import BaseModel
 
-class WaitlistDeleteRequest(BaseModel):
-    email: str
-
-@router.get("/waitlist/")
-def get_waitlist_entries(
-    session = Depends(get_session),
-    admin: AdminUser = Depends(get_current_admin_from_token)
-):
-    """Get all waitlist entries with developer codes"""
-    entries = session.exec(
-        select(WaitlistEntry).order_by(WaitlistEntry.created_at.desc())
-    ).all()
-    
-    return {
-        "entries": [
-            {
-                "email": e.email,
-                "created_at": e.created_at.isoformat() if e.created_at else None,
-                "source": e.source,
-                "developer_code": e.developer_code,
-            }
-            for e in entries
-        ],
-        "total": len(entries),
-        "with_codes": len([e for e in entries if e.developer_code]),
-    }
-
-@router.post("/waitlist/delete/")
-def delete_waitlist_entry(
-    request: WaitlistDeleteRequest,
-    session = Depends(get_session),
-    admin: AdminUser = Depends(get_current_admin_from_token)
-):
-    """Delete a waitlist entry by email"""
-    entry = session.exec(
-        select(WaitlistEntry).where(WaitlistEntry.email == request.email)
-    ).first()
-    
-    if not entry:
-        raise HTTPException(status_code=404, detail="Email not found in waitlist")
-    
-    session.delete(entry)
-    session.commit()
-    
-    return {"message": f"{request.email} removed from waitlist"}
-
-
-@router.post("/listings/approve/{listing_id}")
-def approve_listing(
-    listing_id: str,
-    session = Depends(get_session),
-    admin: AdminUser = Depends(get_current_admin_from_token)
-):
-    """Manually approve a listing (bypass virus scan)"""
-    from uuid import UUID
+@router.post("/run-migration")
+async def run_migration(request: Request, session=Depends(get_session)):
+    """Run database migrations - adds missing columns"""
+    from sqlalchemy import text
     
     try:
-        listing_uuid = UUID(listing_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid listing ID")
-    
-    listing = session.get(Listing, listing_uuid)
-    if not listing:
-        raise HTTPException(status_code=404, detail="Listing not found")
-    
-    # Update listing status
-    listing.status = 'approved'
-    listing.virus_scan_status = 'clean'
-    
-    # Create or update product
-    if not listing.product_id:
-        product = Product(
-            name=listing.name,
-            slug=listing.slug,
-            description=listing.description,
-            category=listing.category,
-            price_cents=listing.price_cents,
-            developer_id=listing.owner_id,
-            is_active=True,
-            is_verified=True
-        )
-        session.add(product)
+        # Check if column exists
+        result = session.execute(text("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'became_developer_at'
+        """))
+        
+        if result.fetchone():
+            return {"status": "already_exists", "message": "Column 'became_developer_at' already exists"}
+        
+        # Add the column
+        session.execute(text("""
+            ALTER TABLE users 
+            ADD COLUMN became_developer_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
+        """))
         session.commit()
-        session.refresh(product)
-        listing.product_id = product.id
-    else:
-        product = session.get(Product, listing.product_id)
-        if product:
-            product.is_active = True
-            product.is_verified = True
-    
-    session.commit()
-    
-    return {
-        "message": "Listing approved successfully",
-        "listing_id": str(listing.id),
-        "slug": listing.slug,
-        "status": listing.status
-    }
+        
+        return {"status": "success", "message": "Added 'became_developer_at' column to users table"}
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Migration failed: {str(e)}")
 
 
 # Temporary endpoint to create/reset admin - remove after use
@@ -874,15 +799,16 @@ def setup_admin(
 ):
     """Create or reset admin user - requires setup key from environment"""
     from core.config import settings
+    from sqlmodel import Session, create_engine
+    from uuid import uuid4
     
     # Verify setup key
     expected_key = getattr(settings, 'ADMIN_SETUP_KEY', 'dev-setup-key-12345')
     if setup_key != expected_key:
         raise HTTPException(status_code=403, detail="Invalid setup key")
     
-    from sqlmodel import Session
-    from core.database import engine
-    from uuid import uuid4
+    # Create engine inline
+    engine = create_engine(settings.DATABASE_URL)
     
     with Session(engine) as session:
         # Check if admin exists

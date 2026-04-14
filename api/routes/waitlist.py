@@ -35,7 +35,7 @@ def send_welcome_email(email: str, code: str):
             <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
                 <!-- Logo -->
                 <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="width: 60px; height: 60px; background: #2563eb; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 24px;">AR</div>
+                    <img src="https://shopagentresources.com/logo.svg" alt="Agent Resources" width="60" height="60" style="border-radius: 12px;"/>
                     <div style="margin-top: 10px; font-size: 18px; font-weight: 600; color: #1f2937;">Agent Resources</div>
                 </div>
                 
@@ -51,7 +51,8 @@ def send_welcome_email(email: str, code: str):
                 
                 <p>As one of our first 50 developers, you're eligible for:</p>
                 <ul>
-                    <li>$20 bonus after your first sale</li>
+                    <li>✓ List your first item free</li>
+                    <li>✓ $20 bonus after your first sale</li>
                 </ul>
                 
                 <p>Stay tuned for updates!</p>
@@ -66,10 +67,11 @@ def send_welcome_email(email: str, code: str):
         """
         
         resend.Emails.send({
-            "from": settings.FROM_EMAIL_SUPPORT,
+            "from": "Agent Resources <info@shopagentresources.com>",
             "to": email,
             "subject": "Welcome to Agent Resources - Your Developer Code Inside!",
-            "html": html_content
+            "html": html_content,
+            "reply_to": "Agent Resources <support@shopagentresources.com>"
         })
         print(f"[EMAIL] Welcome email sent to {email}")
     except Exception as e:
@@ -90,7 +92,7 @@ def send_waitlist_email(email: str):
             <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
                 <!-- Logo -->
                 <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="width: 60px; height: 60px; background: #2563eb; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 24px;">AR</div>
+                    <img src="https://shopagentresources.com/logo.svg" alt="Agent Resources" width="60" height="60" style="border-radius: 12px;"/>
                     <div style="margin-top: 10px; font-size: 18px; font-weight: 600; color: #1f2937;">Agent Resources</div>
                 </div>
                 
@@ -112,10 +114,11 @@ def send_waitlist_email(email: str):
         """
         
         resend.Emails.send({
-            "from": settings.FROM_EMAIL_SUPPORT,
+            "from": "Agent Resources <info@shopagentresources.com>",
             "to": email,
             "subject": "You're on the Agent Resources waitlist!",
-            "html": html_content
+            "html": html_content,
+            "reply_to": "Agent Resources <support@shopagentresources.com>"
         })
         print(f"[EMAIL] Waitlist email sent to {email}")
     except Exception as e:
@@ -198,3 +201,5 @@ def delete_from_waitlist(request: WaitlistRequest):
     
     session.close()
     return {"status": "not_found", "message": "Email not found in waitlist"}
+
+

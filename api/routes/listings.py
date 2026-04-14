@@ -28,53 +28,6 @@ VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "")
 VIRUSTOTAL_BASE_URL = "https://www.virustotal.com/api/v3"
 VIRUSTOTAL_RATE_LIMIT = 4  # requests per minute (free tier)
 
-# File structure requirements for each category
-CATEGORY_REQUIREMENTS = {
-    'skill': {
-        'required_files': ['skill.md'],
-        'recommended_files': ['readme.md', 'examples/'],
-        'description': 'Agent Skill - A specific capability or workflow'
-    },
-    'persona': {
-        'required_files': ['skill.md', 'persona.md'],  # Either one is acceptable
-        'recommended_files': ['readme.md', 'avatar.png', 'knowledge/'],
-        'description': 'AI Persona - A complete AI worker with personality'
-    },
-    'mcp_server': {
-        'required_files': ['mcp.json', 'manifest.json'],  # Either one is acceptable
-        'recommended_files': ['readme.md', 'src/', 'config/'],
-        'description': 'MCP Server - Infrastructure for agent connections'
-    }
-}
-
-def validate_file_structure(files: List[UploadFile], category: str) -> tuple[bool, List[str], List[str]]:
-    """
-    Validate uploaded files against category requirements.
-    Returns: (is_valid, missing_required, missing_recommended)
-    """
-    if category not in CATEGORY_REQUIREMENTS:
-        return True, [], []
-    
-    requirements = CATEGORY_REQUIREMENTS[category]
-    filenames = [f.filename.lower() if f.filename else '' for f in files]
-    
-    # Check for required files (at least one must match)
-    has_required = False
-    for req_file in requirements['required_files']:
-        if any(f.endswith(req_file) or f.endswith('/' + req_file) for f in filenames):
-            has_required = True
-            break
-    
-    missing_required = [] if has_required else requirements['required_files']
-    
-    # Check for recommended files
-    missing_recommended = []
-    for rec_file in requirements['recommended_files']:
-        if not any(f.endswith(rec_file.rstrip('/')) or f.endswith('/' + rec_file.rstrip('/')) for f in filenames):
-            missing_recommended.append(rec_file)
-    
-    return has_required, missing_required, missing_recommended
-
 # Rate limiter for VirusTotal
 class RateLimiter:
     def __init__(self, max_calls: int, period: float):
@@ -481,48 +434,21 @@ async def create_listing(
             required_file_missing = True
             required_file_name = "mcp.json or manifest.json"
     
-    # Run comprehensive file structure validation
-    is_valid, missing_required, missing_recommended = validate_file_structure(files, category)
-    
-    if not is_valid:
+    if required_file_missing:
+        # Log what files were received for debugging
         received_files = [f.filename for f in files if f.filename]
-        requirements = CATEGORY_REQUIREMENTS.get(category, {})
-        required_str = ' or '.join(requirements.get('required_files', ['required file']))
-        print(f"[DEBUG] File validation failed for category '{category}'. Missing: {missing_required}. Received: {received_files}")
+        print(f"[DEBUG] {required_file_name} not found for category '{category}'. Received files: {received_files}")
+        # Clean up and error
         shutil.rmtree(listing_dir, ignore_errors=True)
-        raise HTTPException(
-            status_code=400, 
-            detail=f"{required_str} is required for {category} listings. Received {len(files)} files: {received_files}"
-        )
+        raise HTTPException(status_code=400, detail=f"{required_file_name} is required for {category} listings. Received {len(files)} files: {received_files}")
     
-    # Log recommendations (non-blocking)
-    if missing_recommended:
-        print(f"[VALIDATION] Recommendations for {category} listing: Consider adding {', '.join(missing_recommended)}")
-    
-    # Create ZIP file with flattened structure (remove outer folder)
+    # Create ZIP file
     zip_path = f"{listing_dir}.zip"
-    
-    # Check if all files are in a single subfolder and get the folder name
-    entries = os.listdir(listing_dir)
-    subdirs = [e for e in entries if os.path.isdir(os.path.join(listing_dir, e))]
-    files_in_root = [e for e in entries if os.path.isfile(os.path.join(listing_dir, e))]
-    
-    # If there's exactly one subfolder and no files in root, flatten it
-    flatten_prefix = None
-    if len(subdirs) == 1 and len(files_in_root) == 0:
-        flatten_prefix = subdirs[0]
-        print(f"[ZIP] Flattening outer folder: {flatten_prefix}")
-    
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(listing_dir):
             for file in files:
                 file_path = os.path.join(root, file)
                 arcname = os.path.relpath(file_path, listing_dir)
-                
-                # Remove outer folder prefix if flattening
-                if flatten_prefix and arcname.startswith(flatten_prefix + '/'):
-                    arcname = arcname[len(flatten_prefix) + 1:]
-                
                 zipf.write(file_path, arcname)
     
     # Clean up directory, keep only ZIP
@@ -531,20 +457,6 @@ async def create_listing(
     # Detect original language
     original_language = detect_language(name + " " + description)
     print(f"[TRANSLATION] Detected language: {original_language}")
-    
-    # Calculate listing fee based on pricing rules:
-    # - Free if user has developer code (first 50)
-    # - Free if price is $0
-    # - $10 (1000 cents) otherwise
-    if current_user.developer_code:
-        # First 50 developers list free
-        listing_fee_cents = 0
-    elif price_cents == 0:
-        # Free listings are free to post
-        listing_fee_cents = 0
-    else:
-        # $10 listing fee for paid items
-        listing_fee_cents = 1000
     
     # Create listing record
     listing = Listing(
@@ -559,8 +471,8 @@ async def create_listing(
         file_count=file_count,
         file_size_bytes=total_size,
         original_language=original_language,
-        listing_fee_cents=listing_fee_cents,
-        status='pending_payment' if listing_fee_cents > 0 else 'pending_scan',
+        listing_fee_cents=LISTING_FEE_CENTS,
+        status='pending_payment' if LISTING_FEE_CENTS > 0 else 'pending_scan',
         virus_scan_status='pending'
     )
     
@@ -621,20 +533,6 @@ async def create_listing(
                 
                 listing.product_id = product.id
                 session.commit()
-                
-                # Send approval email to seller
-                from services.email import send_listing_approved_email
-                import asyncio
-                
-                frontend_url = settings.FRONTEND_URL or "https://shopagentresources.com"
-                listing_url = f"{frontend_url}/listings/{listing.slug}"
-                
-                asyncio.create_task(send_listing_approved_email(
-                    to_email=current_user.email,
-                    seller_name=current_user.name or current_user.email.split('@')[0],
-                    listing_name=listing.name,
-                    listing_url=listing_url
-                ))
                 
                 return {
                     "id": str(listing.id),
@@ -780,7 +678,7 @@ async def get_public_listings(
     """Get published/approved listings for public browsing"""
     from models import User, Product
     
-    query = select(Listing, User, Product).join(User, Listing.owner_id == User.id).outerjoin(Product, Listing.product_id == Product.id).where(Listing.status.in_(['approved', 'scanning', 'pending_scan']))
+    query = select(Listing, User, Product).join(User, Listing.owner_id == User.id).outerjoin(Product, Listing.product_id == Product.id).where(Listing.status == 'approved')
     
     # Helper function to get translated content
     def get_listing_content(listing: Listing, language: str):
@@ -851,7 +749,6 @@ async def get_public_listings(
             "category": l.category,
             "price_cents": l.price_cents,
             "tags": l.category_tags,
-            "status": l.status,
             "virus_scan_status": l.virus_scan_status,
             "translation_status": l.translation_status,
             "created_at": l.created_at,
@@ -883,8 +780,8 @@ async def get_listing_detail(
 
     listing, user, product = result
 
-    # Show approved, scanning, and pending_scan listings publicly
-    if listing.status not in ['approved', 'scanning', 'pending_scan']:
+    # Only show approved listings publicly
+    if listing.status != 'approved':
         raise HTTPException(status_code=404, detail="Listing not found")
 
     return {
@@ -895,7 +792,6 @@ async def get_listing_detail(
         "category": listing.category,
         "price_cents": listing.price_cents,
         "tags": listing.category_tags,
-        "status": listing.status,
         "file_count": listing.file_count,
         "file_size_bytes": listing.file_size_bytes,
         "scan_results": listing.scan_results,
@@ -1198,164 +1094,3 @@ async def toggle_listing_status(
             }
     
     return {"message": "No product associated with this listing"}
-
-
-@router.get("/{slug}/download-skill")
-async def download_skill_package(
-    slug: str,
-    session = Depends(get_session),
-    current_user = Depends(get_current_user_from_token)
-):
-    """Generate and download a listing as an OpenClaw skill package"""
-    from fastapi.responses import StreamingResponse
-    import io
-    
-    # Get listing
-    listing = session.exec(
-        select(Listing).where(Listing.slug == slug, Listing.status == 'approved')
-    ).first()
-    
-    if not listing:
-        raise HTTPException(status_code=404, detail="Listing not found")
-    
-    # Check if user has purchased this (or it's free)
-    from models import Transaction
-    has_purchased = session.exec(
-        select(Transaction).where(
-            Transaction.buyer_id == current_user.id,
-            Transaction.product_id == listing.product_id,
-            Transaction.status == 'completed'
-        )
-    ).first()
-    
-    is_free = listing.price_cents == 0
-    
-    if not has_purchased and not is_free:
-        raise HTTPException(status_code=403, detail="Purchase required to download")
-    
-    # Generate skill package
-    zip_buffer = io.BytesIO()
-    
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        # Generate SKILL.md
-        skill_md = f'''---
-name: {listing.slug}
-description: {listing.description[:100] if listing.description else "AI agent from Agent Resources"}
-metadata:
-  {{
-    "openclaw":
-      {{
-        "emoji": "🤖",
-        "source": "Agent Resources",
-        "installed_at": "{datetime.utcnow().isoformat()}"
-      }}
-  }}
----
-
-# {listing.name}
-
-{listing.description or "AI agent from Agent Resources"}
-
-## Tags
-{', '.join(listing.category_tags or [])}
-
-## Source
-Installed from [Agent Resources](https://shopagentresources.com/listings/{listing.slug})
-'''
-        zip_file.writestr('SKILL.md', skill_md)
-        
-        # Add SOUL.md if exists (from listing files)
-        listing_dir = os.path.join(UPLOAD_DIR, str(listing.id))
-        if os.path.exists(listing_dir):
-            for root, dirs, files in os.walk(listing_dir):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    arcname = os.path.relpath(file_path, listing_dir)
-                    zip_file.write(file_path, arcname)
-        
-        # Add README if not present
-        if not any(name.endswith('README.md') for name in zip_file.namelist()):
-            readme = f'''# {listing.name}
-
-{listing.description or ""}
-
-## Installation
-
-This skill was installed from Agent Resources.
-
-## Usage
-
-Refer to the SOUL.md file for detailed usage instructions.
-'''
-            zip_file.writestr('README.md', readme)
-    
-    zip_buffer.seek(0)
-    
-    return StreamingResponse(
-        zip_buffer,
-        media_type='application/zip',
-        headers={
-            'Content-Disposition': f'attachment; filename="{listing.slug}-skill.zip"'
-        }
-    )
-
-
-@router.post("/{slug}/deploy-to-openclaw")
-async def deploy_to_openclaw(
-    slug: str,
-    session = Depends(get_session),
-    current_user = Depends(get_current_user_from_token)
-):
-    """Generate deployment manifest for OpenClaw auto-install"""
-    
-    # Get listing
-    listing = session.exec(
-        select(Listing).where(Listing.slug == slug, Listing.status == 'approved')
-    ).first()
-    
-    if not listing:
-        raise HTTPException(status_code=404, detail="Listing not found")
-    
-    # Check purchase
-    from models import Transaction
-    has_purchased = session.exec(
-        select(Transaction).where(
-            Transaction.buyer_id == current_user.id,
-            Transaction.product_id == listing.product_id,
-            Transaction.status == 'completed'
-        )
-    ).first()
-    
-    is_free = listing.price_cents == 0
-    
-    if not has_purchased and not is_free:
-        raise HTTPException(status_code=403, detail="Purchase required")
-    
-    # Generate deployment manifest
-    manifest = {
-        "version": "1.0.0",
-        "name": listing.slug,
-        "display_name": listing.name,
-        "description": listing.description,
-        "source": {
-            "type": "agent-resources",
-            "listing_id": str(listing.id),
-            "slug": listing.slug,
-            "url": f"https://shopagentresources.com/listings/{listing.slug}"
-        },
-        "install": {
-            "method": "skill",
-            "destination": f"~/.openclaw/skills/{listing.slug}",
-            "files": [
-                "SKILL.md",
-                "SOUL.md", 
-                "README.md"
-            ]
-        },
-        "openclaw": {
-            "min_version": "0.1.0",
-            "auto_enable": True
-        }
-    }
-    
-    return manifest

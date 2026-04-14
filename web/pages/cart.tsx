@@ -2,59 +2,62 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agent-resources-api-dev-production.up.railway.app';
 
 export default function Cart() {
   const { items, removeFromCart, total, clearCart } = useCart();
-  const [email, setEmail] = useState('');
+  const { user } = useAuth();
+  const { t } = useLanguage();
+  const [email, setEmail] = useState(user?.email || '');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleCheckout = async () => {
     if (!email || items.length === 0) return;
     
     setLoading(true);
+    setError('');
+    
     try {
-      const item = items[0];
-      const url = `${API_URL}/payments/create-checkout-session?product_slug=${encodeURIComponent(item.slug)}&email=${encodeURIComponent(email)}`;
+      // Convert cart items to API format
+      const cartItems = items.map(item => ({
+        listing_id: item.id, // Note: items need to have 'id' from listings
+        quantity: 1
+      }));
       
-      console.log('Calling API:', url);
-      
-      const response = await fetch(url, {
+      const response = await fetch(`${API_URL}/payments/create-checkout-session`, {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
+        body: JSON.stringify({
+          items: cartItems,
+          email: email,
+          success_url: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${window.location.origin}/cart`
+        }),
       });
       
-      console.log('Response status:', response.status);
-      
-      const text = await response.text();
-      console.log('Response text:', text);
-      
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        alert('Invalid JSON response: ' + text.substring(0, 200));
-        setLoading(false);
-        return;
-      }
+      const data = await response.json();
       
       if (!response.ok) {
-        alert('Error: ' + (data.detail || data.message || JSON.stringify(data)));
-        setLoading(false);
-        return;
+        throw new Error(data.detail || 'Checkout failed');
       }
       
       if (data.url) {
+        // Clear cart before redirecting
+        clearCart();
         window.location.href = data.url;
       } else {
-        alert('No checkout URL received: ' + JSON.stringify(data));
+        throw new Error('No checkout URL received');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Checkout error:', err);
-      alert('Network error: ' + (err instanceof Error ? err.message : String(err)));
+      setError(err.message || 'Failed to create checkout session');
     } finally {
       setLoading(false);
     }
@@ -85,7 +88,7 @@ export default function Cart() {
               {/* Cart items */}
               <div className="md:col-span-2 space-y-4">
                 {items.map(item => (
-                  <div key={item.slug} className="flex items-center gap-4 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-4">
+                  <div key={item.id || item.slug} className="flex items-center gap-4 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-4">
                     <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-md">
                       <span className="text-white font-bold text-xl">
                         {item.name.charAt(0)}
@@ -125,8 +128,8 @@ export default function Cart() {
                     <span>${Number(total).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-gray-400">
-                    <span>Tax</span>
-                    <span>Calculated at checkout</span>
+                    <span>Platform Fee (10%)</span>
+                    <span>${(total * 0.10).toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -135,7 +138,16 @@ export default function Cart() {
                     <span>Total</span>
                     <span>${Number(total).toFixed(2)}</span>
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Includes 10% platform fee
+                  </p>
                 </div>
+
+                {error && (
+                  <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
+                    {error}
+                  </div>
+                )}
 
                 <div className="space-y-3">
                   <input

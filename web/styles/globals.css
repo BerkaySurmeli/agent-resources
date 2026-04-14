@@ -111,6 +111,41 @@
   .animation-delay-400 { animation-delay: 400ms; }
   .animation-delay-500 { animation-delay: 500ms; }
 
+  /* Moving gradient animation */
+  @keyframes gradient-x {
+    0%, 100% {
+      background-size: 200% 200%;
+      background-position: left center;
+    }
+    50% {
+      background-size: 200% 200%;
+      background-position: right center;
+    }
+  }
+  
+  .animate-gradient-x {
+    animation: gradient-x 3s ease infinite;
+    background-size: 200% 200%;
+  }
+
+  /* Gradient flowing through text - seamless rainbow loop */
+  @keyframes gradient-flow {
+    0% { background-position: 200% center; }
+    100% { background-position: 0% center; }
+  }
+  
+  .gradient-flow-text {
+    background: linear-gradient(90deg, 
+      #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, 
+      #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3);
+    background-size: 200% auto;
+    background-position: 200% center;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-flow 8s linear infinite;
+  }
+
   /* Text balance for better typography */
   .text-balance {
     text-wrap: balance;

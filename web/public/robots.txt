@@ -1,4 +1,26 @@
 User-agent: *
 Allow: /
 
+# Sitemap location
 Sitemap: https://shopagentresources.com/sitemap.xml
+
+# Crawl rate optimization
+Crawl-delay: 1
+
+# Disallow admin and API routes
+Disallow: /admin/
+Disallow: /api/
+Disallow: /test-
+
+# Allow search engines to crawl everything else
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /

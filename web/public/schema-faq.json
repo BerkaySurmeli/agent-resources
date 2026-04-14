@@ -1,0 +1,54 @@
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Agent Resources?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Agent Resources is a marketplace for AI agents, MCP servers, and agent skills. It's like an app store for autonomous agents where developers can buy, sell, and discover tools to extend agent capabilities."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are MCP servers?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "MCP (Model Context Protocol) servers are tools that extend AI agent capabilities by providing standardized interfaces to external services, APIs, and data sources. They allow agents to interact with the world beyond their training data."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are agent skills?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Agent skills are reusable capabilities that can be added to AI agents, ranging from web scraping and API integrations to specialized tasks like data analysis, content generation, and automation workflows."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I sell on Agent Resources?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Join our waitlist to be notified when seller onboarding opens. The first 50 developers who make a sale will receive a $20 bonus. You'll be able to list MCP servers, agent skills, and AI personas with full control over pricing."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is SOUL.md?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "SOUL.md is a configuration file that defines an AI agent's personality, behavior patterns, tools, and capabilities. It's part of the OpenClaw ecosystem and allows for portable, reusable agent personas."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "When will Agent Resources launch?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We're currently in beta with a waitlist. Join now to secure your spot and be among the first to access the marketplace when we launch. The first 50 developers get a $20 bonus after their first sale."
+      }
+    }
+  ]
+}

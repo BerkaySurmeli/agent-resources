@@ -7,19 +7,16 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "SUPER_SECRET_CHANGE_ME_2026"  # TODO: Override in production
     STRIPE_SECRET_KEY: str = "sk_test_..."  # Add your Stripe secret key
     STRIPE_PUBLISHABLE_KEY: str = "pk_test_..."  # Add your Stripe publishable key
-    STRIPE_WEBHOOK_SECRET: str = ""  # For webhook verification
+    STRIPE_WEBHOOK_SECRET: str = ""  # Add your Stripe webhook secret
     
     # Resend Email API Configuration
     RESEND_API_KEY: str = ""
-    FROM_EMAIL_INFO: str = "info@shopagentresources.com"
-    FROM_EMAIL_SUPPORT: str = "support@shopagentresources.com"
+    FROM_EMAIL_INFO: str = "Agent Resources <info@shopagentresources.com>"
+    FROM_EMAIL_SUPPORT: str = "Agent Resources <support@shopagentresources.com>"
     
-    # Cloudflare API Configuration
-    CLOUDFLARE_API_TOKEN: str = ""  # Get from Cloudflare dashboard → API Tokens
-    CLOUDFLARE_ZONE_ID: str = ""    # Get from Cloudflare dashboard → Zone overview
-    
-    # Frontend URL for redirects
-    FRONTEND_URL: str = "https://web-azyrb0ssf-agent-resources.vercel.app"
+    # Cloudflare Analytics
+    CLOUDFLARE_API_TOKEN: str = ""
+    CLOUDFLARE_ZONE_ID: str = ""
     
     class Config:
         env_file = ".env"
@@ -36,3 +33,8 @@ class Settings(BaseSettings):
             print("[EMAIL CONFIG] WARNING: Resend API key not configured - emails will not be sent")
 
 settings = Settings()
+
+# Debug: Log Cloudflare config on startup
+print(f"[CONFIG DEBUG] CLOUDFLARE_API_TOKEN set: {bool(settings.CLOUDFLARE_API_TOKEN)}")
+print(f"[CONFIG DEBUG] CLOUDFLARE_ZONE_ID set: {bool(settings.CLOUDFLARE_ZONE_ID)}")
+print(f"[CONFIG DEBUG] CLOUDFLARE_ZONE_ID value: {settings.CLOUDFLARE_ZONE_ID}")
