@@ -127,7 +127,7 @@ export default function LandingPage() {
         <Navbar />
 
         {/* Hero Section */}
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8 lg:pt-28 lg:pb-10">
           <div className="text-center">
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
               {lt.title}<br /><span className="text-blue-400">{lt.titleHighlight}</span>
