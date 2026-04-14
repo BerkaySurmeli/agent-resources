@@ -368,15 +368,12 @@ export default function Home() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      // Add all three personas to cart, then navigate
-                      addToCart({ slug: 'claudia-project-manager', name: 'Claudia - AI Project Manager', price: 49, category: 'personas' });
-                      addToCart({ slug: 'chen-developer', name: 'Chen - AI Developer', price: 59, category: 'personas' });
-                      addToCart({ slug: 'adrian-ux-designer', name: 'Adrian - AI UX Designer', price: 49, category: 'personas' });
-                      window.location.href = '/cart';
+                      // Navigate to wizard to build team
+                      window.location.href = '/wizard';
                     }}
                     className="btn-primary"
                   >
-                    Get Bundle
+                    Build Your Team
                   </button>
                 </div>
               </div>
