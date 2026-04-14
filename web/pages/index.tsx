@@ -162,7 +162,7 @@ export default function LandingPage({ initialSpotsRemaining }: { initialSpotsRem
 
             {/* Main Navigation */}
             <div className="hidden md:flex items-center gap-1">
-              <Link href="/browse" className="px-4 py-2 text-slate-300 hover:text-white transition-colors">
+              <Link href="/listings" className="px-4 py-2 text-slate-300 hover:text-white transition-colors">
                 {t.nav?.listings || 'Listings'}
               </Link>
               <Link href="/wizard" className="px-4 py-2 text-blue-400 hover:text-blue-300 transition-colors font-medium">

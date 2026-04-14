@@ -240,70 +240,63 @@ export default function Listings() {
                   className="group block bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden hover:border-blue-500/50 hover:shadow-lg transition-all duration-300"
                 >
                   {/* Card Header with Avatar */}
-                  <div className="relative h-32 bg-gradient-to-br from-gray-800 to-gray-900 p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-4">
-                        {/* Persona Avatar */}
-                        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg text-white text-2xl font-bold">
+                  <div className="relative h-28 bg-gradient-to-br from-gray-800 to-gray-900 p-5">
+                    <div className="flex items-center gap-3">
+                      {/* Avatar - use seller avatar if available, otherwise generate from name */}
+                      {listing.seller?.avatar_url ? (
+                        <img 
+                          src={listing.seller.avatar_url} 
+                          alt={listing.seller.name}
+                          className="w-14 h-14 rounded-xl object-cover shadow-lg"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-lg text-white text-xl font-bold">
                           {listing.seller?.name?.charAt(0).toUpperCase() || '?'}
                         </div>
-                        <div>
-                          {/* Persona Name */}
-                          <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
-                            {listing.seller?.name || 'Unknown'}
-                          </h3>
-                          {/* Category */}
-                          <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full mt-1 ${getCategoryColor(listing.category)}`}>
-                            {getCategoryIcon(listing.category)}
-                            {getCategoryName(listing.category, categories)}
-                          </span>
-                        </div>
-                      </div>
-                      {listing.is_verified && (
-                        <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-blue-500/20 text-blue-400">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                          {t.listings.verified}
-                        </span>
                       )}
+                      <div className="flex-1 min-w-0">
+                        {/* Listing Name */}
+                        <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors truncate">
+                          {listing.name}
+                        </h3>
+                        {/* Developer Name */}
+                        <p className="text-sm text-gray-400 truncate">{listing.seller?.name || 'Unknown'}</p>
+                      </div>
                       {(listing.status === 'scanning' || listing.status === 'pending_scan') && (
-                        <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-400 animate-pulse">
+                        <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-400 animate-pulse flex-shrink-0">
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          Scanning...
+                          Scanning
                         </span>
                       )}
                     </div>
                   </div>
 
                   {/* Card Body */}
-                  <div className="p-6">
+                  <div className="p-5">
                     {/* Description */}
-                    <p className="text-gray-400 text-sm mb-4 line-clamp-2">{listing.description}</p>
+                    <p className="text-gray-400 text-sm mb-3 line-clamp-2">{listing.description}</p>
 
-                    {/* Developer Info */}
-                    {listing.seller && (
-                      <div className="flex items-center gap-2 mb-4 text-sm">
-                        <span className="text-gray-500">by</span>
-                        <span className="text-gray-300 font-medium">{listing.seller.name}</span>
-                      </div>
-                    )}
-
-                    {/* Virus Scan Status Badge */}
-                    <div className="mb-4">
-                      <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${getScanStatusColor(listing.virus_scan_status)}`}>
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                        {getScanStatusLabel(listing.virus_scan_status)}
+                    {/* Tags & Category Row */}
+                    <div className="flex items-center gap-2 mb-4 flex-wrap">
+                      <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${getCategoryColor(listing.category)}`}>
+                        {getCategoryIcon(listing.category)}
+                        {getCategoryName(listing.category, categories)}
                       </span>
+                      {listing.tags?.slice(0, 2).map((tag, i) => (
+                        <span key={i} className="text-xs text-gray-500 bg-gray-700/50 px-2 py-1 rounded-full">
+                          {tag}
+                        </span>
+                      ))}
+                      {listing.tags && listing.tags.length > 2 && (
+                        <span className="text-xs text-gray-500">+{listing.tags.length - 2}</span>
+                      )}
                     </div>
 
                     {/* Price & Actions */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-700">
-                      <span className="text-2xl font-bold text-white">{formatPrice(listing.price_cents)}</span>
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-700">
+                      <span className="text-xl font-bold text-white">{formatPrice(listing.price_cents)}</span>
                       <div className="flex items-center gap-2">
                         {isAvailableForPurchase(listing) ? (
                           <>
