@@ -1,456 +1,238 @@
 import Head from 'next/head';
-import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import Logo from '../components/Logo';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agent-resources-api-dev-production.up.railway.app';
-
-// Simple icon components
-const Icon = ({ name, className }: { name: string; className?: string }) => {
-  const icons: Record<string, JSX.Element> = {
-    arrowRight: (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-      </svg>
-    ),
-    check: (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 12.75l6 6 9-13.5" />
-      </svg>
-    ),
-  };
-  return icons[name] || null;
-};
-
-// Fade in animation component
-const FadeIn = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), delay);
-    return () => clearTimeout(timer);
-  }, [delay]);
-  return (
-    <div className={`transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-      {children}
-    </div>
-  );
-};
-
-
-
-export default function Home() {
-  const { t } = useLanguage();
-  const [showWaitlist, setShowWaitlist] = useState(false);
+export default function LandingPage() {
+  const { t, language, setLanguage, languages } = useLanguage();
+  
   const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const { addToCart } = useCart();
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('');
+  const [spotsRemaining, setSpotsRemaining] = useState<number | null>(null);
 
-  const handleExplore = () => {
-    window.location.href = '/wizard';
-  };
+  useEffect(() => {
+    fetch('https://api.shopagentresources.com/waitlist/count/')
+      .then(res => res.json())
+      .then(data => {
+        const remaining = Math.max(0, 50 - data.count);
+        setSpotsRemaining(remaining);
+      })
+      .catch(() => setSpotsRemaining(50));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-    
+    if (!email || !email.includes('@')) {
+      setStatus('error');
+      setMessage(t.landing?.errorMessage || 'Please enter a valid email address');
+      return;
+    }
+
+    setStatus('loading');
     try {
-      const response = await fetch(`${API_URL}/waitlist/`, {
+      const response = await fetch('https://api.shopagentresources.com/waitlist/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      
-      const data = await response.json();
-      
+
       if (response.ok) {
-        setSubmitted(true);
+        setStatus('success');
+        setMessage(lt.successMessage);
         setEmail('');
+        const countRes = await fetch('https://api.shopagentresources.com/waitlist/count/');
+        const data = await countRes.json();
+        setSpotsRemaining(Math.max(0, 50 - data.count));
       } else {
-        setError(data.message || 'Something went wrong. Please try again.');
+        throw new Error('Failed to join waitlist');
       }
-    } catch (err) {
-      setError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      setStatus('error');
+      setMessage(lt.errorMessage);
     }
   };
 
+  const lt = t.landing || {
+    title: 'The Marketplace for',
+    titleHighlight: 'AI Agents',
+    subtitle: 'Buy, sell, and discover AI personas, skills, and MCP servers.',
+    tagline: 'Reimagining Human Resources.',
+    incentive: '🎉 First 50 developers get $20 when they make their first sale!',
+    spotsRemaining: 'spots remaining',
+    spotsClaimed: 'All spots claimed! Join the waitlist for early access.',
+    allSpotsFilled: "🎉 We've filled all 50 spots! But you can still sign up to be the first to know when we're live.",
+    emailPlaceholder: 'Enter your email',
+    getAccess: 'Secure Your Spot',
+    joining: 'Joining...',
+    successMessage: "You're on the list! We'll notify you when we're live.",
+    errorMessage: 'Something went wrong. Please try again.',
+    features: {
+      personas: { title: 'AI Personas', description: 'Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.' },
+      skills: { title: 'Skills', description: 'Reusable capabilities for agents — from web scraping to API integrations.' },
+      mcp: { title: 'MCP Servers', description: 'Model Context Protocol servers for extending agent capabilities.' }
+    },
+    footer: '© 2026 Agent Resources. Built for the agent economy.'
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex flex-col">
+    <>
       <Head>
-        <title>Agent Resources | The Agent Marketplace</title>
-        <meta name="description" content="Equipping the Agentic Workforce. Trade MCP Servers, Skills, and Personas." />
-        <meta name="keywords" content="AI agents, MCP servers, agent skills, AI personas, OpenClaw, marketplace, AI tools" />
+        {/* Primary Meta Tags */}
+        <title>Agent Resources | Marketplace for AI Agents, MCP Servers & Skills</title>
+        <meta name="description" content="The marketplace for AI agents, MCP servers, and agent skills. Buy, sell, and discover tools for autonomous agents. First 50 developers get $20 after their first sale." />
+        <meta name="keywords" content="AI agents, MCP servers, agent skills, marketplace, buy AI agents, sell AI agents, SOUL.md, OpenClaw, autonomous agents, AI personas" />
+        <meta name="author" content="Agent Resources" />
+        <meta name="robots" content="index, follow" />
+        
+        {/* Canonical URL */}
         <link rel="canonical" href="https://shopagentresources.com" />
-
-        {/* Open Graph */}
+        
+        {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="Agent Resources | The Agent Marketplace" />
-        <meta property="og:description" content="Equipping the Agentic Workforce. Trade MCP Servers, Skills, and Personas." />
         <meta property="og:url" content="https://shopagentresources.com" />
+        <meta property="og:title" content="Agent Resources | Marketplace for AI Agents, MCP Servers & Skills" />
+        <meta property="og:description" content="The marketplace for AI agents, MCP servers, and agent skills. Buy, sell, and discover tools for autonomous agents. First 50 developers get $20 after their first sale." />
+        <meta property="og:image" content="https://shopagentresources.com/og-image.png" />
         <meta property="og:site_name" content="Agent Resources" />
-
+        <meta property="og:locale" content="en_US" />
+        
         {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Agent Resources | The Agent Marketplace" />
-        <meta name="twitter:description" content="Equipping the Agentic Workforce. Trade MCP Servers, Skills, and Personas." />
-
-        {/* Structured Data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              "name": "Agent Resources",
-              "url": "https://shopagentresources.com",
-              "description": "The Agent Marketplace. Equipping the Agentic Workforce. Trade MCP Servers, Skills, and Personas.",
-              "potentialAction": {
-                "@type": "SearchAction",
-                "target": "https://shopagentresources.com/browse?q={search_term_string}",
-                "query-input": "required name=search_term_string"
-              }
-            })
-          }}
-        />
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://shopagentresources.com" />
+        <meta property="twitter:title" content="Agent Resources | Marketplace for AI Agents, MCP Servers & Skills" />
+        <meta property="twitter:description" content="The marketplace for AI agents, MCP servers, and agent skills. Buy, sell, and discover tools for autonomous agents." />
+        <meta property="twitter:image" content="https://shopagentresources.com/og-image.png" />
+        <meta property="twitter:creator" content="@ClaudiaAR_CEO" />
+        
+        {/* Favicon */}
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="alternate icon" href="/favicon.ico" />
+        
+        {/* Alternate Languages */}
+        <link rel="alternate" hrefLang="en" href="https://shopagentresources.com" />
+        <link rel="alternate" hrefLang="es" href="https://shopagentresources.com?lang=es" />
+        <link rel="alternate" hrefLang="fr" href="https://shopagentresources.com?lang=fr" />
+        <link rel="alternate" hrefLang="de" href="https://shopagentresources.com?lang=de" />
+        <link rel="alternate" hrefLang="it" href="https://shopagentresources.com?lang=it" />
+        <link rel="alternate" hrefLang="pt" href="https://shopagentresources.com?lang=pt" />
+        <link rel="alternate" hrefLang="tr" href="https://shopagentresources.com?lang=tr" />
+        <link rel="alternate" hrefLang="zh" href="https://shopagentresources.com?lang=zh" />
+        <link rel="alternate" hrefLang="x-default" href="https://shopagentresources.com" />
       </Head>
 
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+        {/* Navigation */}
+        <nav className="border-b border-white/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <Logo variant="full" size="md" textClassName="text-white" />
+              <div className="flex items-center gap-6">
+                <a href="/blog" className="text-sm text-slate-400 hover:text-white transition-colors">{t.nav?.blog || 'Blog'}</a>
+                <span className="text-sm text-slate-400">{t.landing?.comingSoon || 'Coming Soon'}</span>
+                {/* Language Selector */}
+                <select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value as any)}
+                  className="bg-slate-800 border border-slate-700 text-white text-sm rounded px-2 py-1"
+                >
+                  {languages.map(lang => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.flag} {lang.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        </nav>
 
-      {/* Hero */}
-      <main className="pt-32 pb-20 px-6 relative" role="main">
-        {/* Decorative glow */}
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary-600/10 rounded-full blur-3xl -z-10" />
-
-        <div className="max-w-4xl mx-auto text-center">
-          <FadeIn delay={100}>
-            <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight mb-6">
-              The
-              <br />
-              <span className="text-gradient">Agent Marketplace</span>
+        {/* Hero Section */}
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
+          <div className="text-center">
+            <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-10">
+              {lt.title}<br /><span className="text-blue-400">{lt.titleHighlight}</span>
             </h1>
-          </FadeIn>
-
-          <FadeIn delay={200}>
-            <p className="text-xl text-dark-300 mb-4 max-w-2xl mx-auto leading-relaxed">
-              {t.home.heroSubtitle}
+            
+            {/* Animated Tagline - gradient flowing through text */}
+            <p className="text-2xl md:text-3xl font-bold mb-20 max-w-xl mx-auto gradient-flow-text">
+              {lt.tagline?.replace(/\.$/, '')}
             </p>
-          </FadeIn>
 
-          <FadeIn delay={250}>
-            <p className="text-lg text-primary-400 font-medium mb-10 max-w-2xl mx-auto">
-              {t.home.heroDescription}
-            </p>
-          </FadeIn>
+            {/* Email Signup */}
+            <div className="max-w-2xl mx-auto mb-4 px-4">
 
-          <FadeIn delay={300}>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/listings"
-                className="btn-primary text-lg px-8 py-4 inline-flex items-center justify-center gap-2"
-              >
-                {t.home.viewListings}
-                <Icon name="arrowRight" className="w-5 h-5" />
-              </Link>
-              <Link
-                href="/developers"
-                className="btn-secondary text-lg px-8 py-4 inline-flex items-center justify-center gap-2"
-              >
-                Meet Developers
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </Link>
-            </div>
-          </FadeIn>
-        </div>
-      </main>
-
-      {/* Build Your Team Section */}
-      <section className="py-24 px-6 section-gradient relative">
-        {/* Decorative element */}
-        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary-500/30 to-transparent" />
-
-        <div className="max-w-6xl mx-auto">
-          <FadeIn>
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                Beyond Human Resources
-              </h2>
-              <div className="mt-8 flex justify-center">
-                <Link
-                  href="/wizard"
-                  className="btn-primary text-lg px-8 py-4 inline-flex items-center justify-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  {t.nav.buildTeam}
-                </Link>
-              </div>
-            </div>
-          </FadeIn>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            <FadeIn delay={100}>
-              <div className="card card-hover p-8 text-center group">
-                <div className="w-16 h-16 bg-primary-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform ring-1 ring-primary-500/30">
-                  <svg className="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-3">1. Browse & Select</h3>
-                <p className="text-dark-400">
-                  Explore our marketplace of AI personas, skills, and MCP servers. Find the perfect fit for your needs.
-                </p>
-              </div>
-            </FadeIn>
-
-            <FadeIn delay={200}>
-              <div className="card card-hover p-8 text-center group">
-                <div className="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform ring-1 ring-emerald-500/30">
-                  <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-3">2. Purchase</h3>
-                <p className="text-dark-400">
-                  One-time purchase. No subscriptions, no hidden fees. Own your AI team forever.
-                </p>
-              </div>
-            </FadeIn>
-
-            <FadeIn delay={300}>
-              <div className="card card-hover p-8 text-center group">
-                <div className="w-16 h-16 bg-accent-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform ring-1 ring-accent-500/30">
-                  <svg className="w-8 h-8 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-3">3. Deploy Instantly</h3>
-                <p className="text-dark-400">
-                  Deploy to your OpenClaw environment with a single command. Your AI team is ready to work.
-                </p>
-              </div>
-            </FadeIn>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Products */}
-      <section className="py-24 px-6 relative">
-        {/* Decorative element */}
-        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-dark-700 to-transparent" />
-
-        <div className="max-w-6xl mx-auto">
-          <FadeIn>
-            <h2 className="text-4xl font-bold text-white mb-4 text-center">{t.home.featuredAgents}</h2>
-            <p className="text-dark-400 text-center mb-12 max-w-2xl mx-auto">Ready-to-deploy AI personas for your team</p>
-          </FadeIn>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Claudia Card */}
-            <FadeIn delay={100}>
-              <Link href="/listings/claudia-project-manager" className="card card-hover block p-8 h-full relative group">
-                {/* Icon */}
-                <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center mb-6 shadow-glow" aria-hidden="true">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-1">AI Project Manager</h3>
-                <p className="text-primary-400 font-medium mb-1">Claudia</p>
-                <p className="text-xs text-dark-500 uppercase tracking-wide mb-4">Persona</p>
-                <p className="text-dark-400 text-sm mb-6">Your AI project orchestrator. Delegates tasks, tracks progress, and ensures nothing falls through the cracks.</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-white">$49</span>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleExplore();
-                    }}
-                    className="btn-primary text-sm py-2 px-4"
-                  >
-                    Explore
-                  </button>
-                </div>
-              </Link>
-            </FadeIn>
-
-            {/* Chen Card */}
-            <FadeIn delay={200}>
-              <Link href="/listings/chen-developer" className="card card-hover block p-8 h-full relative group">
-                <div className="w-14 h-14 bg-gradient-to-br from-dark-600 to-dark-800 rounded-xl flex items-center justify-center mb-6 shadow-lg" aria-hidden="true">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-1">AI Developer</h3>
-                <p className="text-primary-400 font-medium mb-1">Chen</p>
-                <p className="text-xs text-dark-500 uppercase tracking-wide mb-4">Persona</p>
-                <p className="text-dark-400 text-sm mb-6">Your AI software engineer. Writes clean, efficient code across any stack.</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-white">$59</span>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleExplore();
-                    }}
-                    className="btn-primary text-sm py-2 px-4"
-                  >
-                    Explore
-                  </button>
-                </div>
-              </Link>
-            </FadeIn>
-
-            {/* Adrian Card */}
-            <FadeIn delay={300}>
-              <Link href="/listings/adrian-ux-designer" className="card card-hover block p-8 h-full relative group">
-                <div className="w-14 h-14 bg-gradient-to-br from-violet-500 to-violet-700 rounded-xl flex items-center justify-center mb-6 shadow-lg" aria-hidden="true">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-1">AI UX Designer</h3>
-                <p className="text-primary-400 font-medium mb-1">Adrian</p>
-                <p className="text-xs text-dark-500 uppercase tracking-wide mb-4">Persona</p>
-                <p className="text-dark-400 text-sm mb-6">Your AI design partner. Creates interfaces, writes copy, and crafts user experiences.</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-white">$49</span>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleExplore();
-                    }}
-                    className="btn-primary text-sm py-2 px-4"
-                  >
-                    Explore
-                  </button>
-                </div>
-              </Link>
-            </FadeIn>
-          </div>
-
-          {/* Dream Team Bundle */}
-          <FadeIn delay={400}>
-            <div className="mt-12 card p-8 relative overflow-hidden">
-              {/* Background gradient */}
-              <div className="absolute inset-0 bg-gradient-to-r from-primary-900/50 via-dark-900 to-violet-900/50 -z-10" />
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full filter blur-3xl opacity-10 -translate-y-1/2 translate-x-1/2" />
-
-              <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm ring-1 ring-white/20">
-                    <svg className="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-primary-400 text-sm font-medium mb-1">Agent Resources</div>
-                    <h3 className="text-2xl font-bold mb-2">Dream Team Bundle</h3>
-                    <p className="text-dark-400">Get all three personas. Complete AI team for your projects.</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <span className="text-3xl font-bold">$99</span>
-                    <span className="text-dark-500 line-through ml-2">$157</span>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      // Navigate to wizard to build team
-                      window.location.href = '/wizard';
-                    }}
-                    className="btn-primary"
-                  >
-                    Build Your Team
-                  </button>
-                </div>
-              </div>
-            </div>
-          </FadeIn>
-        </div>
-      </section>
-
-      {/* Waitlist Modal */}
-      {showWaitlist && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="waitlist-title"
-        >
-          <div className="card max-w-md w-full">
-            {!submitted ? (
-              <>
-                <h3 id="waitlist-title" className="text-2xl font-bold text-white mb-2">Join the Waitlist</h3>
-                <p className="text-dark-400 mb-6">Join our marketplace for AI agents. List your personas, skills, and MCP servers.</p>
-                {error && (
-                  <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg mb-4 text-sm">
-                    {error}
-                  </div>
-                )}
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-dark-300 mb-1">Email</label>
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      className="input"
-                    />
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowWaitlist(false)}
-                      className="flex-1 btn-secondary"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="flex-1 btn-primary disabled:opacity-50"
-                    >
-                      {loading ? 'Joining...' : 'Join Waitlist'}
-                    </button>
-                  </div>
-                </form>
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4 ring-1 ring-emerald-500/30">
-                  <Icon name="check" className="w-8 h-8 text-emerald-400" />
-                </div>
-                <h3 className="text-xl font-bold text-white mb-2">You're on the list!</h3>
-                <p className="text-dark-400 mb-6">We'll email you when Agent Resources launches.</p>
+              {/* Developer Incentive - centered, closer to input */}
+              <p className="text-lg text-amber-400 font-medium mb-4 text-center">
+                {lt.incentive}
+              </p>
+              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={lt.emailPlaceholder}
+                  className="flex-[2] px-5 py-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={status === 'loading'}
+                />
                 <button
-                  onClick={() => {
-                    setShowWaitlist(false);
-                    setSubmitted(false);
-                  }}
-                  className="btn-primary"
+                  type="submit"
+                  disabled={status === 'loading'}
+                  className="px-6 py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed rounded-lg font-semibold transition-colors whitespace-nowrap"
                 >
-                  Got it
+                  {status === 'loading' ? lt.joining : lt.getAccess}
                 </button>
+              </form>
+              
+              {status === 'success' && (
+                <p className="mt-4 text-green-400 text-sm">{message}</p>
+              )}
+              {status === 'error' && (
+                <p className="mt-4 text-red-400 text-sm">{message}</p>
+              )}
+            </div>
+
+            {/* Spots Counter or Waitlist Message */}
+            {spotsRemaining !== null && spotsRemaining > 0 ? (
+              <p className="text-lg font-medium text-white mb-8">
+                {spotsRemaining} / 50 {lt.spotsRemaining}
+              </p>
+            ) : spotsRemaining === 0 ? (
+              <p className="text-lg font-medium text-emerald-400 mb-8 max-w-xl mx-auto">
+                {lt.allSpotsFilled}
+              </p>
+            ) : null}
+
+            {/* Features Section */}
+            <div className="mt-24 pt-16 border-t border-white/10">
+              <p className="text-center text-2xl md:text-3xl font-bold text-white mb-12 max-w-3xl mx-auto leading-relaxed">
+                {lt.subtitle}
+              </p>
+              <div className="grid md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto">
+                <div className="p-8 rounded-xl bg-white/5 border border-white/10">
+                  <h3 className="text-xl font-semibold mb-3 text-blue-400">{lt.features?.personas?.title || 'AI Personas'}</h3>
+                  <p className="text-slate-400">{lt.features?.personas?.description || 'Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.'}</p>
+                </div>
+                <div className="p-8 rounded-xl bg-white/5 border border-white/10">
+                  <h3 className="text-xl font-semibold mb-3 text-purple-400">{lt.features?.skills?.title || 'Skills'}</h3>
+                  <p className="text-slate-400">{lt.features?.skills?.description || 'Reusable capabilities for agents — from web scraping to API integrations.'}</p>
+                </div>
+                <div className="p-8 rounded-xl bg-white/5 border border-white/10">
+                  <h3 className="text-xl font-semibold mb-3 text-green-400">{lt.features?.mcp?.title || 'MCP Servers'}</h3>
+                  <p className="text-slate-400">{lt.features?.mcp?.description || 'Model Context Protocol servers for extending agent capabilities.'}</p>
+                </div>
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        </main>
+
+        {/* Footer */}
+        <footer className="border-t border-white/10 py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-slate-400 text-sm">
+            <p>{lt.footer}</p>
+          </div>
+        </footer>
+      </div>
+    </>
   );
 }
