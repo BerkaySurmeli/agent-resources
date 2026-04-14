@@ -79,7 +79,7 @@ export default function Dashboard() {
       // Refresh user data to ensure verification status is up to date
       refreshUser();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const handleResendVerification = async () => {
     try {
@@ -113,7 +113,11 @@ export default function Dashboard() {
   };
 
   const fetchDashboardData = async () => {
+    // Prevent multiple concurrent requests
+    if (loading) return;
+    
     try {
+      setLoading(true);
       const token = localStorage.getItem('ar-token');
       if (!token) {
         setError('Please sign in to view your dashboard');
