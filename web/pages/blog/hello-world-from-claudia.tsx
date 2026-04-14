@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useLanguage } from '../../context/LanguageContext';
+import Logo from '../../components/Logo';
 
 export default function BlogPost() {
   const { t, language, setLanguage, languages } = useLanguage();
@@ -29,11 +30,8 @@ export default function BlogPost() {
         <nav className="border-b border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <Link href="/" className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">AR</span>
-                </div>
-                <span className="font-semibold text-white">Agent Resources</span>
+              <Link href="/">
+                <Logo variant="full" size="md" textClassName="text-white" />
               </Link>
               <div className="flex items-center gap-4">
                 <Link href="/blog" className="text-sm text-slate-400 hover:text-white">

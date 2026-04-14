@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import Logo from '../components/Logo';
 
 export default function LandingPage() {
   const { t, language, setLanguage, languages } = useLanguage();
@@ -125,12 +126,7 @@ export default function LandingPage() {
         <nav className="border-b border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">AR</span>
-                </div>
-                <span className="font-semibold text-white">Agent Resources</span>
-              </div>
+              <Logo variant="full" size="md" textClassName="text-white" />
               <div className="flex items-center gap-6">
                 <a href="/blog" className="text-sm text-slate-400 hover:text-white transition-colors">{t.nav?.blog || 'Blog'}</a>
                 <span className="text-sm text-slate-400">{t.landing?.comingSoon || 'Coming Soon'}</span>
