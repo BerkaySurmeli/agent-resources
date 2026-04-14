@@ -35,7 +35,6 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Debug: Log config on startup
-print(f"[CONFIG DEBUG] SECRET_KEY set: {bool(settings.SECRET_KEY)}")
-print(f"[CONFIG DEBUG] SECRET_KEY length: {len(settings.SECRET_KEY)}")
-print(f"[CONFIG DEBUG] CLOUDFLARE_API_TOKEN set: {bool(settings.CLOUDFLARE_API_TOKEN)}")
-print(f"[CONFIG DEBUG] CLOUDFLARE_ZONE_ID set: {bool(settings.CLOUDFLARE_ZONE_ID)}")
+print(f"[CONFIG] Starting with SECRET_KEY: {bool(settings.SECRET_KEY)} (len: {len(settings.SECRET_KEY)})")
+print(f"[CONFIG] CLOUDFLARE_API_TOKEN: {bool(settings.CLOUDFLARE_API_TOKEN)}")
+print(f"[CONFIG] CLOUDFLARE_ZONE_ID: {bool(settings.CLOUDFLARE_ZONE_ID)}")
