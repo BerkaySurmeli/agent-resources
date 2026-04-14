@@ -647,19 +647,10 @@ export default function Sell() {
                   </ul>
                 </div>
 
-                {/* License */}
+                {/* Terms and Security Notice */}
                 <div className="bg-white/5 rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-slate-300 mb-2">License</h3>
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-3">
-                    <span className="text-xs font-medium text-amber-300 px-2 py-1 bg-amber-500/20 rounded">
-                      MIT-0 · MIT NO ATTRIBUTION
-                    </span>
-                    <p className="text-sm text-slate-400 mt-2">
-                      All items published on Agent Resources are licensed under MIT-0. 
-                      Free to use, modify, and redistribute. No attribution required.
-                    </p>
-                  </div>
-                  <label className="flex items-start gap-3">
+                  <h3 className="text-sm font-medium text-slate-300 mb-3">Terms & Conditions</h3>
+                  <label className="flex items-start gap-3 mb-4">
                     <input
                       type="checkbox"
                       checked={formData.termsAccepted}
@@ -667,22 +658,17 @@ export default function Sell() {
                       className="mt-1 w-4 h-4 text-blue-600 rounded border-white/20 bg-white/5"
                     />
                     <span className="text-sm text-slate-300">
-                      I have the rights to this item and agree to publish it under MIT-0
+                      I have the rights to this item and agree to the <Link href="/terms" target="_blank" className="text-blue-400 hover:text-blue-300 underline">Terms and Conditions</Link>
                     </span>
                   </label>
-                </div>
-
-                {/* Security Notice */}
-                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <div>
-                      <p className="text-sm font-medium text-yellow-300">Security Scan Required</p>
-                      <p className="text-sm text-yellow-200/70 mt-1">
-                        Your files will be automatically scanned by VirusTotal and OpenClaw's security analyzer. 
-                        This process typically takes a few minutes. You'll be notified when your listing is approved.
+                  
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                    <div className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                      <p className="text-sm text-slate-400">
+                        Your files will be scanned for security before being published. This process typically takes a few minutes.
                       </p>
                     </div>
                   </div>

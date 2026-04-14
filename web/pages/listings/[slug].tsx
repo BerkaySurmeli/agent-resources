@@ -36,6 +36,7 @@ interface ListingDetail {
   category: string;
   price_cents: number;
   tags: string[];
+  status?: string;
   file_count: number;
   file_size_bytes: number;
   created_at: string;
@@ -238,6 +239,23 @@ export default function ListingDetail() {
 
       <main className="pt-24 pb-12 px-6">
         <div className="max-w-4xl mx-auto">
+          {/* Scanning Status Banner */}
+          {(listing.status === 'scanning' || listing.status === 'pending_scan') && (
+            <div className="mb-6 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-medium text-yellow-300">Security Scan in Progress</p>
+                  <p className="text-sm text-yellow-200/70 mt-1">
+                    This item is currently being scanned for security. You can view the details but purchasing will be available once the scan is complete.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid md:grid-cols-2 gap-12">
             {/* Left Column */}
             <div>
@@ -246,8 +264,8 @@ export default function ListingDetail() {
                 {getCategoryName(listing.category)}
               </span>
               
-              <h1 className="text-4xl font-semibold text-slate-900 mb-4">{listing.name}</h1>
-              <p className="text-slate-600 mb-6">{listing.description}</p>
+              <h1 className="text-4xl font-semibold text-white mb-4">{listing.name}</h1>
+              <p className="text-slate-400 mb-6">{listing.description}</p>
               
               {/* Developer Info */}
               <Link 

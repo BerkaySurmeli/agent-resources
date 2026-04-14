@@ -320,16 +320,13 @@ export default function Dashboard() {
                               {t.dashboard.payFee}
                             </button>
                           )}
-                          {['approved', 'scanning', 'rejected'].includes(listing.status) && (
+                          {['approved', 'scanning', 'pending_scan', 'rejected'].includes(listing.status) && (
                             <Link
                               href={`/dashboard/products/${listing.slug}`}
                               className="text-blue-400 hover:text-blue-300 text-sm font-medium"
                             >
                               {t.dashboard.manage}
                             </Link>
-                          )}
-                          {listing.status === 'pending_scan' && (
-                            <span className="text-gray-500 text-sm">{t.common.statusPendingScan}</span>
                           )}
                         </td>
                       </tr>

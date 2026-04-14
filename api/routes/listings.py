@@ -780,7 +780,7 @@ async def get_public_listings(
     """Get published/approved listings for public browsing"""
     from models import User, Product
     
-    query = select(Listing, User, Product).join(User, Listing.owner_id == User.id).outerjoin(Product, Listing.product_id == Product.id).where(Listing.status == 'approved')
+    query = select(Listing, User, Product).join(User, Listing.owner_id == User.id).outerjoin(Product, Listing.product_id == Product.id).where(Listing.status.in_(['approved', 'scanning', 'pending_scan']))
     
     # Helper function to get translated content
     def get_listing_content(listing: Listing, language: str):
@@ -851,6 +851,7 @@ async def get_public_listings(
             "category": l.category,
             "price_cents": l.price_cents,
             "tags": l.category_tags,
+            "status": l.status,
             "virus_scan_status": l.virus_scan_status,
             "translation_status": l.translation_status,
             "created_at": l.created_at,
@@ -882,8 +883,8 @@ async def get_listing_detail(
 
     listing, user, product = result
 
-    # Only show approved listings publicly
-    if listing.status != 'approved':
+    # Show approved, scanning, and pending_scan listings publicly
+    if listing.status not in ['approved', 'scanning', 'pending_scan']:
         raise HTTPException(status_code=404, detail="Listing not found")
 
     return {
@@ -894,6 +895,7 @@ async def get_listing_detail(
         "category": listing.category,
         "price_cents": listing.price_cents,
         "tags": listing.category_tags,
+        "status": listing.status,
         "file_count": listing.file_count,
         "file_size_bytes": listing.file_size_bytes,
         "scan_results": listing.scan_results,
