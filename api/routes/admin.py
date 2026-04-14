@@ -799,15 +799,16 @@ def setup_admin(
 ):
     """Create or reset admin user - requires setup key from environment"""
     from core.config import settings
+    from sqlmodel import Session, create_engine
+    from uuid import uuid4
     
     # Verify setup key
     expected_key = getattr(settings, 'ADMIN_SETUP_KEY', 'dev-setup-key-12345')
     if setup_key != expected_key:
         raise HTTPException(status_code=403, detail="Invalid setup key")
     
-    from sqlmodel import Session
-    from core.database import engine
-    from uuid import uuid4
+    # Create engine inline
+    engine = create_engine(settings.DATABASE_URL)
     
     with Session(engine) as session:
         # Check if admin exists
