@@ -619,9 +619,13 @@ async def get_my_listings(
 ):
     """Get all listings for current user"""
     
+    print(f"[MY-LISTINGS] Fetching for user: {current_user.id}, email: {current_user.email}")
+    
     listings = session.exec(
         select(Listing).where(Listing.owner_id == current_user.id).order_by(Listing.created_at.desc())
     ).all()
+    
+    print(f"[MY-LISTINGS] Found {len(listings)} listings for user {current_user.id}")
     
     return [
         ListingResponse(
