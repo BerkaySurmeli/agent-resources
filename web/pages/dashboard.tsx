@@ -128,10 +128,12 @@ export default function Dashboard() {
       
       if (listingsRes.ok) {
         const listingsData = await listingsRes.json();
+        console.log('Listings fetched:', listingsData.length, listingsData);
         setListings(listingsData);
       } else {
         const errorData = await listingsRes.json().catch(() => ({}));
         console.error('Listings fetch error:', errorData);
+        setError(`Failed to fetch listings: ${errorData.detail || 'Unknown error'}`);
       }
       
       // Fetch stats
