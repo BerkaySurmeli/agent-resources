@@ -49,9 +49,8 @@ export default function Home() {
   const [error, setError] = useState('');
   const { addToCart } = useCart();
 
-  const handleBuyNow = (slug: string, name: string, price: number, category: string) => {
-    addToCart({ slug, name, price, category });
-    window.location.href = '/cart';
+  const handleExplore = () => {
+    window.location.href = '/wizard';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -273,11 +272,11 @@ export default function Home() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      handleBuyNow('claudia-project-manager', 'Claudia - AI Project Manager', 49, 'personas');
+                      handleExplore();
                     }}
                     className="btn-primary text-sm py-2 px-4"
                   >
-                    Buy Now
+                    Explore
                   </button>
                 </div>
               </Link>
@@ -301,11 +300,11 @@ export default function Home() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      handleBuyNow('chen-developer', 'Chen - AI Developer', 59, 'personas');
+                      handleExplore();
                     }}
                     className="btn-primary text-sm py-2 px-4"
                   >
-                    Buy Now
+                    Explore
                   </button>
                 </div>
               </Link>
@@ -329,11 +328,11 @@ export default function Home() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      handleBuyNow('adrian-ux-designer', 'Adrian - AI UX Designer', 49, 'personas');
+                      handleExplore();
                     }}
                     className="btn-primary text-sm py-2 px-4"
                   >
-                    Buy Now
+                    Explore
                   </button>
                 </div>
               </Link>
