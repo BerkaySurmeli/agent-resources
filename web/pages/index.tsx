@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import Logo from '../components/Logo';
@@ -128,8 +129,10 @@ export default function LandingPage() {
             <div className="flex items-center justify-between h-16">
               <Logo variant="full" size="md" textClassName="text-white" />
               <div className="flex items-center gap-6">
-                <a href="/blog" className="text-sm text-slate-400 hover:text-white transition-colors">{t.nav?.blog || 'Blog'}</a>
-                <span className="text-sm text-slate-400">{t.landing?.comingSoon || 'Coming Soon'}</span>
+                <Link href="/listings" className="text-sm text-slate-400 hover:text-white transition-colors">{t.nav?.listings || 'Listings'}</Link>
+                <Link href="/wizard" className="text-sm text-slate-400 hover:text-white transition-colors">{t.nav?.wizard || 'Build Your Team'}</Link>
+                <Link href="/blog" className="text-sm text-slate-400 hover:text-white transition-colors">{t.nav?.blog || 'Blog'}</Link>
+                <Link href="/dashboard" className="text-sm text-slate-400 hover:text-white transition-colors">{t.nav?.dashboard || 'Dashboard'}</Link>
                 {/* Language Selector */}
                 <select
                   value={language}
