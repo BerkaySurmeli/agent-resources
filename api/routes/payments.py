@@ -410,5 +410,175 @@ async def get_earnings_summary(
         "platform_fee_percent": int(PLATFORM_FEE_PERCENT * 100),
         "payout_schedule": "weekly",
         "next_payout_date": next_payout_date,
-        "pending_payout_cents": net_earnings_cents  # All earnings pending until payout day
+        "pending_payout_cents": net_earnings_cents,  # All earnings pending until payout day
+        "stripe_connect_status": current_user.stripe_status if current_user.stripe_connect_id else "not_started"
     }
+
+
+# ==================== STRIPE CONNECT ONBOARDING ====================
+
+@router.post("/connect/onboard")
+async def create_connect_account(
+    request: Request,
+    current_user: User = Depends(get_current_user_from_token),
+    session = Depends(get_session)
+):
+    """Create Stripe Connect account and return onboarding URL"""
+    
+    if not current_user.is_developer:
+        raise HTTPException(status_code=403, detail="Only developers can connect Stripe accounts")
+    
+    try:
+        # Create Stripe Connect Express account
+        account = stripe.Account.create(
+            type='express',
+            country='US',
+            email=current_user.email,
+            capabilities={
+                'transfers': {'requested': True},
+                'card_payments': {'requested': True}
+            },
+            business_type='individual',
+            metadata={
+                'user_id': str(current_user.id),
+                'platform': 'agent-resources'
+            }
+        )
+        
+        # Update user with Stripe Connect ID
+        current_user.stripe_connect_id = account.id
+        current_user.stripe_status = 'pending'
+        session.commit()
+        
+        # Create onboarding link
+        base_url = str(request.base_url).rstrip('/')
+        account_link = stripe.AccountLink.create(
+            account=account.id,
+            refresh_url=f'{base_url}/payments/connect/refresh',
+            return_url=f'{base_url}/payments/connect/return?account_id={account.id}',
+            type='account_onboarding'
+        )
+        
+        return {
+            "onboarding_url": account_link.url,
+            "account_id": account.id,
+            "status": "pending"
+        }
+        
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/connect/status")
+async def get_connect_status(
+    current_user: User = Depends(get_current_user_from_token),
+    session = Depends(get_session)
+):
+    """Get Stripe Connect account status"""
+    
+    if not current_user.is_developer:
+        raise HTTPException(status_code=403, detail="Only developers can view Stripe status")
+    
+    if not current_user.stripe_connect_id:
+        return {
+            "connected": False,
+            "status": "not_started",
+            "message": "Stripe account not connected"
+        }
+    
+    try:
+        # Fetch latest account status from Stripe
+        account = stripe.Account.retrieve(current_user.stripe_connect_id)
+        
+        # Update local status
+        current_user.stripe_charges_enabled = account.charges_enabled
+        current_user.stripe_payouts_enabled = account.payouts_enabled
+        
+        if account.charges_enabled and account.payouts_enabled:
+            current_user.stripe_status = 'active'
+        elif current_user.stripe_status != 'active':
+            current_user.stripe_status = 'pending'
+        
+        session.commit()
+        
+        return {
+            "connected": True,
+            "status": current_user.stripe_status,
+            "charges_enabled": account.charges_enabled,
+            "payouts_enabled": account.payouts_enabled,
+            "account_id": current_user.stripe_connect_id,
+            "requirements": account.requirements.currently_due if hasattr(account, 'requirements') else []
+        }
+        
+    except stripe.error.StripeError as e:
+        return {
+            "connected": False,
+            "status": "error",
+            "message": str(e)
+        }
+
+
+@router.post("/connect/refresh")
+async def refresh_connect_link(
+    request: Request,
+    current_user: User = Depends(get_current_user_from_token),
+    session = Depends(get_session)
+):
+    """Refresh Stripe Connect onboarding link"""
+    
+    if not current_user.is_developer or not current_user.stripe_connect_id:
+        raise HTTPException(status_code=400, detail="No Stripe account found")
+    
+    try:
+        base_url = str(request.base_url).rstrip('/')
+        account_link = stripe.AccountLink.create(
+            account=current_user.stripe_connect_id,
+            refresh_url=f'{base_url}/payments/connect/refresh',
+            return_url=f'{base_url}/payments/connect/return?account_id={current_user.stripe_connect_id}',
+            type='account_onboarding'
+        )
+        
+        return {"onboarding_url": account_link.url}
+        
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/connect/return")
+async def connect_return(
+    account_id: str,
+    session = Depends(get_session)
+):
+    """Handle Stripe Connect onboarding return"""
+    
+    # Find user by Stripe account ID
+    user = session.exec(
+        select(User).where(User.stripe_connect_id == account_id)
+    ).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="Account not found")
+    
+    try:
+        # Check account status
+        account = stripe.Account.retrieve(account_id)
+        
+        user.stripe_charges_enabled = account.charges_enabled
+        user.stripe_payouts_enabled = account.payouts_enabled
+        
+        if account.charges_enabled and account.payouts_enabled:
+            user.stripe_status = 'active'
+        else:
+            user.stripe_status = 'pending'
+        
+        session.commit()
+        
+        return {
+            "status": "success",
+            "account_status": user.stripe_status,
+            "charges_enabled": account.charges_enabled,
+            "payouts_enabled": account.payouts_enabled
+        }
+        
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=400, detail=str(e))

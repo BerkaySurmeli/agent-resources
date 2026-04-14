@@ -10,8 +10,9 @@ import PurchasesSection from '../components/settings/PurchasesSection';
 import ReviewsSection from '../components/settings/ReviewsSection';
 import ListingsSection from '../components/settings/ListingsSection';
 import NotificationsSection from '../components/settings/NotificationsSection';
+import PayoutSection from '../components/settings/PayoutSection';
 
-type SettingsTab = 'profile' | 'account' | 'purchases' | 'reviews' | 'listings' | 'notifications';
+type SettingsTab = 'profile' | 'account' | 'purchases' | 'reviews' | 'listings' | 'notifications' | 'payouts';
 
 interface NavItem {
   id: SettingsTab;
@@ -30,7 +31,7 @@ export default function Settings() {
   useEffect(() => {
     if (router.isReady) {
       const { tab } = router.query;
-      if (tab && ['profile', 'account', 'purchases', 'reviews', 'listings', 'notifications'].includes(tab as string)) {
+      if (tab && ['profile', 'account', 'purchases', 'reviews', 'listings', 'notifications', 'payouts'].includes(tab as string)) {
         setActiveTab(tab as SettingsTab);
       }
     }
@@ -105,6 +106,15 @@ export default function Settings() {
         </svg>
       )
     },
+    {
+      id: 'payouts',
+      label: 'Payouts',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      )
+    },
   ];
 
   const renderContent = () => {
@@ -121,6 +131,8 @@ export default function Settings() {
         return <ListingsSection />;
       case 'notifications':
         return <NotificationsSection />;
+      case 'payouts':
+        return <PayoutSection />;
       default:
         return <ProfileSection />;
     }
