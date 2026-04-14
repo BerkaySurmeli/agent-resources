@@ -113,9 +113,6 @@ export default function Dashboard() {
   };
 
   const fetchDashboardData = async () => {
-    // Prevent multiple concurrent requests
-    if (loading) return;
-    
     try {
       setLoading(true);
       const token = localStorage.getItem('ar-token');

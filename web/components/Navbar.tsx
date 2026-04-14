@@ -1,15 +1,19 @@
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import Logo from './Logo';
 
 export default function Navbar() {
+  const router = useRouter();
   const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     setDropdownOpen(false);
+    // Force a page refresh to ensure all components update
+    window.location.href = '/';
   };
 
   return (
