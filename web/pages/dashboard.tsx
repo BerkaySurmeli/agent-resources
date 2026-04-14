@@ -130,6 +130,12 @@ export default function Dashboard() {
         const listingsData = await listingsRes.json();
         console.log('Listings fetched:', listingsData.length, listingsData);
         setListings(listingsData);
+      } else if (listingsRes.status === 401) {
+        // Token expired or invalid
+        console.error('Token expired or invalid');
+        setError('Your session has expired. Please log in again.');
+        setLoading(false);
+        return;
       } else {
         const errorText = await listingsRes.text();
         console.error('Listings fetch error:', listingsRes.status, errorText);
@@ -392,7 +398,15 @@ export default function Dashboard() {
           {/* Error State */}
           {error && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-center">
-              <p className="text-red-400">{error}</p>
+              <p className="text-red-400 mb-4">{error}</p>
+              {error.includes('session has expired') && (
+                <Link 
+                  href="/login" 
+                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Log In Again
+                </Link>
+              )}
             </div>
           )}
         </div>
