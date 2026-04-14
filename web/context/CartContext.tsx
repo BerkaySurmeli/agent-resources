@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface CartItem {
+  id: string;
   slug: string;
   name: string;
   price: number;
@@ -38,13 +39,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addToCart = (item: CartItem) => {
     setItems(prev => {
-      if (prev.find(i => i.slug === item.slug)) return prev;
+      if (prev.find(i => i.id === item.id)) return prev;
       return [...prev, item];
     });
   };
 
-  const removeFromCart = (slug: string) => {
-    setItems(prev => prev.filter(i => i.slug !== slug));
+  const removeFromCart = (slugOrId: string) => {
+    setItems(prev => prev.filter(i => i.slug !== slugOrId && i.id !== slugOrId));
   };
 
   const clearCart = () => {

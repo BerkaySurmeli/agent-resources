@@ -300,6 +300,7 @@ export default function Listings() {
                           <>
                             <button
                               onClick={() => addToCart({
+                                id: listing.id,
                                 slug: listing.slug,
                                 name: listing.name,
                                 price: Math.round(listing.price_cents) / 100,

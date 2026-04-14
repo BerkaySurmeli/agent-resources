@@ -349,3 +349,184 @@ def send_verification_email(to_email: str, name: str, token: str) -> dict:
 def send_developer_welcome_email(to_email: str, name: str, developer_code: str) -> dict:
     """Send developer welcome email with code"""
     return EmailService.send_developer_welcome_email(to_email, name, developer_code)
+
+
+def send_purchase_confirmation(to_email: str, product_name: str, amount: float) -> dict:
+    """Send purchase confirmation email to buyer"""
+    if not settings.RESEND_API_KEY:
+        print(f"[EMAIL] Purchase confirmation (dry run): {to_email} bought {product_name} for ${amount}")
+        return {"id": "dry-run"}
+    
+    html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You for Your Purchase!</title>
+</head>
+<body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <div style="width: 60px; height: 60px; background: #2563eb; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+            <span style="color: white; font-weight: bold; font-size: 24px;">AR</span>
+        </div>
+        <h1 style="color: #0f172a; margin: 0;">Thank You for Your Purchase!</h1>
+    </div>
+
+    <div style="background: #f8fafc; border-radius: 12px; padding: 30px; margin-bottom: 20px;">
+        <p style="margin-top: 0;">Hi there,</p>
+        <p>Thank you for purchasing <strong>{product_name}</strong>!</p>
+        
+        <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #e2e8f0;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <span style="color: #64748b;">Item:</span>
+                <span style="font-weight: 500;">{product_name}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+                <span style="color: #64748b;">Total:</span>
+                <span style="font-weight: bold; color: #2563eb;">${amount:.2f}</span>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="https://shopagentresources.com/settings?tab=purchases" style="display: inline-block; background: #2563eb; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 500;">
+                View Your Purchases
+            </a>
+        </div>
+
+        <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">
+            You can download your purchase from your account dashboard. If you have any questions, reply to this email.
+        </p>
+    </div>
+
+    <div style="text-align: center; font-size: 14px; color: #64748b;">
+        <p>Best regards,<br>The Agent Resources Team</p>
+        <p style="margin-top: 20px;">
+            <a href="https://shopagentresources.com" style="color: #2563eb;">shopagentresources.com</a>
+        </p>
+    </div>
+</body>
+</html>
+"""
+    
+    text_content = f"""
+Thank You for Your Purchase!
+
+Hi there,
+
+Thank you for purchasing {product_name}!
+
+Order Details:
+- Item: {product_name}
+- Total: ${amount:.2f}
+
+You can download your purchase from your account dashboard at:
+https://shopagentresources.com/settings?tab=purchases
+
+If you have any questions, reply to this email.
+
+Best regards,
+The Agent Resources Team
+"""
+    
+    try:
+        response = resend.Emails.send({
+            "from": settings.FROM_EMAIL_INFO,
+            "to": [to_email],
+            "subject": f"Your Purchase: {product_name}",
+            "html": html_content,
+            "text": text_content,
+            "reply_to": settings.FROM_EMAIL_SUPPORT
+        })
+        print(f"[EMAIL] Purchase confirmation sent to {to_email}")
+        return response
+    except Exception as e:
+        print(f"[EMAIL ERROR] Failed to send purchase confirmation: {e}")
+        return {"error": str(e)}
+
+
+def send_sale_notification(to_email: str, product_name: str, earnings: float) -> dict:
+    """Send sale notification email to seller"""
+    if not settings.RESEND_API_KEY:
+        print(f"[EMAIL] Sale notification (dry run): {to_email} sold {product_name} for ${earnings}")
+        return {"id": "dry-run"}
+    
+    html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You Made a Sale!</title>
+</head>
+<body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <div style="width: 60px; height: 60px; background: #22c55e; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+            <span style="color: white; font-weight: bold; font-size: 24px;">$</span>
+        </div>
+        <h1 style="color: #0f172a; margin: 0;">You Made a Sale!</h1>
+    </div>
+
+    <div style="background: #f0fdf4; border-radius: 12px; padding: 30px; margin-bottom: 20px; border: 1px solid #bbf7d0;">
+        <p style="margin-top: 0;">Great news! Someone just purchased your item:</p>
+        
+        <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #0f172a;">{product_name}</h3>
+            <div style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                <span style="color: #64748b;">Your Earnings:</span>
+                <span style="font-weight: bold; color: #22c55e; font-size: 20px;">${earnings:.2f}</span>
+            </div>
+        </div>
+
+        <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">
+            Your earnings will be included in your next weekly payout. Keep up the great work!
+        </p>
+    </div>
+
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="https://shopagentresources.com/dashboard" style="display: inline-block; background: #2563eb; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 500;">
+            View Dashboard
+        </a>
+    </div>
+
+    <div style="text-align: center; font-size: 14px; color: #64748b;">
+        <p>Best regards,<br>The Agent Resources Team</p>
+        <p style="margin-top: 20px;">
+            <a href="https://shopagentresources.com" style="color: #2563eb;">shopagentresources.com</a>
+        </p>
+    </div>
+</body>
+</html>
+"""
+    
+    text_content = f"""
+You Made a Sale!
+
+Great news! Someone just purchased your item:
+
+{product_name}
+
+Your Earnings: ${earnings:.2f}
+
+Your earnings will be included in your next weekly payout. Keep up the great work!
+
+View your dashboard: https://shopagentresources.com/dashboard
+
+Best regards,
+The Agent Resources Team
+"""
+    
+    try:
+        response = resend.Emails.send({
+            "from": settings.FROM_EMAIL_INFO,
+            "to": [to_email],
+            "subject": f"🎉 You Made a Sale: {product_name}",
+            "html": html_content,
+            "text": text_content,
+            "reply_to": settings.FROM_EMAIL_SUPPORT
+        })
+        print(f"[EMAIL] Sale notification sent to {to_email}")
+        return response
+    except Exception as e:
+        print(f"[EMAIL ERROR] Failed to send sale notification: {e}")
+        return {"error": str(e)}

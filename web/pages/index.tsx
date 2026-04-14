@@ -198,11 +198,11 @@ export default function LandingPage() {
 
             {/* Spots Counter or Waitlist Message */}
             {spotsRemaining !== null && spotsRemaining > 0 ? (
-              <p className="text-lg font-medium text-white mb-20">
+              <p className="text-lg font-medium text-white mb-8">
                 {spotsRemaining} / 50 {lt.spotsRemaining}
               </p>
             ) : spotsRemaining === 0 ? (
-              <p className="text-lg font-medium text-emerald-400 mb-20 max-w-xl mx-auto">
+              <p className="text-lg font-medium text-emerald-400 mb-8 max-w-xl mx-auto">
                 {lt.allSpotsFilled}
               </p>
             ) : null}
