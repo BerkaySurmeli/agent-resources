@@ -905,3 +905,33 @@ async def seed_mcp_servers(
     
     session.commit()
     return {"created": created, "skipped": skipped, "owner": owner.email}
+
+
+@router.post("/migrate")
+async def run_migration(
+    setup_key: str = Header(..., alias="X-Setup-Key"),
+    session = Depends(get_session)
+):
+    """Run database migrations - requires setup key"""
+    from core.config import settings
+    from sqlalchemy import text
+    
+    expected_key = getattr(settings, 'ADMIN_SETUP_KEY', 'dev-setup-key-12345')
+    if setup_key != expected_key:
+        raise HTTPException(status_code=403, detail="Invalid setup key")
+    
+    try:
+        # Add version column
+        session.exec(text("ALTER TABLE listings ADD COLUMN IF NOT EXISTS version VARCHAR(20) DEFAULT '1.0.0'"))
+        
+        # Add scan_progress column
+        session.exec(text("ALTER TABLE listings ADD COLUMN IF NOT EXISTS scan_progress INTEGER DEFAULT 0"))
+        
+        # Add translation_progress column
+        session.exec(text("ALTER TABLE listings ADD COLUMN IF NOT EXISTS translation_progress INTEGER DEFAULT 0"))
+        
+        session.commit()
+        return {"message": "Migration completed successfully"}
+    except Exception as e:
+        session.rollback()
+        return {"error": str(e)}
