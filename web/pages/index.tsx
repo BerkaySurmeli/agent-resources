@@ -151,14 +151,14 @@ export default function LandingPage() {
         </nav>
 
         {/* Hero Section */}
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
           <div className="text-center">
-            <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-10">
+            <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
               {lt.title}<br /><span className="text-blue-400">{lt.titleHighlight}</span>
             </h1>
             
             {/* Animated Tagline - gradient flowing through text */}
-            <p className="text-2xl md:text-3xl font-bold mb-20 max-w-xl mx-auto gradient-flow-text">
+            <p className="text-2xl md:text-3xl font-bold mb-6 max-w-xl mx-auto gradient-flow-text">
               {lt.tagline?.replace(/\.$/, '')}
             </p>
 
@@ -166,7 +166,7 @@ export default function LandingPage() {
             <div className="max-w-2xl mx-auto mb-4 px-4">
 
               {/* Developer Incentive - centered, closer to input */}
-              <p className="text-lg text-amber-400 font-medium mb-4 text-center">
+              <p className="text-base text-amber-400 font-medium mb-3 text-center">
                 {lt.incentive}
               </p>
               <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
@@ -197,30 +197,30 @@ export default function LandingPage() {
 
             {/* Spots Counter or Waitlist Message */}
             {spotsRemaining !== null && spotsRemaining > 0 ? (
-              <p className="text-lg font-medium text-white mb-8">
+              <p className="text-base font-medium text-white mb-2">
                 {spotsRemaining} / 50 {lt.spotsRemaining}
               </p>
             ) : spotsRemaining === 0 ? (
-              <p className="text-lg font-medium text-emerald-400 mb-8 max-w-xl mx-auto">
+              <p className="text-base font-medium text-emerald-400 mb-2 max-w-xl mx-auto">
                 {lt.allSpotsFilled}
               </p>
             ) : null}
 
             {/* Features Section */}
-            <div className="mt-24 pt-16 border-t border-white/10">
-              <p className="text-center text-2xl md:text-3xl font-bold text-white mb-12 max-w-3xl mx-auto leading-relaxed">
+            <div className="mt-12 pt-8 border-t border-white/10">
+              <p className="text-center text-xl md:text-2xl font-bold text-white mb-8 max-w-3xl mx-auto leading-relaxed">
                 {lt.subtitle}
               </p>
-              <div className="grid md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto">
-                <div className="p-8 rounded-xl bg-white/5 border border-white/10">
+              <div className="grid md:grid-cols-3 gap-6 text-left max-w-5xl mx-auto">
+                <div className="p-6 rounded-xl bg-white/5 border border-white/10">
                   <h3 className="text-xl font-semibold mb-3 text-blue-400">{lt.features?.personas?.title || 'AI Personas'}</h3>
                   <p className="text-slate-400">{lt.features?.personas?.description || 'Pre-configured agent personalities with SOUL.md, tools, and behavior patterns.'}</p>
                 </div>
-                <div className="p-8 rounded-xl bg-white/5 border border-white/10">
+                <div className="p-6 rounded-xl bg-white/5 border border-white/10">
                   <h3 className="text-xl font-semibold mb-3 text-purple-400">{lt.features?.skills?.title || 'Skills'}</h3>
                   <p className="text-slate-400">{lt.features?.skills?.description || 'Reusable capabilities for agents — from web scraping to API integrations.'}</p>
                 </div>
-                <div className="p-8 rounded-xl bg-white/5 border border-white/10">
+                <div className="p-6 rounded-xl bg-white/5 border border-white/10">
                   <h3 className="text-xl font-semibold mb-3 text-green-400">{lt.features?.mcp?.title || 'MCP Servers'}</h3>
                   <p className="text-slate-400">{lt.features?.mcp?.description || 'Model Context Protocol servers for extending agent capabilities.'}</p>
                 </div>
@@ -230,7 +230,7 @@ export default function LandingPage() {
         </main>
 
         {/* Footer */}
-        <footer className="border-t border-white/10 py-8">
+        <footer className="border-t border-white/10 py-6">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-slate-400 text-sm">
             <p>{lt.footer}</p>
           </div>
