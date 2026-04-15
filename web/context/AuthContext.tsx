@@ -213,6 +213,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
+    removeLocalStorage('ar-token');
+    removeLocalStorage('ar-user');
   };
 
   const updateProfile = async (data: Partial<User>) => {
