@@ -36,5 +36,16 @@ settings = Settings()
 
 # Debug: Log config on startup
 print(f"[CONFIG] Starting with SECRET_KEY: {bool(settings.SECRET_KEY)} (len: {len(settings.SECRET_KEY)})")
+print(f"[CONFIG] SECRET_KEY first 20 chars: {settings.SECRET_KEY[:20]}...")
 print(f"[CONFIG] CLOUDFLARE_API_TOKEN: {bool(settings.CLOUDFLARE_API_TOKEN)}")
 print(f"[CONFIG] CLOUDFLARE_ZONE_ID: {bool(settings.CLOUDFLARE_ZONE_ID)}")
+
+# Check if .env file exists and log its contents
+import os
+if os.path.exists('.env'):
+    print("[CONFIG] WARNING: .env file exists!")
+    with open('.env', 'r') as f:
+        for line in f:
+            if line.strip() and not line.startswith('#'):
+                key = line.split('=')[0] if '=' in line else line
+                print(f"[CONFIG] .env contains: {key}")

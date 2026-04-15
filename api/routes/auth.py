@@ -17,6 +17,8 @@ SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
 
+print(f"[AUTH MODULE] Loaded SECRET_KEY (first 20 chars): {SECRET_KEY[:20]}... (len: {len(SECRET_KEY)})")
+
 # Pydantic models
 class UserSignup(BaseModel):
     email: EmailStr
