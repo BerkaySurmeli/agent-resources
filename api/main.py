@@ -5,7 +5,7 @@ from fastapi.responses import Response
 from sqlmodel import create_engine
 from core.config import settings
 from models import SQLModel
-from routes import waitlist, payments, auth, admin, listings, admin, products, developers, search, contact, admin_metrics
+from routes import waitlist, payments, auth, admin, listings, products, developers, search, contact, admin_metrics
 import re
 
 @asynccontextmanager

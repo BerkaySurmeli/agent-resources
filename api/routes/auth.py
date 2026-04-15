@@ -194,6 +194,8 @@ def login(user_data: UserLogin, session = Depends(get_session)):
     
     # Create token
     access_token = create_access_token({"sub": str(user.id)})
+    print(f"[LOGIN DEBUG] Created token for user {user.id}: {access_token[:50]}...")
+    print(f"[LOGIN DEBUG] Using SECRET_KEY (first 10 chars): {SECRET_KEY[:10]}...")
     
     return {
         "access_token": access_token,

@@ -92,7 +92,7 @@ export default function ContactPage() {
     setErrorMessage('');
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://agent-resources-api-dev-production.up.railway.app';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agent-resources-api-dev-production.up.railway.app';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
 export default function VerifyEmail() {
   const router = useRouter();

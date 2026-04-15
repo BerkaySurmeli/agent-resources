@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import Logo from '../components/Logo';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agent-resources-api-dev-production.up.railway.app';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
 // Simple icon components
 const Icon = ({ name, className }: { name: string; className?: string }) => {

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import Navbar from '../components/Navbar';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agent-resources-api-dev-production.up.railway.app';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
 
 const steps = [
   { id: 'orchestrator', title: 'Choose Your Orchestrator', description: 'Select a project manager to coordinate your AI team' },
