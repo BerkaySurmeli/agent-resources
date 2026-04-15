@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Force rebuild timestamp
-ENV BUILD_TIMESTAMP=2026-03-29-2247
+ENV BUILD_TIMESTAMP=2026-04-15-1640
 
 # Expose port
 EXPOSE 8000
