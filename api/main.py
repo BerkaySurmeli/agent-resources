@@ -129,3 +129,7 @@ async def test_auth():
 # Deploy Mon Apr  6 12:14:37 PDT 2026
 # Force rebuild Thu Apr 16 13:12:17 PDT 2026
 # Deploy Thu Apr 16 13:35:33 PDT 2026
+
+@app.get("/test-deploy")
+async def test_deploy():
+    return {"message": "New code deployed", "timestamp": "2026-04-16-1340"}
