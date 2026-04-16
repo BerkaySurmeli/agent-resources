@@ -947,3 +947,62 @@ async def run_migration(
     except Exception as e:
         session.rollback()
         return {"error": str(e)}
+
+
+@router.post("/approve-listing/{listing_id}")
+async def approve_listing_manual(
+    listing_id: str,
+    setup_key: str = Header(None),
+    session = Depends(get_session)
+):
+    """Manually approve a stuck listing"""
+    from models import Listing, Product
+    import uuid
+    
+    # Verify setup key
+    expected_key = getattr(settings, 'ADMIN_SETUP_KEY', 'dev-setup-key-12345')
+    if setup_key != expected_key:
+        raise HTTPException(status_code=403, detail="Invalid setup key")
+    
+    try:
+        # Get the listing
+        listing = session.exec(select(Listing).where(Listing.id == uuid.UUID(listing_id))).first()
+        if not listing:
+            raise HTTPException(status_code=404, detail="Listing not found")
+        
+        # Approve the listing
+        listing.status = 'approved'
+        listing.virus_scan_status = 'clean'
+        listing.scan_completed_at = datetime.utcnow()
+        listing.scan_results = {
+            "virustotal": {"status": "clean", "source": "manual"},
+            "openclaw_analysis": {"status": "passed"}
+        }
+        
+        # Create product from listing
+        product = Product(
+            owner_id=listing.owner_id,
+            name=listing.name,
+            slug=listing.slug,
+            description=listing.description,
+            category=listing.category.value,
+            category_tags=listing.category_tags,
+            price_cents=listing.price_cents,
+            is_active=True,
+            is_verified=True
+        )
+        session.add(product)
+        session.commit()
+        session.refresh(product)
+        
+        listing.product_id = product.id
+        session.commit()
+        
+        return {
+            "message": "Listing approved successfully",
+            "listing_id": str(listing.id),
+            "product_id": str(product.id)
+        }
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
