@@ -124,8 +124,7 @@ class ScanQueue:
                         },
                         "openclaw_analysis": {"status": "passed"}
                     }
-                    import json
-                    listing.virustotal_report = json.dumps(vt_result.get("data"))
+                    listing.virustotal_report = vt_result.get("data")
                     
                     # Create product from listing
                     product = Product(
@@ -1025,7 +1024,7 @@ async def process_pending_scans(
                     "openclaw_analysis": {"status": "passed"}
                 }
                 import json
-                listing.virustotal_report = json.dumps(vt_result.get("data"))
+                listing.virustotal_report = vt_result.get("data")
                 
                 # Create product from listing
                 product = Product(

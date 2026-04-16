@@ -211,7 +211,7 @@ class Listing(SQLModel, table=True):
     scan_started_at: Optional[datetime] = Field(default=None)
     scan_completed_at: Optional[datetime] = Field(default=None)
     scan_results: Dict = Field(default={}, sa_column=Column(JSON))
-    virustotal_report: Optional[str] = Field(default=None)
+    virustotal_report: Optional[Dict] = Field(default=None, sa_column=Column(JSON))
     rejection_reason: Optional[str] = Field(default=None)
     
     # Payment
