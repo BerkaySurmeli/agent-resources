@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query, BackgroundTasks
 from pydantic import BaseModel
 from sqlmodel import select
 from typing import List, Optional
@@ -54,6 +54,132 @@ class RateLimiter:
 
 # Global rate limiter: 4 calls per 60 seconds
 vt_rate_limiter = RateLimiter(VIRUSTOTAL_RATE_LIMIT, 60.0)
+
+# Scan queue for background processing
+class ScanQueue:
+    def __init__(self):
+        self.queue = []
+        self.processing = False
+        self.lock = asyncio.Lock()
+    
+    async def add(self, listing_id: uuid.UUID, file_path: str):
+        async with self.lock:
+            self.queue.append({
+                'listing_id': listing_id,
+                'file_path': file_path
+            })
+            if not self.processing:
+                asyncio.create_task(self._process_queue())
+    
+    async def _process_queue(self):
+        async with self.lock:
+            self.processing = True
+        
+        try:
+            while True:
+                async with self.lock:
+                    if not self.queue:
+                        self.processing = False
+                        break
+                    task = self.queue.pop(0)
+                
+                # Process one scan at a time with delay to respect rate limits
+                await self._process_scan(task)
+                await asyncio.sleep(15)  # 15 second delay between scans
+        except Exception as e:
+            print(f"[SCAN QUEUE] Error: {e}")
+            async with self.lock:
+                self.processing = False
+    
+    async def _process_scan(self, task: Dict):
+        from core.database import get_session
+        session = next(get_session())
+        try:
+            listing_id = task['listing_id']
+            file_path = task['file_path']
+            
+            print(f"[SCAN QUEUE] Processing scan for listing {listing_id}")
+            
+            # Get listing details
+            listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
+            if not listing:
+                print(f"[SCAN QUEUE] Listing {listing_id} not found")
+                return
+            
+            # Run VirusTotal scan
+            try:
+                vt_result = await scan_with_virustotal(file_path)
+                analysis = analyze_virustotal_results(vt_result)
+                
+                if analysis["is_safe"]:
+                    # Approve listing
+                    listing.status = 'approved'
+                    listing.virus_scan_status = 'clean'
+                    listing.scan_completed_at = datetime.utcnow()
+                    listing.scan_results = {
+                        "virustotal": {
+                            "status": "clean",
+                            "source": vt_result.get("source", "unknown"),
+                            "stats": analysis.get("details", {})
+                        },
+                        "openclaw_analysis": {"status": "passed"}
+                    }
+                    listing.virustotal_report = vt_result.get("data")
+                    
+                    # Create product from listing
+                    product = Product(
+                        owner_id=listing.owner_id,
+                        name=listing.name,
+                        slug=listing.slug,
+                        description=listing.description,
+                        category=listing.category.value,
+                        category_tags=listing.category_tags,
+                        price_cents=listing.price_cents,
+                        is_active=True,
+                        is_verified=True
+                    )
+                    session.add(product)
+                    session.commit()
+                    session.refresh(product)
+                    
+                    listing.product_id = product.id
+                    session.commit()
+                    
+                    # Trigger translations
+                    await translation_queue.add(listing.id, listing.name, listing.description, listing.original_language)
+                    
+                    print(f"[SCAN QUEUE] Listing {listing_id} approved")
+                else:
+                    # Reject listing
+                    listing.status = 'rejected'
+                    listing.virus_scan_status = 'infected'
+                    listing.scan_completed_at = datetime.utcnow()
+                    listing.scan_results = {
+                        "virustotal": {
+                            "status": "suspicious",
+                            "reason": analysis.get("reason"),
+                            "malicious": analysis.get("malicious_count"),
+                            "suspicious": analysis.get("suspicious_count"),
+                            "total": analysis.get("total_engines")
+                        }
+                    }
+                    listing.rejection_reason = f"Security scan failed: {analysis.get('reason')}"
+                    session.commit()
+                    
+                    print(f"[SCAN QUEUE] Listing {listing_id} rejected: {analysis.get('reason')}")
+                    
+            except Exception as e:
+                print(f"[SCAN QUEUE] Scan failed for listing {listing_id}: {e}")
+                listing.status = 'pending_scan'
+                listing.virus_scan_status = 'failed'
+                listing.scan_results = {"virustotal": {"status": "error", "error": str(e)}}
+                session.commit()
+                
+        finally:
+            session.close()
+
+# Global scan queue
+scan_queue = ScanQueue()
 
 # Translation queue for rate limiting
 class TranslationQueue:
@@ -205,6 +331,7 @@ async def scan_with_virustotal(file_path: str) -> Dict[str, Any]:
         
         # Step 3: Poll for results (max 10 attempts, with rate limiting)
         for attempt in range(10):
+            print(f"[VIRUSTOTAL] Polling attempt {attempt + 1}/10 for analysis {analysis_id}")
             await asyncio.sleep(15)  # Wait between polls
             await vt_rate_limiter.acquire()
             
@@ -487,7 +614,7 @@ async def create_listing(
     session.commit()
     session.refresh(listing)
     
-    # If free, trigger security scan
+    # If free, trigger security scan in background
     if LISTING_FEE_CENTS == 0:
         # Start scanning
         listing.status = 'scanning'
@@ -495,113 +622,16 @@ async def create_listing(
         listing.scan_started_at = datetime.utcnow()
         session.commit()
         
-        # Run VirusTotal scan (with timeout protection)
-        try:
-            # Use asyncio.wait_for to prevent HTTP timeout issues
-            vt_result = await asyncio.wait_for(
-                scan_with_virustotal(zip_path),
-                timeout=120.0  # 2 minute max
-            )
-            analysis = analyze_virustotal_results(vt_result)
-            
-            if analysis["is_safe"]:
-                # Approve listing
-                listing.status = 'approved'
-                listing.virus_scan_status = 'clean'
-                listing.scan_completed_at = datetime.utcnow()
-                listing.scan_results = {
-                    "virustotal": {
-                        "status": "clean",
-                        "source": vt_result.get("source", "unknown"),
-                        "stats": analysis.get("details", {})
-                    },
-                    "openclaw_analysis": {"status": "passed"}
-                }
-                listing.virustotal_report = vt_result.get("data")
-                
-                # Create product from listing
-                product = Product(
-                    owner_id=current_user.id,
-                    name=name,
-                    slug=slug,
-                    description=description,
-                    category=category,
-                    category_tags=tag_list,
-                    price_cents=price_cents,
-                    is_active=True,
-                    is_verified=True
-                )
-                session.add(product)
-                session.commit()
-                
-                # Trigger translations in background using queue
-                await translation_queue.add(listing.id, name, description, original_language)
-                session.refresh(product)
-                
-                listing.product_id = product.id
-                session.commit()
-                
-                return {
-                    "id": str(listing.id),
-                    "slug": listing.slug,
-                    "status": listing.status,
-                    "virus_scan_status": listing.virus_scan_status,
-                    "translation_status": listing.translation_status,
-                    "message": "Listing created and approved after security scan"
-                }
-            else:
-                # Reject listing
-                listing.status = 'rejected'
-                listing.virus_scan_status = 'infected'
-                listing.scan_completed_at = datetime.utcnow()
-                listing.scan_results = {
-                    "virustotal": {
-                        "status": "suspicious",
-                        "reason": analysis.get("reason"),
-                        "malicious": analysis.get("malicious_count"),
-                        "suspicious": analysis.get("suspicious_count"),
-                        "total": analysis.get("total_engines")
-                    }
-                }
-                listing.rejection_reason = f"Security scan failed: {analysis.get('reason')}"
-                session.commit()
-
-                return {
-                    "id": str(listing.id),
-                    "slug": listing.slug,
-                    "status": listing.status,
-                    "virus_scan_status": listing.virus_scan_status,
-                    "message": f"Listing rejected: {analysis.get('reason')}"
-                }
-                
-        except asyncio.TimeoutError:
-            # Scan is taking too long - will complete in background
-            return {
-                "id": str(listing.id),
-                "slug": listing.slug,
-                "status": "scanning",
-                "virus_scan_status": "scanning",
-                "message": "Security scan in progress. Check back in a few minutes."
-            }
-        except Exception as e:
-            import traceback
-            error_details = traceback.format_exc()
-            print(f"[VIRUSTOTAL ERROR] {str(e)}\n{error_details}")
-            
-            listing.status = 'pending_scan'
-            listing.virus_scan_status = 'failed'
-            listing.scan_results = {
-                "virustotal": {"status": "error", "error": str(e), "trace": error_details[:500]}
-            }
-            session.commit()
-            
-            return {
-                "id": str(listing.id),
-                "slug": listing.slug,
-                "status": listing.status,
-                "virus_scan_status": listing.virus_scan_status,
-                "message": f"Listing created but security scan failed: {str(e)[:100]}"
-            }
+        # Add to background scan queue
+        await scan_queue.add(listing.id, zip_path)
+        
+        return {
+            "id": str(listing.id),
+            "slug": listing.slug,
+            "status": "scanning",
+            "virus_scan_status": "scanning",
+            "message": "Listing created. Security scan in progress - check back in a few minutes."
+        }
     
     return {
         "id": str(listing.id),
