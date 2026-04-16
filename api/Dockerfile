@@ -13,7 +13,7 @@ COPY . .
 RUN echo "=== Build Time: 2026-04-15-1645 ===" && ls -la core/ && cat core/config.py | grep "SECRET_KEY first 20"
 
 # Force rebuild timestamp - updated to force fresh build
-ENV BUILD_TIMESTAMP=2026-04-16-0846
+ENV BUILD_TIMESTAMP=2026-04-16-1145
 
 # Expose port
 EXPOSE 8000
