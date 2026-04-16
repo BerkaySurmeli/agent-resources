@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+import { API_URL } from '../lib/api';
 
 // Resend verification component
 function ResendVerification({ email }: { email: string }) {

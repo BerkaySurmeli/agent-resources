@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import Logo from '../components/Logo';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+import { API_URL } from '../lib/api';
 
 const products = [
   {

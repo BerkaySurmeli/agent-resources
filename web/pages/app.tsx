@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import Logo from '../components/Logo';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+import { API_URL } from '../lib/api';
 
 // Simple icon components
 const Icon = ({ name, className }: { name: string; className?: string }) => {
