@@ -127,3 +127,4 @@ async def health():
 async def test_auth():
     return {"message": "Auth routes should be at /auth/signup and /auth/login"}
 # Deploy Mon Apr  6 12:14:37 PDT 2026
+# Force rebuild Thu Apr 16 13:12:17 PDT 2026
