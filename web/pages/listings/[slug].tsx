@@ -26,6 +26,7 @@ interface Listing {
   scan_results: any;
   virus_scan_status: string;
   translation_status: string;
+  status: string;
   created_at: string;
   seller: Seller;
   is_verified: boolean;
