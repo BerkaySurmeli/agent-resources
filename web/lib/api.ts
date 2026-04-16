@@ -1,2 +1,2 @@
 // Central API configuration
-export const API_URL = 'https://agent-resources-api-dev-production.up.railway.app';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
