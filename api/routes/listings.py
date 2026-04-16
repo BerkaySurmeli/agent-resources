@@ -124,7 +124,8 @@ class ScanQueue:
                         },
                         "openclaw_analysis": {"status": "passed"}
                     }
-                    listing.virustotal_report = vt_result.get("data")
+                    import json
+                    listing.virustotal_report = json.dumps(vt_result.get("data"))
                     
                     # Create product from listing
                     product = Product(
@@ -170,11 +171,23 @@ class ScanQueue:
                     
             except Exception as e:
                 print(f"[SCAN QUEUE] Scan failed for listing {listing_id}: {e}")
-                listing.status = 'pending_scan'
-                listing.virus_scan_status = 'failed'
-                listing.scan_results = {"virustotal": {"status": "error", "error": str(e)}}
-                session.commit()
+                import traceback
+                traceback.print_exc()
+                # Rollback and start fresh
+                session.rollback()
+                # Re-fetch listing after rollback
+                listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
+                if listing:
+                    listing.status = 'pending_scan'
+                    listing.virus_scan_status = 'failed'
+                    listing.scan_results = {"virustotal": {"status": "error", "error": str(e)}}
+                    session.commit()
                 
+        except Exception as e:
+            print(f"[SCAN QUEUE] Fatal error processing listing {listing_id}: {e}")
+            import traceback
+            traceback.print_exc()
+            session.rollback()
         finally:
             session.close()
 
