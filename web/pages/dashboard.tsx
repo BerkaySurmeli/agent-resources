@@ -373,10 +373,10 @@ export default function Dashboard() {
                           )}
                           {['approved', 'scanning', 'pending_scan', 'rejected'].includes(listing.status) && (
                             <Link
-                              href={`/dashboard/products/${listing.slug}`}
+                              href={`/listings/${listing.slug}`}
                               className="text-blue-400 hover:text-blue-300 text-sm font-medium"
                             >
-                              {t.dashboard.manage}
+                              {t.dashboard.view}
                             </Link>
                           )}
                         </td>
