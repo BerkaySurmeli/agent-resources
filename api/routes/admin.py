@@ -930,6 +930,18 @@ async def run_migration(
         # Add translation_progress column
         session.exec(text("ALTER TABLE listings ADD COLUMN IF NOT EXISTS translation_progress INTEGER DEFAULT 0"))
         
+        # Change virustotal_report to JSONB if it's still TEXT/VARCHAR
+        try:
+            session.exec(text("ALTER TABLE listings ALTER COLUMN virustotal_report TYPE JSONB USING virustotal_report::JSONB"))
+        except Exception as e:
+            print(f"[MIGRATION] Could not convert virustotal_report to JSONB (may already be JSON or have data issues): {e}")
+            # Try to drop and recreate as JSONB if conversion fails
+            try:
+                session.exec(text("ALTER TABLE listings ALTER COLUMN virustotal_report DROP DEFAULT"))
+                session.exec(text("ALTER TABLE listings ALTER COLUMN virustotal_report TYPE JSONB USING NULL"))
+            except Exception as e2:
+                print(f"[MIGRATION] Fallback also failed: {e2}")
+        
         session.commit()
         return {"message": "Migration completed successfully"}
     except Exception as e:
