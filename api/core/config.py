@@ -51,3 +51,7 @@ if os.path.exists('.env'):
             if line.strip() and not line.startswith('#'):
                 key = line.split('=')[0] if '=' in line else line
                 print(f"[CONFIG] .env contains: {key}")
+
+# Runtime SECRET_KEY verification
+print(f"[CONFIG] Runtime SECRET_KEY hash: {hash(settings.SECRET_KEY) & 0xFFFFFFFF}")
+print(f"[CONFIG] Runtime SECRET_KEY length: {len(settings.SECRET_KEY)}")
