@@ -2,11 +2,14 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Cache bust - forces fresh build
+ARG CACHE_BUST=2026-04-16-1147
+
 # Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application
+# Copy application - this layer should not be cached when code changes
 COPY . .
 
 # Debug: Show what was copied
