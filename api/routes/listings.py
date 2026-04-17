@@ -132,7 +132,7 @@ class ScanQueue:
                 analysis = analyze_virustotal_results(vt_result)
                 
                 if analysis["is_safe"]:
-                    # Approve listing
+                    # Approve listing FIRST
                     listing.status = 'approved'
                     listing.virus_scan_status = 'clean'
                     listing.scan_completed_at = datetime.utcnow()
@@ -146,29 +146,39 @@ class ScanQueue:
                     }
                     listing.virustotal_report = vt_result.get("data")
                     
-                    # Create product from listing
+                    # Commit the listing status change FIRST
+                    session.commit()
+                    print(f"[SCAN QUEUE] Listing {listing_id} status committed as approved")
+                    
+                    # Then create product from listing
                     # Handle category - could be enum or string
                     category_value = listing.category
                     if hasattr(category_value, 'value'):
                         category_value = category_value.value
                     
-                    product = Product(
-                        owner_id=listing.owner_id,
-                        name=listing.name,
-                        slug=listing.slug,
-                        description=listing.description,
-                        category=category_value,
-                        category_tags=listing.category_tags,
-                        price_cents=listing.price_cents,
-                        is_active=True,
-                        is_verified=True
-                    )
-                    session.add(product)
-                    session.commit()
-                    session.refresh(product)
-                    
-                    listing.product_id = product.id
-                    session.commit()
+                    try:
+                        product = Product(
+                            owner_id=listing.owner_id,
+                            name=listing.name,
+                            slug=listing.slug,
+                            description=listing.description,
+                            category=category_value,
+                            category_tags=listing.category_tags,
+                            price_cents=listing.price_cents,
+                            is_active=True,
+                            is_verified=True
+                        )
+                        session.add(product)
+                        session.commit()
+                        session.refresh(product)
+                        
+                        listing.product_id = product.id
+                        session.commit()
+                        print(f"[SCAN QUEUE] Product created for listing {listing_id}")
+                    except Exception as product_error:
+                        print(f"[SCAN QUEUE] Product creation failed for listing {listing_id}: {product_error}")
+                        # Don't fail the whole operation if product creation fails
+                        # The listing is already approved
                     
                     # Trigger translations
                     await translation_queue.add(listing.id, listing.name, listing.description, listing.original_language)
