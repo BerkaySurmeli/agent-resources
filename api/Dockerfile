@@ -21,5 +21,5 @@ ENV BUILD_TIMESTAMP=2026-04-16-1145
 # Expose port
 EXPOSE 8080
 
-# Run application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Run application using PORT env var
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}"]
