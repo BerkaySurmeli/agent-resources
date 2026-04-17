@@ -74,6 +74,13 @@ interface SaleData {
   date: string;
 }
 
+interface WaitlistEntry {
+  email: string;
+  created_at: string;
+  source: string;
+  developer_code: string;
+}
+
 export default function AdminDashboard() {
   const { admin, isLoading: authLoading, logout } = useAdminAuth();
   const router = useRouter();
@@ -92,6 +99,7 @@ export default function AdminDashboard() {
   const [listings, setListings] = useState<ListingData[]>([]);
   const [developers, setDevelopers] = useState<DeveloperData[]>([]);
   const [sales, setSales] = useState<SaleData[]>([]);
+  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [metrics, setMetrics] = useState<CloudflareMetrics | null>(null);
   const [loading, setLoading] = useState(false);
   const [metricsLoading, setMetricsLoading] = useState(false);
@@ -170,6 +178,15 @@ export default function AdminDashboard() {
       if (salesRes.ok) {
         const salesData = await salesRes.json();
         setSales(salesData);
+      }
+
+      // Fetch waitlist
+      const waitlistRes = await fetch(`${API_URL}/admin/waitlist/`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (waitlistRes.ok) {
+        const waitlistData = await waitlistRes.json();
+        setWaitlist(waitlistData.entries || []);
       }
 
       // Fetch Cloudflare metrics
@@ -307,6 +324,7 @@ export default function AdminDashboard() {
     { id: 'developers', label: 'Developers', icon: '💻' },
     { id: 'listings', label: 'Listings', icon: '📋' },
     { id: 'sales', label: 'Sales', icon: '💰' },
+    { id: 'waitlist', label: 'Waitlist', icon: '📝' },
     { id: 'metrics', label: 'Website Metrics', icon: '📈' },
   ];
 
@@ -558,6 +576,48 @@ export default function AdminDashboard() {
             )}
 
             {/* Metrics Section */}
+            {activeSection === 'waitlist' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-slate-900">Waitlist ({waitlist.length})</h2>
+                  <div className="text-sm text-slate-600">
+                    {Math.max(0, 50 - waitlist.length)} spots remaining
+                  </div>
+                </div>
+
+                {waitlist.length > 0 ? (
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                          <th className="text-left px-6 py-4 text-sm font-medium text-slate-600">Email</th>
+                          <th className="text-left px-6 py-4 text-sm font-medium text-slate-600">Developer Code</th>
+                          <th className="text-left px-6 py-4 text-sm font-medium text-slate-600">Source</th>
+                          <th className="text-left px-6 py-4 text-sm font-medium text-slate-600">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {waitlist.map((entry, index) => (
+                          <tr key={index} className="hover:bg-slate-50">
+                            <td className="px-6 py-4 text-sm text-slate-900">{entry.email}</td>
+                            <td className="px-6 py-4 text-sm font-mono text-slate-600">{entry.developer_code || '-'}</td>
+                            <td className="px-6 py-4 text-sm text-slate-600">{entry.source}</td>
+                            <td className="px-6 py-4 text-sm text-slate-600">
+                              {new Date(entry.created_at).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+                    <p className="text-slate-500">No waitlist entries yet.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {activeSection === 'metrics' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
