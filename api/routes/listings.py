@@ -147,12 +147,17 @@ class ScanQueue:
                     listing.virustotal_report = vt_result.get("data")
                     
                     # Create product from listing
+                    # Handle category - could be enum or string
+                    category_value = listing.category
+                    if hasattr(category_value, 'value'):
+                        category_value = category_value.value
+                    
                     product = Product(
                         owner_id=listing.owner_id,
                         name=listing.name,
                         slug=listing.slug,
                         description=listing.description,
-                        category=listing.category.value,
+                        category=category_value,
                         category_tags=listing.category_tags,
                         price_cents=listing.price_cents,
                         is_active=True,
