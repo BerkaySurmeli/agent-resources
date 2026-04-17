@@ -366,19 +366,30 @@ export default function Dashboard() {
                           {new Date(listing.created_at).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4">
-                          {listing.status === 'pending_payment' && (
-                            <button className="text-blue-400 hover:text-blue-300 text-sm font-medium">
-                              {t.dashboard.payFee}
-                            </button>
-                          )}
-                          {['approved', 'scanning', 'pending_scan', 'rejected'].includes(listing.status) && (
+                          <div className="flex items-center gap-3">
+                            {/* View/Preview Link - Always show for all statuses */}
                             <Link
                               href={`/listings/${listing.slug}`}
                               className="text-blue-400 hover:text-blue-300 text-sm font-medium"
                             >
                               {t.dashboard.view}
                             </Link>
-                          )}
+                            
+                            {/* Manage/Edit Link - Always show for all statuses */}
+                            <Link
+                              href={`/listings/${listing.slug}/manage`}
+                              className="text-gray-400 hover:text-white text-sm font-medium"
+                            >
+                              Manage
+                            </Link>
+                            
+                            {/* Pay Fee Button - Only for pending_payment */}
+                            {listing.status === 'pending_payment' && (
+                              <button className="text-blue-400 hover:text-blue-300 text-sm font-medium">
+                                {t.dashboard.payFee}
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
