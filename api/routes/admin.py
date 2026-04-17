@@ -268,6 +268,30 @@ def get_all_admins(
         ]
     }
 
+
+@router.get("/waitlist")
+def get_waitlist(
+    session = Depends(get_session),
+    admin: AdminUser = Depends(get_current_admin_from_token)
+):
+    """Get all waitlist entries"""
+    from models import WaitlistEntry
+    
+    entries = session.exec(select(WaitlistEntry).order_by(WaitlistEntry.created_at.desc())).all()
+    
+    return {
+        "entries": [
+            {
+                "email": e.email,
+                "created_at": e.created_at.isoformat() if e.created_at else None,
+                "source": e.source,
+                "developer_code": e.developer_code,
+            }
+            for e in entries
+        ],
+        "count": len(entries)
+    }
+
 @router.delete("/users/{user_id}")
 def delete_user(
     user_id: str,
