@@ -64,19 +64,38 @@ class ScanQueue:
         self.lock = asyncio.Lock()
     
     async def add(self, listing_id: uuid.UUID, file_path: str):
+        print(f"[SCAN QUEUE] Adding listing {listing_id} to queue")
         async with self.lock:
             self.queue.append({
                 'listing_id': listing_id,
                 'file_path': file_path
             })
+            print(f"[SCAN QUEUE] Queue size: {len(self.queue)}, processing: {self.processing}")
             if not self.processing:
-                asyncio.create_task(self._process_queue())
+                print(f"[SCAN QUEUE] Starting background processing task")
+                try:
+                    task = asyncio.create_task(self._process_queue())
+                    # Add error handling for the task
+                    def handle_task_exception(t):
+                        try:
+                            t.result()
+                        except Exception as e:
+                            print(f"[SCAN QUEUE] Task failed with error: {e}")
+                            import traceback
+                            traceback.print_exc()
+                    task.add_done_callback(handle_task_exception)
+                except Exception as e:
+                    print(f"[SCAN QUEUE] Failed to create task: {e}")
+                    import traceback
+                    traceback.print_exc()
     
     async def _process_queue(self):
+        print(f"[SCAN QUEUE] _process_queue started")
         async with self.lock:
             self.processing = True
         
         try:
+            print(f"[SCAN QUEUE] Entering processing loop")
             while True:
                 async with self.lock:
                     if not self.queue:
