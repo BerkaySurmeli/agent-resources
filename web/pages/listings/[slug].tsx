@@ -396,23 +396,26 @@ export default function ListingDetail() {
               {/* Seller Card */}
               <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6">
                 <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-4">Developer</h3>
-                <div className="flex items-center gap-4">
+                <Link 
+                  href={`/developers/${listing.seller?.id}`}
+                  className="flex items-center gap-4 group"
+                >
                   {listing.seller?.avatar_url ? (
                     <img
                       src={listing.seller.avatar_url}
                       alt={listing.seller.name}
-                      className="w-16 h-16 rounded-2xl object-cover border-2 border-slate-600"
+                      className="w-16 h-16 rounded-2xl object-cover border-2 border-slate-600 group-hover:border-blue-500 transition-colors"
                     />
                   ) : (
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold border-2 border-slate-600">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold border-2 border-slate-600 group-hover:border-blue-500 transition-colors">
                       {listing.seller?.name?.charAt(0).toUpperCase() || '?'}
                     </div>
                   )}
                   <div>
-                    <p className="font-semibold text-white text-lg">{listing.seller?.name || 'Anonymous'}</p>
+                    <p className="font-semibold text-white text-lg group-hover:text-blue-400 transition-colors">{listing.seller?.name || 'Anonymous'}</p>
                     <p className="text-sm text-slate-400">{listing.seller?.bio || 'Agent Developer'}</p>
                   </div>
-                </div>
+                </Link>
               </div>
             </div>
           </div>
