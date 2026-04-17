@@ -377,7 +377,7 @@ export default function Dashboard() {
                             
                             {/* Manage/Edit Link - Always show for all statuses */}
                             <Link
-                              href={`/listings/${listing.slug}/manage`}
+                              href={`/dashboard/products/${listing.slug}`}
                               className="text-gray-400 hover:text-white text-sm font-medium"
                             >
                               Manage
