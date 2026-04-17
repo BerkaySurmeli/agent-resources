@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 
 const API_URL = 'https://api.shopagentresources.com';
 const SESSION_KEY = 'admin_session';
+const TOKEN_KEY = 'admin_token';
 
 interface WaitlistEntry {
   email: string;
@@ -25,6 +26,7 @@ const TIME_RANGES = [
 ];
 
 export default function AdminDashboard() {
+  const [email, setEmail] = useState('admin@shopagentresources.com');
   const [password, setPassword] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
@@ -35,57 +37,54 @@ export default function AdminDashboard() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [timeRange, setTimeRange] = useState(24);
 
-  // Check for existing session on mount
+  // Check for existing token on mount
   useEffect(() => {
-    const session = localStorage.getItem(SESSION_KEY);
-    if (session) {
-      try {
-        const { password: savedPassword, expires } = JSON.parse(session);
-        if (new Date(expires) > new Date()) {
-          setPassword(savedPassword);
-          setAuthenticated(true);
-          fetchData(savedPassword);
-        } else {
-          localStorage.removeItem(SESSION_KEY);
-        }
-      } catch (e) {
-        localStorage.removeItem(SESSION_KEY);
-      }
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) {
+      setAuthenticated(true);
+      fetchData(token);
     }
   }, []);
 
-  const saveSession = (pwd: string) => {
-    const expires = new Date();
-    expires.setHours(expires.getHours() + 8); // 8 hour session
-    localStorage.setItem(SESSION_KEY, JSON.stringify({
-      password: pwd,
-      expires: expires.toISOString()
-    }));
+  const saveToken = (token: string) => {
+    localStorage.setItem(TOKEN_KEY, token);
   };
 
   const clearSession = () => {
+    localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(SESSION_KEY);
     setAuthenticated(false);
     setPassword('');
     setWaitlist([]);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === '16384bEr32768!') {
-      setAuthenticated(true);
-      saveSession(password);
-      fetchData(password);
-    } else {
-      alert('Invalid password');
+    try {
+      const response = await fetch(`${API_URL}/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        saveToken(data.access_token);
+        setAuthenticated(true);
+        fetchData(data.access_token);
+      } else {
+        alert('Invalid email or password');
+      }
+    } catch (error) {
+      alert('Login failed. Please try again.');
     }
   };
 
-  const fetchData = async (pwd: string = password, hours: number = timeRange) => {
+  const fetchData = async (token: string = localStorage.getItem(TOKEN_KEY) || '', hours: number = timeRange) => {
     setLoading(true);
     try {
       const waitlistRes = await fetch(`${API_URL}/admin/waitlist/`, {
-        headers: { 'X-Admin-Password': pwd }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (waitlistRes.ok) {
         const data = await waitlistRes.json();
@@ -97,10 +96,17 @@ export default function AdminDashboard() {
         return;
       }
 
-      const metricsRes = await fetch(`${API_URL}/admin/metrics/?hours=${hours}`);
+      const metricsRes = await fetch(`${API_URL}/admin/metrics/cloudflare`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (metricsRes.ok) {
         const data = await metricsRes.json();
-        setMetrics(data);
+        setMetrics({
+          requests: data.requests,
+          bandwidth: data.bandwidth,
+          views: data.pageviews,
+          visits: data.uniqueVisitors
+        });
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -108,21 +114,22 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
-  const handleDelete = async (email: string) => {
-    if (!confirm(`Are you sure you want to delete ${email}?`)) return;
+  const handleDelete = async (emailToDelete: string) => {
+    if (!confirm(`Are you sure you want to delete ${emailToDelete}?`)) return;
     
+    const token = localStorage.getItem(TOKEN_KEY) || '';
     try {
       const response = await fetch(`${API_URL}/admin/waitlist/delete/`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'X-Admin-Password': password 
+          'Authorization': `Bearer ${token}` 
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: emailToDelete }),
       });
       
       if (response.ok) {
-        setWaitlist(waitlist.filter(e => e.email !== email));
+        setWaitlist(waitlist.filter(e => e.email !== emailToDelete));
         setDeleteConfirm(null);
       } else if (response.status === 401) {
         clearSession();
@@ -152,13 +159,20 @@ export default function AdminDashboard() {
   if (!authenticated) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <form onSubmit={handleLogin} className="bg-slate-800 p-8 rounded-lg border border-slate-700">
+        <form onSubmit={handleLogin} className="bg-slate-800 p-8 rounded-lg border border-slate-700 w-full max-w-md">
           <h1 className="text-2xl font-bold text-white mb-4">Admin Login</h1>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded text-white mb-4"
+          />
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter password"
+            placeholder="Password"
             className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded text-white mb-4"
           />
           <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded">
@@ -192,7 +206,8 @@ export default function AdminDashboard() {
               onChange={(e) => {
                 const hours = parseInt(e.target.value);
                 setTimeRange(hours);
-                fetchData(password, hours);
+                const token = localStorage.getItem(TOKEN_KEY) || '';
+                fetchData(token, hours);
               }}
               className="bg-slate-800 border border-slate-700 text-white px-4 py-2 rounded"
             >
