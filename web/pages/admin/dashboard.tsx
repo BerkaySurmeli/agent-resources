@@ -181,7 +181,7 @@ export default function AdminDashboard() {
       }
 
       // Fetch waitlist
-      const waitlistRes = await fetch(`${API_URL}/admin/waitlist/`, {
+      const waitlistRes = await fetch(`${API_URL}/admin/waitlist`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (waitlistRes.ok) {
