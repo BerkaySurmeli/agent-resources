@@ -6,6 +6,16 @@ from core.config import settings
 if settings.RESEND_API_KEY:
     resend.api_key = settings.RESEND_API_KEY
 
+# Consistent logo HTML for all emails
+EMAIL_LOGO_HTML = """
+<div style="text-align: center; margin-bottom: 30px;">
+    <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
+        <span style="color: white; font-weight: 800; font-size: 24px; letter-spacing: -1px;">AR</span>
+    </div>
+    <h1 style="color: #0f172a; margin: 0; font-size: 24px; font-weight: 700;">Agent Resources</h1>
+</div>
+""".strip()
+
 
 class EmailService:
     """Service for sending emails via Resend API"""
@@ -28,12 +38,7 @@ class EmailService:
     <title>Verify Your Email</title>
 </head>
 <body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <div style="width: 60px; height: 60px; background: #2563eb; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-            <span style="color: white; font-weight: bold; font-size: 24px;">AR</span>
-        </div>
-        <h1 style="color: #0f172a; margin: 0;">Welcome to Agent Resources</h1>
-    </div>
+    {EMAIL_LOGO_HTML}
 
     <div style="background: #f8fafc; border-radius: 12px; padding: 30px; margin-bottom: 20px;">
         <p style="margin-top: 0;">Hi {name},</p>
@@ -109,12 +114,7 @@ The Agent Resources Team
     <title>Reset Your Password</title>
 </head>
 <body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <div style="width: 60px; height: 60px; background: #2563eb; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-            <span style="color: white; font-weight: bold; font-size: 24px;">AR</span>
-        </div>
-        <h1 style="color: #0f172a; margin: 0;">Reset Your Password</h1>
-    </div>
+    {EMAIL_LOGO_HTML}
 
     <div style="background: #f8fafc; border-radius: 12px; padding: 30px; margin-bottom: 20px;">
         <p style="margin-top: 0;">Hi {name},</p>
@@ -265,12 +265,7 @@ This email was sent via the Agent Resources contact form.
     <title>Welcome to Agent Resources - Your Developer Code Inside!</title>
 </head>
 <body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <div style="width: 60px; height: 60px; background: #2563eb; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-            <span style="color: white; font-weight: bold; font-size: 24px;">AR</span>
-        </div>
-        <h1 style="color: #0f172a; margin: 0;">Agent Resources</h1>
-    </div>
+    {EMAIL_LOGO_HTML}
 
     <h2 style="color: #2563eb; text-align: center;">Welcome to Agent Resources!</h2>
     
@@ -366,12 +361,7 @@ def send_purchase_confirmation(to_email: str, product_name: str, amount: float) 
     <title>Thank You for Your Purchase!</title>
 </head>
 <body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <div style="width: 60px; height: 60px; background: #2563eb; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-            <span style="color: white; font-weight: bold; font-size: 24px;">AR</span>
-        </div>
-        <h1 style="color: #0f172a; margin: 0;">Thank You for Your Purchase!</h1>
-    </div>
+    {EMAIL_LOGO_HTML}
 
     <div style="background: #f8fafc; border-radius: 12px; padding: 30px; margin-bottom: 20px;">
         <p style="margin-top: 0;">Hi there,</p>
