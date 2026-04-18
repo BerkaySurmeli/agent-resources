@@ -810,6 +810,7 @@ async def get_public_listings(
             "file_size_bytes": listing.file_size_bytes,
             "scan_results": listing.scan_results,
             "virus_scan_status": listing.virus_scan_status,
+            "status": listing.status,
             "translation_status": listing.translation_status,
             "created_at": listing.created_at,
             "seller": {

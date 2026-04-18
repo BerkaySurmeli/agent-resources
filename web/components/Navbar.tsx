@@ -2,11 +2,14 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import Logo from './Logo';
+import CartIcon from './CartIcon';
 
 export default function Navbar() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { itemCount } = useCart();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleLogout = () => {
@@ -41,8 +44,16 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* User Section */}
+          {/* Cart & User Section */}
           <div className="flex items-center gap-4">
+            <Link href="/cart" className="relative p-2 text-slate-300 hover:text-white transition-colors">
+              <CartIcon />
+              {itemCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
             {user ? (
               <div className="relative">
                 <button 
