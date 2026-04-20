@@ -540,23 +540,32 @@ def get_all_listings(
     admin: AdminUser = Depends(get_current_admin_from_token)
 ):
     """Get all listings with sales stats"""
-    listings = session.exec(select(Product)).all()
+    from models import Listing
+    
+    listings = session.exec(select(Listing)).all()
     
     result = []
     for listing in listings:
-        # Get sales stats
-        sales_data = session.exec(
-            select(func.count(Transaction.id), func.sum(Transaction.amount_cents))
-            .where(Transaction.product_id == listing.id)
-        ).one()
+        # Get sales stats from product if exists
+        sales_count = 0
+        revenue = 0.0
+        if listing.product_id:
+            sales_data = session.exec(
+                select(func.count(Transaction.id), func.sum(Transaction.amount_cents))
+                .where(Transaction.product_id == listing.product_id)
+            ).one()
+            sales_count = sales_data[0] or 0
+            revenue = float(sales_data[1] or 0)
         
-        sales_count = sales_data[0] or 0
-        revenue = float(sales_data[1] or 0)
         profit = revenue * 0.10  # 10% commission
         
-        # Get reviews
-        reviews = session.exec(select(Review).where(Review.product_id == listing.id)).all()
-        avg_rating = sum(r.rating for r in reviews) / len(reviews) if reviews else 0
+        # Get reviews from product if exists
+        review_count = 0
+        avg_rating = 0
+        if listing.product_id:
+            reviews = session.exec(select(Review).where(Review.product_id == listing.product_id)).all()
+            review_count = len(reviews)
+            avg_rating = sum(r.rating for r in reviews) / len(reviews) if reviews else 0
         
         # Get developer name
         developer = session.get(User, listing.owner_id)
@@ -569,9 +578,10 @@ def get_all_listings(
             "sales": sales_count,
             "revenue": revenue / 100,
             "profit": profit / 100,
-            "reviews": len(reviews),
+            "reviews": review_count,
             "rating": round(avg_rating, 1),
-            "status": "active" if listing.is_active else "inactive",
+            "status": listing.status,
+            "virus_scan_status": listing.virus_scan_status,
         })
     
     return result
@@ -1002,13 +1012,118 @@ async def run_migration(
         return {"error": str(e)}
 
 
+class RejectListingRequest(BaseModel):
+    reason: str
+
+
+@router.post("/listings/{listing_id}/approve")
+async def approve_listing(
+    listing_id: str,
+    session = Depends(get_session),
+    admin: AdminUser = Depends(get_current_admin_from_token)
+):
+    """Approve a listing (admin only)"""
+    from models import Listing, Product
+    import uuid
+    
+    try:
+        listing_uuid = uuid.UUID(listing_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid listing ID")
+    
+    listing = session.exec(select(Listing).where(Listing.id == listing_uuid)).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    # Approve the listing
+    listing.status = 'approved'
+    listing.virus_scan_status = 'clean'
+    listing.scan_completed_at = datetime.utcnow()
+    listing.scan_results = {
+        "virustotal": {"status": "clean", "source": "manual_admin"},
+        "openclaw_analysis": {"status": "passed"}
+    }
+    
+    # Check if product already exists
+    if listing.product_id:
+        product = session.get(Product, listing.product_id)
+        if product:
+            product.is_active = True
+            product.is_verified = True
+    else:
+        # Create product from listing
+        product = Product(
+            owner_id=listing.owner_id,
+            name=listing.name,
+            slug=listing.slug,
+            description=listing.description,
+            category=listing.category.value if hasattr(listing.category, 'value') else listing.category,
+            category_tags=listing.category_tags,
+            price_cents=listing.price_cents,
+            is_active=True,
+            is_verified=True
+        )
+        session.add(product)
+        session.commit()
+        session.refresh(product)
+        listing.product_id = product.id
+    
+    session.commit()
+    
+    return {
+        "message": "Listing approved successfully",
+        "listing_id": str(listing.id),
+        "product_id": str(listing.product_id) if listing.product_id else None
+    }
+
+
+@router.post("/listings/{listing_id}/reject")
+async def reject_listing(
+    listing_id: str,
+    request: RejectListingRequest,
+    session = Depends(get_session),
+    admin: AdminUser = Depends(get_current_admin_from_token)
+):
+    """Reject a listing (admin only)"""
+    from models import Listing
+    import uuid
+    
+    try:
+        listing_uuid = uuid.UUID(listing_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid listing ID")
+    
+    listing = session.exec(select(Listing).where(Listing.id == listing_uuid)).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    # Reject the listing
+    listing.status = 'rejected'
+    listing.rejection_reason = request.reason
+    
+    # If there's a product, deactivate it
+    if listing.product_id:
+        from models import Product
+        product = session.get(Product, listing.product_id)
+        if product:
+            product.is_active = False
+    
+    session.commit()
+    
+    return {
+        "message": "Listing rejected",
+        "listing_id": str(listing.id),
+        "reason": request.reason
+    }
+
+
 @router.post("/approve-listing/{listing_id}")
 async def approve_listing_manual(
     listing_id: str,
     setup_key: str = Header(None),
     session = Depends(get_session)
 ):
-    """Manually approve a stuck listing"""
+    """Manually approve a stuck listing (setup key required)"""
     from models import Listing, Product
     import uuid
     
