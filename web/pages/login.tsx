@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import Logo from '../components/Logo';
 
 // Force dynamic rendering to ensure client-side JavaScript runs
 export const dynamic = 'force-dynamic';
@@ -49,9 +50,7 @@ export default function Login() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-xl">AR</span>
-            </div>
+            <Logo variant="icon" size="xl" />
           </Link>
           <h1 className="text-2xl font-semibold text-white">{t.login.title}</h1>
           <p className="text-gray-400 mt-2">{t.login.subtitle}</p>

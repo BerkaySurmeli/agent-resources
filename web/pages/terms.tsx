@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import Logo from '../components/Logo';
 
 export default function Terms() {
   return (
@@ -279,10 +280,7 @@ export default function Terms() {
       <footer className="py-12 px-6 border-t border-slate-200">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">AR</span>
-            </div>
-            <span className="font-semibold text-slate-900">Agent Resources</span>
+            <Logo variant="full" size="sm" textClassName="text-slate-900" />
           </Link>
           <div className="flex items-center gap-6 text-slate-600">
             <Link href="/terms" className="hover:text-slate-900">Terms</Link>

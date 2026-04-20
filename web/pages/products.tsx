@@ -226,12 +226,7 @@ export default function Products() {
       {/* Footer */}
       <footer className="py-12 px-6 border-t border-slate-200 mt-12">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">AR</span>
-            </div>
-            <span className="font-semibold text-slate-900">Agent Resources</span>
-          </div>
+          <Logo variant="full" size="sm" textClassName="text-slate-900" />
           <p className="text-slate-500 text-sm">© 2026 Agent Resources</p>
         </div>
       </footer>

@@ -6,11 +6,11 @@ from core.config import settings
 if settings.RESEND_API_KEY:
     resend.api_key = settings.RESEND_API_KEY
 
-# Consistent logo HTML for all emails
+# Consistent logo HTML for all emails - matches website bevelled gradient design
 EMAIL_LOGO_HTML = """
 <div style="text-align: center; margin-bottom: 30px;">
-    <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
-        <span style="color: white; font-weight: 800; font-size: 24px; letter-spacing: -1px;">AR</span>
+    <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);">
+        <span style="color: white; font-weight: 700; font-size: 24px; letter-spacing: -1px;">AR</span>
     </div>
     <h1 style="color: #0f172a; margin: 0; font-size: 24px; font-weight: 700;">Agent Resources</h1>
 </div>
