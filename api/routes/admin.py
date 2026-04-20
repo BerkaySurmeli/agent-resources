@@ -1792,3 +1792,31 @@ def fix_file_path(
     session.commit()
     
     return {"message": "File path updated", "file_path": file_path}
+
+# Debug endpoint to check listing
+@router.get("/debug-listing/{listing_id}")
+def debug_listing(
+    listing_id: str,
+    current_admin: AdminUser = Depends(get_current_admin_from_token),
+    session = Depends(get_session)
+):
+    """Debug endpoint to check listing details"""
+    from uuid import UUID
+    
+    try:
+        listing_uuid = UUID(listing_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid listing ID")
+    
+    listing = session.get(Listing, listing_uuid)
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    return {
+        "id": str(listing.id),
+        "name": listing.name,
+        "file_path": listing.file_path,
+        "file_path_type": type(listing.file_path).__name__,
+        "file_size_bytes": listing.file_size_bytes,
+        "status": listing.status
+    }
