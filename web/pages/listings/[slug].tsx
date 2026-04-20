@@ -165,6 +165,8 @@ export default function ListingDetail() {
     // Allow purchase if scan is clean and status is approved OR published
     // Some listings may have status 'published' instead of 'approved'
     const isClean = listing.virus_scan_status === 'clean';
+    // Only allow purchase if status is explicitly approved or published
+    // Do NOT allow purchase for pending, waiting_for_approval, or other statuses
     const isApproved = listing.status === 'approved' || listing.status === 'published';
     return isClean && isApproved;
   };
@@ -176,8 +178,11 @@ export default function ListingDetail() {
     if (listing.virus_scan_status !== 'clean') {
       return 'Security Check Required';
     }
+    if (listing.status === 'pending' || listing.status === 'waiting_for_approval') {
+      return 'Waiting for Approval';
+    }
     if (listing.status !== 'approved' && listing.status !== 'published') {
-      return 'Pending Approval';
+      return 'Not Available';
     }
     return 'Not Available';
   };

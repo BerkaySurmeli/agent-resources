@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -8,12 +8,33 @@ import Navbar from '../components/Navbar';
 import { API_URL } from '../lib/api';
 
 export default function Cart() {
-  const { items, removeFromCart, total, clearCart } = useCart();
+  const { items, removeFromCart, total, clearCart, addToCart } = useCart();
   const { user } = useAuth();
   const { t } = useLanguage();
   const [email, setEmail] = useState(user?.email || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Restore cart if user navigated back from payment page
+  useEffect(() => {
+    const pendingCart = sessionStorage.getItem('ar-pending-cart');
+    if (pendingCart) {
+      try {
+        const parsedItems = JSON.parse(pendingCart);
+        // Restore items that aren't already in the cart
+        parsedItems.forEach((item: any) => {
+          const exists = items.some(i => i.id === item.id || i.slug === item.slug);
+          if (!exists) {
+            addToCart(item);
+          }
+        });
+        // Clear the pending cart after restoration
+        sessionStorage.removeItem('ar-pending-cart');
+      } catch (e) {
+        console.error('Failed to restore pending cart:', e);
+      }
+    }
+  }, [addToCart, items]);
 
   const handleCheckout = async () => {
     if (!email || items.length === 0) return;
@@ -49,8 +70,10 @@ export default function Cart() {
       }
       
       if (data.url) {
-        // Clear cart before redirecting
-        clearCart();
+        // DON'T clear cart here - only clear after successful payment confirmation
+        // The cart will be cleared on the success page after verification
+        // Store cart items temporarily in case user navigates back
+        sessionStorage.setItem('ar-pending-cart', JSON.stringify(items));
         window.location.href = data.url;
       } else {
         throw new Error('No checkout URL received');
