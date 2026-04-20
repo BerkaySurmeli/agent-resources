@@ -280,6 +280,73 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleApproveListing = async (listingId: string) => {
+    if (!confirm('Are you sure you want to approve this listing?')) {
+      return;
+    }
+
+    const token = getAdminToken();
+    try {
+      const res = await fetch(`${API_URL}/admin/listings/${listingId}/approve`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        // Refresh listings list
+        const listingsRes = await fetch(`${API_URL}/admin/listings`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (listingsRes.ok) {
+          const listingsData = await listingsRes.json();
+          setListings(listingsData);
+        }
+        alert('Listing approved successfully');
+      } else {
+        const error = await res.json();
+        alert(error.detail || 'Failed to approve listing');
+      }
+    } catch (err) {
+      console.error('Failed to approve listing:', err);
+      alert('Failed to approve listing');
+    }
+  };
+
+  const handleRejectListing = async (listingId: string) => {
+    const reason = prompt('Please enter a reason for rejection:');
+    if (!reason) return;
+
+    const token = getAdminToken();
+    try {
+      const res = await fetch(`${API_URL}/admin/listings/${listingId}/reject`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reason })
+      });
+
+      if (res.ok) {
+        // Refresh listings list
+        const listingsRes = await fetch(`${API_URL}/admin/listings`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (listingsRes.ok) {
+          const listingsData = await listingsRes.json();
+          setListings(listingsData);
+        }
+        alert('Listing rejected');
+      } else {
+        const error = await res.json();
+        alert(error.detail || 'Failed to reject listing');
+      }
+    } catch (err) {
+      console.error('Failed to reject listing:', err);
+      alert('Failed to reject listing');
+    }
+  };
+
   const handleLogout = () => {
     logout();
     router.push('/admin/login');
@@ -422,7 +489,7 @@ export default function AdminDashboard() {
                   <StatCard title="Active Listings" value={stats.totalListings} icon="📋" color="purple" />
                   <StatCard title="Total Sales" value={stats.totalSales} icon="🛒" color="yellow" />
                   <StatCard title="Total Revenue" value={formatCurrency(stats.totalRevenue)} icon="💰" color="emerald" />
-                  <StatCard title="Platform Profit (15%)" value={formatCurrency(stats.platformProfit)} icon="📈" color="emerald" isProfit />
+                  <StatCard title="Platform Profit (10%)" value={formatCurrency(stats.platformProfit)} icon="📈" color="emerald" isProfit />
                 </div>
 
                 {/* Recent Sales Table */}
@@ -538,22 +605,69 @@ export default function AdminDashboard() {
             {activeSection === 'listings' && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-slate-900">Listings ({listings.length})</h2>
-                <DataTable
-                  headers={['Name', 'Developer', 'Price', 'Sales', 'Revenue', 'Profit', 'Reviews', 'Rating', 'Status']}
-                  rows={listings.map(l => [
-                    l.name,
-                    l.developer,
-                    formatCurrency(l.price),
-                    l.sales,
-                    formatCurrency(l.revenue),
-                    formatCurrency(l.profit),
-                    l.reviews,
-                    `${l.rating} ★`,
-                    <span key={l.id} className={`px-2 py-1 rounded-full text-xs ${l.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                      {l.status}
-                    </span>
-                  ])}
-                />
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-slate-50 border-b border-slate-200">
+                      <tr>
+                        <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase">Name</th>
+                        <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase">Developer</th>
+                        <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase">Price</th>
+                        <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase">Status</th>
+                        <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {listings.map((l) => (
+                        <tr key={l.id} className="hover:bg-slate-50">
+                          <td className="px-4 py-3 text-sm text-slate-900">{l.name}</td>
+                          <td className="px-4 py-3 text-sm text-slate-600">{l.developer}</td>
+                          <td className="px-4 py-3 text-sm text-slate-900">{formatCurrency(l.price)}</td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              l.status === 'approved' || l.status === 'active' 
+                                ? 'bg-green-100 text-green-800' 
+                                : l.status === 'rejected'
+                                ? 'bg-red-100 text-red-800'
+                                : l.status === 'pending_scan' || l.status === 'scanning'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {l.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={`https://shopagentresources.com/listings/${l.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 text-sm"
+                              >
+                                View
+                              </a>
+                              {(l.status === 'pending_scan' || l.status === 'scanning' || l.status === 'pending_approval') && (
+                                <>
+                                  <button
+                                    onClick={() => handleApproveListing(l.id)}
+                                    className="text-green-600 hover:text-green-800 text-sm font-medium"
+                                  >
+                                    Approve
+                                  </button>
+                                  <button
+                                    onClick={() => handleRejectListing(l.id)}
+                                    className="text-red-600 hover:text-red-800 text-sm font-medium"
+                                  >
+                                    Reject
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 

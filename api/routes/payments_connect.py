@@ -11,8 +11,8 @@ router = APIRouter(prefix="/payments", tags=["Payments"])
 # Initialize Stripe
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
-# Platform fee: 15%
-PLATFORM_FEE_PERCENT = 0.15
+# Platform fee: 10%
+PLATFORM_FEE_PERCENT = 0.10
 
 @router.post("/connect/onboard")
 def create_connect_account(

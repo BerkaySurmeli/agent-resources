@@ -530,15 +530,32 @@ async def create_listing(
     price_cents: int = Form(...),
     version: str = Form("1.0.0"),  # Semver version
     tags: str = Form("[]"),  # JSON string
+    developer_code: str = Form(None),  # Optional developer code for bonus
     files: List[UploadFile] = File(...),
     session = Depends(get_session),
-    current_user: User = Depends(get_current_user_from_token)
+    current_user: User = Depends(get_current_user_from_token),
+    background_tasks: BackgroundTasks = None
 ):
     """Create a new listing with file upload"""
 
     # Check if user is verified
     if not current_user.is_verified:
         raise HTTPException(status_code=403, detail="Please verify your email before creating a listing")
+    
+    # Validate developer code if provided
+    developer_bonus_applied = False
+    if developer_code:
+        # Check if code is valid and not already used by this user
+        from services.email import EmailService
+        code_user = session.exec(select(User).where(User.developer_code == developer_code)).first()
+        if not code_user:
+            raise HTTPException(status_code=400, detail="Invalid developer code")
+        if code_user.id == current_user.id:
+            raise HTTPException(status_code=400, detail="Cannot use your own developer code")
+        # Store the code for later bonus application on first sale
+        current_user.developer_code_used = developer_code
+        developer_bonus_applied = True
+        session.commit()
 
     ensure_upload_dir()
     
@@ -660,6 +677,22 @@ async def create_listing(
     session.add(listing)
     session.commit()
     session.refresh(listing)
+    
+    # Send notification to admin about new listing submission
+    try:
+        from services.email import send_listing_submission_notification
+        preview_url = f"https://shopagentresources.com/listings/{listing.slug}"
+        await send_listing_submission_notification(
+            listing_name=listing.name,
+            developer_name=current_user.name or current_user.email.split('@')[0],
+            developer_email=current_user.email,
+            virus_scan_status=listing.virus_scan_status,
+            preview_url=preview_url,
+            listing_id=str(listing.id)
+        )
+    except Exception as e:
+        print(f"[LISTING] Failed to send admin notification: {e}")
+        # Don't fail the listing creation if email fails
     
     # If free, trigger security scan in background
     if LISTING_FEE_CENTS == 0:

@@ -33,6 +33,14 @@ interface Listing {
   seller: Seller;
   is_verified: boolean;
   download_count?: number;
+  version?: string;
+  review_count?: number;
+  average_rating?: number;
+  claudia_review?: {
+    rating: number;
+    comment: string;
+    reviewed_at: string;
+  };
 }
 
 const getCategoryColor = (category: string) => {
@@ -101,6 +109,23 @@ const formatDate = (dateString: string) => {
   });
 };
 
+const renderStars = (rating: number) => {
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <svg
+          key={star}
+          className={`w-4 h-4 ${star <= rating ? 'text-yellow-400' : 'text-gray-600'}`}
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+      ))}
+    </div>
+  );
+};
+
 export default function ListingDetail() {
   const router = useRouter();
   const { slug } = router.query;
@@ -137,7 +162,24 @@ export default function ListingDetail() {
   };
 
   const isAvailableForPurchase = (listing: Listing) => {
-    return listing.virus_scan_status === 'clean' && listing.status === 'approved';
+    // Allow purchase if scan is clean and status is approved OR published
+    // Some listings may have status 'published' instead of 'approved'
+    const isClean = listing.virus_scan_status === 'clean';
+    const isApproved = listing.status === 'approved' || listing.status === 'published';
+    return isClean && isApproved;
+  };
+
+  const getAvailabilityMessage = (listing: Listing) => {
+    if (listing.virus_scan_status === 'scanning') {
+      return 'Security Scan in Progress';
+    }
+    if (listing.virus_scan_status !== 'clean') {
+      return 'Security Check Required';
+    }
+    if (listing.status !== 'approved' && listing.status !== 'published') {
+      return 'Pending Approval';
+    }
+    return 'Not Available';
   };
 
   if (loading) {
@@ -200,7 +242,7 @@ export default function ListingDetail() {
               <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl overflow-hidden">
                 {/* Category Badge & Verification */}
                 <div className="px-6 pt-6 pb-4 border-b border-slate-700/50">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-3">
                     <div className="flex items-center gap-3">
                       <span className={`inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-full border ${getCategoryColor(listing.category)}`}>
                         {getCategoryIcon(listing.category)}
@@ -229,7 +271,15 @@ export default function ListingDetail() {
 
                 {/* Stats Bar */}
                 <div className="px-6 py-4 bg-slate-900/30 border-t border-slate-700/50">
-                  <div className="flex items-center gap-8 text-sm">
+                  <div className="flex items-center gap-6 text-sm flex-wrap">
+                    {listing.version && (
+                      <div className="flex items-center gap-2 text-slate-400">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        <span>v{listing.version}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 text-slate-400">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -242,12 +292,57 @@ export default function ListingDetail() {
                       </svg>
                       <span>{formatFileSize(listing.file_size_bytes)}</span>
                     </div>
-                    {listing.download_count !== undefined && (
+                    {listing.download_count !== undefined && listing.download_count > 0 && (
                       <div className="flex items-center gap-2 text-slate-400">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        <span>{listing.download_count} downloads</span>
+                        <span>{listing.download_count} installs</span>
+                      </div>
+                    )}
+                    {listing.review_count !== undefined && listing.review_count > 0 && (
+                      <div className="flex items-center gap-2 text-slate-400">
+                        {renderStars(listing.average_rating || 0)}
+                        <span>({listing.review_count} reviews)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Security Section - Prominent placement */}
+              <div className="bg-gradient-to-r from-green-900/30 to-blue-900/30 backdrop-blur-sm border border-green-500/30 rounded-2xl p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-lg font-semibold text-white mb-2">Security Verified</h2>
+                    {listing.virus_scan_status === 'clean' ? (
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 bg-green-500/20 border border-green-500/30 rounded-lg px-3 py-2">
+                          <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span className="text-green-400 font-medium">VirusTotal Clean</span>
+                        </div>
+                        <span className="text-slate-400 text-sm">No malware or threats detected</span>
+                      </div>
+                    ) : listing.virus_scan_status === 'scanning' ? (
+                      <div className="flex items-center gap-2 text-yellow-400">
+                        <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Security scan in progress...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-slate-400">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <span>Security verification pending</span>
                       </div>
                     )}
                   </div>
@@ -273,60 +368,32 @@ export default function ListingDetail() {
                 </div>
               )}
 
-              {/* Security Section */}
-              <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                  Security
-                </h2>
-                <div className="flex items-center gap-4">
-                  {listing.virus_scan_status === 'clean' ? (
-                    <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3">
-                      <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
-                        <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="font-medium text-green-400">Security Scan Passed</p>
-                        <p className="text-sm text-slate-400">VirusTotal verified clean</p>
-                      </div>
+              {/* Claudia's Take Section */}
+              {listing.claudia_review && (
+                <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 backdrop-blur-sm border border-purple-500/30 rounded-2xl p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold text-lg">C</span>
                     </div>
-                  ) : listing.virus_scan_status === 'scanning' ? (
-                    <div className="flex items-center gap-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3">
-                      <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center animate-pulse">
-                        <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                    <div className="flex-1">
+                      <h2 className="text-lg font-semibold text-white mb-2">Claudia's Take</h2>
+                      <div className="flex items-center gap-2 mb-3">
+                        {renderStars(listing.claudia_review.rating)}
+                        <span className="text-slate-400 text-sm">
+                          Reviewed {formatDate(listing.claudia_review.reviewed_at)}
+                        </span>
                       </div>
-                      <div>
-                        <p className="font-medium text-yellow-400">Scan in Progress</p>
-                        <p className="text-sm text-slate-400">Security verification pending</p>
-                      </div>
+                      <p className="text-slate-300 italic">"{listing.claudia_review.comment}"</p>
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-3 bg-slate-700/50 border border-slate-600 rounded-xl px-4 py-3">
-                      <div className="w-10 h-10 bg-slate-600 rounded-full flex items-center justify-center">
-                        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="font-medium text-slate-300">Scan Pending</p>
-                        <p className="text-sm text-slate-400">Awaiting security verification</p>
-                      </div>
-                    </div>
-                  )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Right Column - Sidebar */}
-            <div className="space-y-6">
-              {/* Price Card */}
-              <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 sticky top-24">
+            <div className="space-y-6 lg:relative">
+              {/* Price Card - Fixed positioning on desktop */}
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 lg:sticky lg:top-24 z-10">
                 <div className="text-center mb-6">
                   <p className="text-4xl sm:text-5xl font-bold text-white mb-2">{formatPrice(listing.price_cents)}</p>
                   <p className="text-slate-400">One-time purchase</p>
@@ -366,7 +433,7 @@ export default function ListingDetail() {
                   </button>
                 ) : (
                   <div className="w-full py-4 rounded-xl font-semibold text-lg bg-slate-700/50 text-slate-400 border border-slate-600 text-center">
-                    {listing.virus_scan_status === 'scanning' ? 'Scan in Progress' : 'Not Available'}
+                    {getAvailabilityMessage(listing)}
                   </div>
                 )}
 
@@ -393,8 +460,8 @@ export default function ListingDetail() {
                 </div>
               </div>
 
-              {/* Seller Card */}
-              <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6">
+              {/* Seller Card - Below the price card, not sticky */}
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 relative z-0">
                 <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-4">Developer</h3>
                 <Link 
                   href={`/developers/${listing.seller?.id}`}

@@ -62,7 +62,7 @@ export default function Terms() {
                 <li>We collect payment on behalf of creators</li>
                 <li>We remit creator share after deducting platform commission and payment processing fees</li>
                 <li>No commission for free listings</li>
-                <li>Standard commission: 15% (free items: 0%)</li>
+                <li>Standard commission: 10% (free items: 0%)</li>
               </ul>
             </section>
 
@@ -113,6 +113,21 @@ export default function Terms() {
               <p className="text-slate-600">
                 We may conduct automated security checks on Listings. A security report may be displayed, 
                 but this does not constitute a guarantee of safety or functionality.
+              </p>
+
+              <h3 className="text-lg font-semibold text-slate-900 mt-6 mb-2">5.4 Listing Approval Policy</h3>
+              <p className="text-slate-600">All listings are subject to review and approval before being published. Our approval criteria include:</p>
+              <ul className="list-disc list-inside text-slate-600 space-y-2 mt-2">
+                <li><strong>Security Scan:</strong> All files must pass automated virus and malware scanning</li>
+                <li><strong>Content Quality:</strong> Listings must have clear descriptions and appropriate categorization</li>
+                <li><strong>Required Files:</strong> Category-specific required files must be present (e.g., SKILL.md, PERSONA.md, mcp.json)</li>
+                <li><strong>No Prohibited Content:</strong> Listings must not contain malware, stolen content, or illegal material</li>
+                <li><strong>Functionality:</strong> Listings should function as described</li>
+              </ul>
+              <p className="text-slate-600 mt-4">
+                We reserve the right to reject any listing that does not meet our quality standards or violates our policies. 
+                Rejected listings will include a reason for rejection. Listings may be removed at any time if they are found 
+                to violate these terms after approval.
               </p>
             </section>
 

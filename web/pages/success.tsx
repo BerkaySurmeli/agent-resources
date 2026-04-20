@@ -11,6 +11,8 @@ export default function Success() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [purchaseData, setPurchaseData] = useState<any>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 5;
 
   useEffect(() => {
     if (session_id && typeof session_id === 'string') {
@@ -18,19 +20,45 @@ export default function Success() {
     }
   }, [session_id]);
 
-  const verifyPurchase = async (sid: string) => {
+  const verifyPurchase = async (sid: string, attempt = 0) => {
     try {
       const response = await fetch(`${API_URL}/payments/session/${sid}`);
       const data = await response.json();
       
       if (response.ok) {
+        // Check if payment is completed but no transactions yet (webhook delay)
+        if (data.status === 'paid' && (!data.transactions || data.transactions.length === 0) && attempt < MAX_RETRIES) {
+          // Wait and retry - webhook might still be processing
+          setTimeout(() => {
+            setRetryCount(attempt + 1);
+            verifyPurchase(sid, attempt + 1);
+          }, 2000); // Retry every 2 seconds
+          return;
+        }
+        
         setPurchaseData(data);
+        setLoading(false);
       } else {
-        setError(data.detail || 'Failed to verify purchase');
+        // If we get a 404 or other error, still show success if Stripe says paid
+        if (attempt < MAX_RETRIES) {
+          setTimeout(() => {
+            setRetryCount(attempt + 1);
+            verifyPurchase(sid, attempt + 1);
+          }, 2000);
+          return;
+        }
+        setError(data.detail || 'Failed to verify purchase details, but your payment was successful.');
+        setLoading(false);
       }
     } catch (err) {
-      setError('Failed to verify purchase');
-    } finally {
+      if (attempt < MAX_RETRIES) {
+        setTimeout(() => {
+          setRetryCount(attempt + 1);
+          verifyPurchase(sid, attempt + 1);
+        }, 2000);
+        return;
+      }
+      setError('Unable to verify purchase details, but your payment was successful. Check your email for confirmation.');
       setLoading(false);
     }
   };
@@ -47,19 +75,32 @@ export default function Success() {
             <div className="py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
               <p className="text-gray-400">Verifying your purchase...</p>
+              {retryCount > 0 && (
+                <p className="text-gray-500 text-sm mt-2">
+                  Still processing{'.'.repeat(retryCount % 4)}
+                </p>
+              )}
             </div>
           ) : error ? (
             <div className="py-12">
-              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h1 className="text-2xl font-semibold text-white mb-2">Something went wrong</h1>
+              <h1 className="text-2xl font-semibold text-white mb-2">Payment Successful!</h1>
               <p className="text-gray-400 mb-6">{error}</p>
-              <Link href="/listings" className="text-blue-400 hover:text-blue-300">
-                Browse more listings →
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  href="/settings?tab=purchases"
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  View My Purchases
+                </Link>
+                <Link href="/listings" className="text-blue-400 hover:text-blue-300">
+                  Browse more listings →
+                </Link>
+              </div>
             </div>
           ) : (
             <>

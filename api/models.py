@@ -33,6 +33,8 @@ class User(SQLModel, table=True):
     verification_sent_at: Optional[datetime] = Field(default=None)
     # Developer fields
     developer_code: Optional[str] = Field(default=None, unique=True, index=True)
+    developer_code_used: Optional[str] = Field(default=None)  # Code used by this user for bonus
+    first_sale_bonus_paid: bool = Field(default=False)  # Track if $20 bonus was paid
     became_developer_at: Optional[datetime] = Field(default=None)
     stripe_connect_id: Optional[str] = Field(default=None, unique=True)
     stripe_status: str = Field(default="pending")

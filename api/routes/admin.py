@@ -552,7 +552,7 @@ def get_all_listings(
         
         sales_count = sales_data[0] or 0
         revenue = float(sales_data[1] or 0)
-        profit = revenue * 0.15  # 15% commission
+        profit = revenue * 0.10  # 10% commission
         
         # Get reviews
         reviews = session.exec(select(Review).where(Review.product_id == listing.id)).all()

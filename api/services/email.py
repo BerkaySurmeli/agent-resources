@@ -435,6 +435,105 @@ The Agent Resources Team
         return {"error": str(e)}
 
 
+def send_listing_submission_notification(listing_name: str, developer_name: str, developer_email: str, virus_scan_status: str, preview_url: str, listing_id: str) -> dict:
+    """Send notification to admin when a new listing is submitted for review"""
+    if not settings.RESEND_API_KEY:
+        print(f"[EMAIL] Listing submission notification (dry run): {listing_name} by {developer_name}")
+        return {"id": "dry-run"}
+    
+    status_color = "#22c55e" if virus_scan_status == "clean" else "#eab308" if virus_scan_status == "scanning" else "#64748b"
+    status_text = "Clean" if virus_scan_status == "clean" else "Scanning" if virus_scan_status == "scanning" else "Pending"
+    
+    html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Listing Submission - Review Required</title>
+</head>
+<body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <div style="width: 60px; height: 60px; background: #f59e0b; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+            <span style="color: white; font-weight: bold; font-size: 24px;">!</span>
+        </div>
+        <h1 style="color: #0f172a; margin: 0;">New Listing Submission</h1>
+        <p style="color: #64748b; margin-top: 8px;">Review and approval required</p>
+    </div>
+
+    <div style="background: #fffbeb; border-radius: 12px; padding: 30px; margin-bottom: 20px; border: 1px solid #fcd34d;">
+        <h3 style="margin-top: 0; color: #0f172a;">{listing_name}</h3>
+        
+        <table style="width: 100%; margin: 20px 0;">
+            <tr>
+                <td style="padding: 8px 0; color: #64748b; width: 120px;">Developer:</td>
+                <td style="padding: 8px 0; font-weight: 500;">{developer_name} ({developer_email})</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0; color: #64748b;">Virus Scan:</td>
+                <td style="padding: 8px 0;">
+                    <span style="color: {status_color}; font-weight: 500;">{status_text}</span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0; color: #64748b;">Listing ID:</td>
+                <td style="padding: 8px 0; font-family: monospace; font-size: 12px;">{listing_id}</td>
+            </tr>
+        </table>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{preview_url}" style="display: inline-block; background: #2563eb; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 500; margin-right: 10px;">
+                Preview Listing
+            </a>
+        </div>
+
+        <div style="background: white; border-radius: 8px; padding: 16px; margin-top: 20px;">
+            <p style="margin: 0; font-size: 14px; color: #64748b;">
+                <strong>Admin Actions:</strong><br>
+                Visit the admin dashboard to approve or reject this listing.
+            </p>
+        </div>
+    </div>
+
+    <div style="text-align: center; font-size: 14px; color: #64748b;">
+        <p>This is an automated notification from Agent Resources.</p>
+    </div>
+</body>
+</html>
+"""
+    
+    text_content = f"""
+New Listing Submission - Review Required
+
+Listing: {listing_name}
+Developer: {developer_name} ({developer_email})
+Virus Scan Status: {status_text}
+Listing ID: {listing_id}
+
+Preview: {preview_url}
+
+Visit the admin dashboard to approve or reject this listing.
+
+---
+This is an automated notification from Agent Resources.
+"""
+    
+    try:
+        response = resend.Emails.send({
+            "from": settings.FROM_EMAIL_INFO,
+            "to": [settings.FROM_EMAIL_SUPPORT],
+            "subject": f"🔍 Review Required: {listing_name}",
+            "html": html_content,
+            "text": text_content,
+            "reply_to": developer_email
+        })
+        print(f"[EMAIL] Listing submission notification sent for {listing_name}")
+        return response
+    except Exception as e:
+        print(f"[EMAIL ERROR] Failed to send listing submission notification: {e}")
+        return {"error": str(e)}
+
+
 def send_sale_notification(to_email: str, product_name: str, earnings: float) -> dict:
     """Send sale notification email to seller"""
     if not settings.RESEND_API_KEY:

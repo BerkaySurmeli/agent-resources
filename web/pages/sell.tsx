@@ -64,6 +64,7 @@ export default function Sell() {
     tags: [] as string[],
     files: [] as File[],
     termsAccepted: false,
+    developerCode: '',
   });
   const [isDragging, setIsDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -283,6 +284,11 @@ export default function Sell() {
       data.append('version', formData.version || '1.0.0');
       data.append('tags', JSON.stringify(formData.tags));
       
+      // Add developer code if provided
+      if (formData.developerCode.trim()) {
+        data.append('developer_code', formData.developerCode.trim());
+      }
+      
       // Add files
       formData.files.forEach(file => {
         data.append('files', file);
@@ -481,6 +487,23 @@ export default function Sell() {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Developer Code Field */}
+                <div className="bg-gradient-to-r from-purple-900/20 to-pink-900/20 border border-purple-500/30 rounded-lg p-4">
+                  <label className="block text-sm font-medium text-purple-300 mb-2">
+                    Developer Code (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.developerCode}
+                    onChange={(e) => setFormData(prev => ({ ...prev, developerCode: e.target.value.toUpperCase() }))}
+                    className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-purple-500 placeholder-slate-500 uppercase"
+                    placeholder="ENTER CODE"
+                  />
+                  <p className="text-sm text-purple-400/70 mt-2">
+                    Have a developer code? Enter it to get a $20 bonus after your first sale!
+                  </p>
                 </div>
 
                 <div className="flex gap-3">

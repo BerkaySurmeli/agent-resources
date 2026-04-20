@@ -37,6 +37,12 @@ export default function Navbar() {
               Listings
             </Link>
             <Link 
+              href="/blog" 
+              className="text-sm text-slate-300 hover:text-white transition-colors"
+            >
+              Blog
+            </Link>
+            <Link 
               href="/wizard" 
               className="text-sm gradient-flow-text hover:opacity-80 transition-opacity"
             >
@@ -48,11 +54,6 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             <Link href="/cart" className="relative p-2 text-slate-300 hover:text-white transition-colors">
               <CartIcon />
-              {itemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-                  {itemCount}
-                </span>
-              )}
             </Link>
             {user ? (
               <div className="relative">
