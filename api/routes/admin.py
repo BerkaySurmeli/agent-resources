@@ -1767,3 +1767,28 @@ async def admin_upload_file(
         "file_path": file_path,
         "file_size": listing.file_size_bytes
     }
+
+# Temporary endpoint to fix file path
+@router.post("/fix-file-path")
+def fix_file_path(
+    listing_id: str,
+    file_path: str,
+    current_admin: AdminUser = Depends(get_current_admin_from_token),
+    session = Depends(get_session)
+):
+    """Temporary endpoint to fix file path"""
+    from uuid import UUID
+    
+    try:
+        listing_uuid = UUID(listing_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid listing ID")
+    
+    listing = session.get(Listing, listing_uuid)
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    listing.file_path = file_path
+    session.commit()
+    
+    return {"message": "File path updated", "file_path": file_path}
