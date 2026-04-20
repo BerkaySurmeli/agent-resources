@@ -8,9 +8,9 @@ interface LogoProps {
 }
 
 const sizes = {
-  sm: { icon: 32, full: 120 },
-  md: { icon: 40, full: 150 },
-  lg: { icon: 48, full: 180 },
+  sm: { icon: 32, text: 'text-sm' },
+  md: { icon: 40, text: 'text-base' },
+  lg: { icon: 48, text: 'text-lg' },
 };
 
 export function Logo({ variant = 'full', className = '', size = 'md', textClassName = '' }: LogoProps) {
@@ -18,22 +18,31 @@ export function Logo({ variant = 'full', className = '', size = 'md', textClassN
   
   if (variant === 'icon') {
     return (
-      <img 
-        src="/logos/ar-icon-only.svg" 
-        alt="Agent Resources" 
-        className={`${className}`}
+      <div 
+        className={`bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30 ${className}`}
         style={{ width: sizeConfig.icon, height: sizeConfig.icon }}
-      />
+        aria-label="Agent Resources"
+      >
+        <span className="text-white font-bold text-lg">AR</span>
+      </div>
     );
   }
   
   return (
-    <img 
-      src="/logos/ar-logo-full.svg" 
-      alt="Agent Resources" 
-      className={`${className}`}
-      style={{ height: sizeConfig.icon }}
-    />
+    <div className={`flex items-center gap-3 ${className}`}>
+      {/* Beveled Icon with gradient and shadow */}
+      <div 
+        className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30"
+        style={{ width: sizeConfig.icon, height: sizeConfig.icon }}
+      >
+        <span className="text-white font-bold text-lg">AR</span>
+      </div>
+      
+      {/* Text */}
+      <span className={`font-semibold ${sizeConfig.text} ${textClassName}`}>
+        Agent Resources
+      </span>
+    </div>
   );
 }
 
