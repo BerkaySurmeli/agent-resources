@@ -1,11 +1,11 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useLanguage } from '../../context/LanguageContext';
-import Logo from '../../components/Logo';
+import Navbar from '../../components/Navbar';
 
 export default function BlogIndex() {
   const { t, language, setLanguage, languages } = useLanguage();
-  
+
   const lt = t.blog || {
     title: 'Blog',
     subtitle: 'Thoughts on AI agents, the future of work, and building the agent economy.',
@@ -14,8 +14,7 @@ export default function BlogIndex() {
     by: 'By',
     footer: '© 2026 Agent Resources. Built for the agent economy.'
   };
-  
-  // Blog posts with translations
+
   const posts = [
     {
       slug: 'hello-world-from-claudia',
@@ -30,60 +29,38 @@ export default function BlogIndex() {
   return (
     <>
       <Head>
-        <title>{lt.title} - Agent Resources</title>
+        <title>{lt.title} — Agent Resources</title>
         <meta name="description" content={lt.subtitle} />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-        {/* Navigation */}
-        <nav className="border-b border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <Link href="/">
-                <Logo variant="full" size="md" textClassName="text-white" />
-              </Link>
-              <div className="flex items-center gap-6">
-                <Link href="/" className="text-sm text-slate-400 hover:text-white">
-                  {lt.backToHome}
-                </Link>
-                {/* Language Selector */}
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value as any)}
-                  className="bg-slate-800 border border-slate-700 text-white text-sm rounded px-2 py-1"
-                >
-                  {languages.map(lang => (
-                    <option key={lang.code} value={lang.code}>
-                      {lang.flag} {lang.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-        </nav>
+      <div className="min-h-screen bg-cream-100">
+        <Navbar />
 
-        {/* Blog Header */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">{lt.title}</h1>
-          <p className="text-xl text-slate-400">{lt.subtitle}</p>
+        {/* Header */}
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-10">
+          <h1 className="heading-serif text-4xl md:text-5xl text-ink-900 mb-3">{lt.title}</h1>
+          <p className="text-lg text-ink-500">{lt.subtitle}</p>
         </div>
 
         {/* Posts */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-          <div className="space-y-8">
+          <div className="space-y-5">
             {posts.map((post) => (
-              <article key={post.slug} className="bg-white/5 border border-white/10 rounded-xl p-8 hover:bg-white/10 transition-colors">
+              <article key={post.slug} className="card card-hover p-8">
                 <Link href={`/blog/${post.slug}`}>
-                  <div className="flex items-center gap-4 text-sm text-slate-400 mb-3">
+                  <div className="flex items-center gap-3 text-sm text-ink-400 mb-3">
                     <span>{post.date}</span>
-                    <span>•</span>
+                    <span>·</span>
                     <span>{post.readTime} {lt.readTime}</span>
                   </div>
-                  <h2 className="text-2xl font-bold mb-3 hover:text-blue-400 transition-colors">{post.title}</h2>
-                  <p className="text-slate-300">{post.excerpt}</p>
-                  <div className="mt-4 flex items-center gap-2">
-                    <span className="text-sm text-slate-400">{lt.by} {post.author}</span>
+                  <h2 className="text-xl font-semibold text-ink-900 mb-2 hover:text-terra-600 transition-colors">{post.title}</h2>
+                  <p className="text-ink-500 leading-relaxed">{post.excerpt}</p>
+                  <div className="mt-5 flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                      style={{ background: 'linear-gradient(135deg, #3549D4, #6470FA)' }}>
+                      {post.author.charAt(0)}
+                    </div>
+                    <span className="text-sm text-ink-400">{lt.by} {post.author}</span>
                   </div>
                 </Link>
               </article>
@@ -92,8 +69,8 @@ export default function BlogIndex() {
         </div>
 
         {/* Footer */}
-        <footer className="border-t border-white/10 py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-slate-400 text-sm">
+        <footer className="border-t border-cream-200 py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-ink-400 text-sm">
             <p>{lt.footer}</p>
           </div>
         </footer>
