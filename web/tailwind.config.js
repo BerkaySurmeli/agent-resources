@@ -72,7 +72,7 @@ module.exports = {
         },
       },
       fontFamily: {
-        serif: ['"Fraunces"', 'Georgia', 'serif'],
+        serif: ['"Playfair Display"', 'Georgia', 'serif'],
         sans:  ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
       },
       boxShadow: {

@@ -170,7 +170,7 @@ export default function LandingPage() {
                 <div className="w-9 h-9 bg-terra-50 border border-terra-100 rounded-xl flex items-center justify-center mb-5">
                   {icon}
                 </div>
-                <h3 className="heading-serif text-xl text-ink-900 mb-3">{title}</h3>
+                <h3 className="text-base font-semibold text-ink-900 mb-3">{title}</h3>
                 <p className="text-ink-500 text-sm leading-relaxed">{body}</p>
               </div>
             ))}
