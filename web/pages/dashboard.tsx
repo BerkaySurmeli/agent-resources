@@ -63,7 +63,7 @@ const translationStatusLabels: Record<string, string> = {
 };
 
 export default function Dashboard() {
-  const { user, refreshUser } = useAuth();
+  const { user, isLoading: authLoading, refreshUser } = useAuth();
   const { t } = useLanguage();
   const [listings, setListings] = useState<Listing[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -186,6 +186,14 @@ export default function Dashboard() {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!user) {
     return (

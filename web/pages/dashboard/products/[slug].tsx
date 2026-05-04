@@ -55,7 +55,7 @@ const getCategoryName = (category: string) => {
 export default function ManageProduct() {
   const router = useRouter();
   const { slug } = router.query;
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState<ProductStats | null>(null);
@@ -209,6 +209,14 @@ export default function ManageProduct() {
   };
 
   const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!user) {
     return (
