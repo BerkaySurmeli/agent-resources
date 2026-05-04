@@ -23,7 +23,8 @@ export function Logo({ variant = 'full', className = '', size = 'md', textClassN
       style={{
         width: s.icon,
         height: s.icon,
-        background: 'linear-gradient(135deg, #CC5132 0%, #DF6B50 100%)',
+        background: 'linear-gradient(135deg, #3549D4 0%, #6470FA 100%)',
+        boxShadow: '0 2px 8px 0 rgba(75, 96, 238, 0.30)',
       }}
       aria-label="Agent Resources"
     >

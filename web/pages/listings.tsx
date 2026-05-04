@@ -253,7 +253,7 @@ export default function Listings() {
                         />
                       ) : (
                         <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
-                          style={{ background: 'linear-gradient(135deg, #CC5132, #DF6B50)' }}>
+                          style={{ background: 'linear-gradient(135deg, #3549D4, #6470FA)' }}>
                           {listing.seller?.name?.charAt(0).toUpperCase() || '?'}
                         </div>
                       )}

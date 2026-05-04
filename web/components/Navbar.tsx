@@ -34,12 +34,12 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-cream-100/90 backdrop-blur-md border-b border-cream-300">
+    <nav className="sticky top-0 z-50 bg-cream-100/95 backdrop-blur-md border-b border-cream-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <Logo variant="full" size="md" textClassName="text-ink-900 group-hover:text-terra-500 transition-colors" />
+            <Logo variant="full" size="md" textClassName="text-ink-900 group-hover:text-terra-500 transition-colors font-semibold" />
           </Link>
 
           {/* Desktop nav */}
@@ -81,7 +81,7 @@ export default function Navbar() {
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-lg text-sm font-medium text-ink-700 hover:bg-cream-200 transition-colors"
                 >
-                  <div className="w-7 h-7 bg-terra-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: 'linear-gradient(135deg, #3549D4, #6470FA)' }}>
                     {user.name?.charAt(0).toUpperCase() || 'U'}
                   </div>
                   <span>{user.name?.split(' ')[0]}</span>
@@ -93,7 +93,7 @@ export default function Navbar() {
                 {dropdownOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
-                    <div className="absolute right-0 mt-1.5 w-48 bg-white border border-cream-300 rounded-xl shadow-warm-md z-50 py-1.5 overflow-hidden">
+                    <div className="absolute right-0 mt-1.5 w-48 bg-white border border-cream-200 rounded-xl shadow-warm-md z-50 py-1.5 overflow-hidden">
                       <Link href="/dashboard" className="block px-4 py-2.5 text-sm text-ink-700 hover:bg-cream-100 transition-colors" onClick={() => setDropdownOpen(false)}>
                         Dashboard
                       </Link>
@@ -124,7 +124,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-cream-100 border-t border-cream-300 px-4 py-4 space-y-1">
+        <div className="md:hidden bg-cream-100 border-t border-cream-200 px-4 py-4 space-y-1">
           {[
             { href: '/listings', label: 'Listings' },
             { href: '/blog', label: 'Blog' },
@@ -136,7 +136,7 @@ export default function Navbar() {
             </Link>
           ))}
 
-          <hr className="border-cream-300 my-2" />
+          <hr className="border-cream-200 my-2" />
 
           {user ? (
             <>

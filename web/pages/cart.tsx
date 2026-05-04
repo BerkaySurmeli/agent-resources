@@ -114,7 +114,7 @@ export default function Cart() {
                 {items.map(item => (
                   <div key={item.id || item.slug} className="card flex items-center gap-4 p-4">
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ background: 'linear-gradient(135deg, #CC5132, #DF6B50)' }}>
+                      style={{ background: 'linear-gradient(135deg, #3549D4, #6470FA)' }}>
                       <span className="text-white font-bold text-lg">
                         {item.name.charAt(0)}
                       </span>

@@ -67,62 +67,70 @@ export default function LandingPage() {
         <Navbar />
 
         {/* ── Hero ── */}
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20 text-center">
-          {/* Eyebrow */}
-          <div className="inline-flex items-center gap-2 text-sm font-medium text-terra-600 bg-terra-50 border border-terra-200 rounded-full px-4 py-1.5 mb-10">
-            <span className="w-1.5 h-1.5 rounded-full bg-terra-500 animate-pulse" />
-            Early access — first 50 developer spots
-          </div>
+        <section className="relative overflow-hidden">
+          {/* Dot-grid background pattern */}
+          <div className="absolute inset-0 bg-dot-grid pointer-events-none" />
+          {/* Soft radial fade to hide grid edges */}
+          <div className="absolute inset-0 pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, transparent 40%, #F4F6FF 100%)' }} />
 
-          {/* Headline — editorial serif */}
-          <h1 className="heading-serif text-5xl md:text-7xl text-ink-900 mb-6 text-balance">
-            The marketplace<br />
-            <span className="italic text-terra-500">for AI agents</span>
-          </h1>
+          <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20 text-center">
+            {/* Eyebrow */}
+            <div className="inline-flex items-center gap-2 text-sm font-medium text-terra-600 bg-terra-50 border border-terra-200 rounded-full px-4 py-1.5 mb-10">
+              <span className="w-1.5 h-1.5 rounded-full bg-terra-500 animate-pulse" />
+              Early access — first 50 developer spots
+            </div>
 
-          <p className="text-lg md:text-xl text-ink-500 max-w-2xl mx-auto mb-10 leading-relaxed text-balance">
-            Buy, sell, and deploy AI personas, skills, and MCP servers.
-            Everything your agents need, built and vetted by the community.
-          </p>
+            {/* Headline */}
+            <h1 className="heading-serif text-5xl md:text-7xl text-ink-900 mb-6 text-balance">
+              The marketplace<br />
+              <span className="italic text-brand">for AI agents</span>
+            </h1>
 
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-14">
-            <Link href="/listings" className="btn-primary text-base px-8 py-3.5">
-              Browse the Marketplace
-            </Link>
-            <Link href="/sell" className="btn-secondary text-base px-8 py-3.5">
-              Start selling →
-            </Link>
-          </div>
+            <p className="text-lg md:text-xl text-ink-500 max-w-2xl mx-auto mb-10 leading-relaxed text-balance">
+              Buy, sell, and deploy AI personas, skills, and MCP servers.
+              Everything your agents need, built and vetted by the community.
+            </p>
 
-          {/* Waitlist */}
-          <div className="max-w-md mx-auto">
-            {spotsRemaining !== null && (
-              <p className="text-sm text-ink-400 mb-3">
-                {spotsRemaining > 0
-                  ? <><span className="font-semibold text-ink-700">{spotsRemaining} of 50</span> early developer spots remaining — first sale earns a $20 bonus</>
-                  : 'All 50 early spots are claimed. Join the waitlist below.'}
-              </p>
-            )}
-            <form onSubmit={handleSubmit} className="flex gap-2">
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                disabled={status === 'loading' || status === 'success'}
-                className="input flex-1"
-              />
-              <button
-                type="submit"
-                disabled={status === 'loading' || status === 'success'}
-                className="btn-secondary whitespace-nowrap disabled:opacity-50"
-              >
-                {status === 'loading' ? 'Joining…' : status === 'success' ? 'Joined ✓' : 'Join waitlist'}
-              </button>
-            </form>
-            {status === 'success' && <p className="mt-2.5 text-sm text-green-700">{message}</p>}
-            {status === 'error'   && <p className="mt-2.5 text-sm text-terra-600">{message}</p>}
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-14">
+              <Link href="/listings" className="btn-primary text-base px-8 py-3.5">
+                Browse the Marketplace
+              </Link>
+              <Link href="/sell" className="btn-secondary text-base px-8 py-3.5">
+                Start selling →
+              </Link>
+            </div>
+
+            {/* Waitlist */}
+            <div className="max-w-md mx-auto">
+              {spotsRemaining !== null && (
+                <p className="text-sm text-ink-400 mb-3">
+                  {spotsRemaining > 0
+                    ? <><span className="font-semibold text-ink-700">{spotsRemaining} of 50</span> early developer spots remaining — first sale earns a $20 bonus</>
+                    : 'All 50 early spots are claimed. Join the waitlist below.'}
+                </p>
+              )}
+              <form onSubmit={handleSubmit} className="flex gap-2">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  disabled={status === 'loading' || status === 'success'}
+                  className="input flex-1"
+                />
+                <button
+                  type="submit"
+                  disabled={status === 'loading' || status === 'success'}
+                  className="btn-secondary whitespace-nowrap disabled:opacity-50"
+                >
+                  {status === 'loading' ? 'Joining…' : status === 'success' ? 'Joined ✓' : 'Join waitlist'}
+                </button>
+              </form>
+              {status === 'success' && <p className="mt-2.5 text-sm text-green-700">{message}</p>}
+              {status === 'error'   && <p className="mt-2.5 text-sm text-terra-600">{message}</p>}
+            </div>
           </div>
         </section>
 
@@ -170,7 +178,7 @@ export default function LandingPage() {
         </section>
 
         {/* ── Trust strip ── */}
-        <section className="border-t border-cream-300 bg-cream-200/50">
+        <section className="border-t border-cream-200 bg-cream-200/40">
           <div className="max-w-5xl mx-auto px-4 py-8 flex flex-wrap items-center justify-center gap-8 text-ink-400 text-sm">
             {[
               { icon: '🛡️', text: 'VirusTotal scanned' },
@@ -187,7 +195,7 @@ export default function LandingPage() {
         </section>
 
         {/* ── Footer ── */}
-        <footer className="border-t border-cream-300 bg-cream-100 py-10">
+        <footer className="border-t border-cream-200 bg-cream-100 py-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-ink-400">© 2026 Agent Resources. Built for the agent economy.</p>
             <div className="flex items-center gap-6 text-sm text-ink-400">

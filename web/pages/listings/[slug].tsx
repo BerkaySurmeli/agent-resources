@@ -341,7 +341,7 @@ export default function ListingDetail() {
                 <div className="card p-6">
                   <div className="flex items-start gap-4">
                     <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-bold text-lg"
-                      style={{ background: 'linear-gradient(135deg, #CC5132, #DF6B50)' }}>
+                      style={{ background: 'linear-gradient(135deg, #3549D4, #6470FA)' }}>
                       C
                     </div>
                     <div className="flex-1">
@@ -443,7 +443,7 @@ export default function ListingDetail() {
                     />
                   ) : (
                     <div className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0 border border-cream-200 group-hover:border-terra-300 transition-colors"
-                      style={{ background: 'linear-gradient(135deg, #CC5132, #DF6B50)' }}>
+                      style={{ background: 'linear-gradient(135deg, #3549D4, #6470FA)' }}>
                       {listing.seller?.name?.charAt(0).toUpperCase() || '?'}
                     </div>
                   )}
