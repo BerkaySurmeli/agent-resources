@@ -23,6 +23,7 @@ router = APIRouter(prefix="/listings", tags=["Listings"])
 # Config
 LISTING_FEE_CENTS = 0  # Free for first 500 listings
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "/tmp/listings")  # Use persistent storage in production
+MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
 
 # VirusTotal Config
 VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY", "")
@@ -36,13 +37,13 @@ class RateLimiter:
         self.period = period
         self.calls = []
         self.lock = asyncio.Lock()
-    
+
     async def acquire(self):
         async with self.lock:
             now = datetime.utcnow()
             # Remove calls outside the period
             self.calls = [c for c in self.calls if (now - c).total_seconds() < self.period]
-            
+
             if len(self.calls) >= self.max_calls:
                 # Wait until we can make another call
                 oldest = self.calls[0]
@@ -50,7 +51,7 @@ class RateLimiter:
                 if wait_time > 0:
                     await asyncio.sleep(wait_time)
                     self.calls = self.calls[1:]
-            
+
             self.calls.append(now)
 
 # Global rate limiter: 4 calls per 60 seconds
@@ -62,7 +63,7 @@ class ScanQueue:
         self.queue = []
         self.processing = False
         self.lock = asyncio.Lock()
-    
+
     async def add(self, listing_id: uuid.UUID, file_path: str):
         print(f"[SCAN QUEUE] Adding listing {listing_id} to queue")
         async with self.lock:
@@ -88,12 +89,12 @@ class ScanQueue:
                     print(f"[SCAN QUEUE] Failed to create task: {e}")
                     import traceback
                     traceback.print_exc()
-    
+
     async def _process_queue(self):
         print(f"[SCAN QUEUE] _process_queue started")
         async with self.lock:
             self.processing = True
-        
+
         try:
             print(f"[SCAN QUEUE] Entering processing loop")
             while True:
@@ -102,7 +103,7 @@ class ScanQueue:
                         self.processing = False
                         break
                     task = self.queue.pop(0)
-                
+
                 # Process one scan at a time with delay to respect rate limits
                 await self._process_scan(task)
                 await asyncio.sleep(15)  # 15 second delay between scans
@@ -110,27 +111,27 @@ class ScanQueue:
             print(f"[SCAN QUEUE] Error: {e}")
             async with self.lock:
                 self.processing = False
-    
+
     async def _process_scan(self, task: Dict):
         from core.database import get_session
         session = next(get_session())
         try:
             listing_id = task['listing_id']
             file_path = task['file_path']
-            
+
             print(f"[SCAN QUEUE] Processing scan for listing {listing_id}")
-            
+
             # Get listing details
             listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
             if not listing:
                 print(f"[SCAN QUEUE] Listing {listing_id} not found")
                 return
-            
+
             # Run VirusTotal scan
             try:
                 vt_result = await scan_with_virustotal(file_path)
                 analysis = analyze_virustotal_results(vt_result)
-                
+
                 if analysis["is_safe"]:
                     # Approve listing FIRST
                     listing.status = 'approved'
@@ -145,17 +146,17 @@ class ScanQueue:
                         "openclaw_analysis": {"status": "passed"}
                     }
                     listing.virustotal_report = vt_result.get("data")
-                    
+
                     # Commit the listing status change FIRST
                     session.commit()
                     print(f"[SCAN QUEUE] Listing {listing_id} status committed as approved")
-                    
+
                     # Then create product from listing
                     # Handle category - could be enum or string
                     category_value = listing.category
                     if hasattr(category_value, 'value'):
                         category_value = category_value.value
-                    
+
                     try:
                         product = Product(
                             owner_id=listing.owner_id,
@@ -171,7 +172,7 @@ class ScanQueue:
                         session.add(product)
                         session.commit()
                         session.refresh(product)
-                        
+
                         listing.product_id = product.id
                         session.commit()
                         print(f"[SCAN QUEUE] Product created for listing {listing_id}")
@@ -179,10 +180,10 @@ class ScanQueue:
                         print(f"[SCAN QUEUE] Product creation failed for listing {listing_id}: {product_error}")
                         # Don't fail the whole operation if product creation fails
                         # The listing is already approved
-                    
+
                     # Trigger translations
                     await translation_queue.add(listing.id, listing.name, listing.description, listing.original_language)
-                    
+
                     print(f"[SCAN QUEUE] Listing {listing_id} approved")
                 else:
                     # Reject listing
@@ -200,9 +201,9 @@ class ScanQueue:
                     }
                     listing.rejection_reason = f"Security scan failed: {analysis.get('reason')}"
                     session.commit()
-                    
+
                     print(f"[SCAN QUEUE] Listing {listing_id} rejected: {analysis.get('reason')}")
-                    
+
             except Exception as e:
                 print(f"[SCAN QUEUE] Scan failed for listing {listing_id}: {e}")
                 import traceback
@@ -216,7 +217,7 @@ class ScanQueue:
                     listing.virus_scan_status = 'failed'
                     listing.scan_results = {"virustotal": {"status": "error", "error": str(e)}}
                     session.commit()
-                
+
         except Exception as e:
             print(f"[SCAN QUEUE] Fatal error processing listing {listing_id}: {e}")
             import traceback
@@ -234,7 +235,7 @@ class TranslationQueue:
         self.queue = []
         self.processing = False
         self.lock = asyncio.Lock()
-    
+
     async def add(self, listing_id: uuid.UUID, name: str, description: str, source_lang: str):
         async with self.lock:
             self.queue.append({
@@ -245,11 +246,11 @@ class TranslationQueue:
             })
             if not self.processing:
                 asyncio.create_task(self._process_queue())
-    
+
     async def _process_queue(self):
         async with self.lock:
             self.processing = True
-        
+
         try:
             while True:
                 async with self.lock:
@@ -257,7 +258,7 @@ class TranslationQueue:
                         self.processing = False
                         break
                     task = self.queue.pop(0)
-                
+
                 # Process one translation at a time with delay to respect rate limits
                 await self._process_translation(task)
                 await asyncio.sleep(2)  # 2 second delay between translations
@@ -265,7 +266,7 @@ class TranslationQueue:
             print(f"[TRANSLATION QUEUE] Error: {e}")
             async with self.lock:
                 self.processing = False
-    
+
     async def _process_translation(self, task: Dict):
         from core.database import get_session
         session = next(get_session())
@@ -274,16 +275,16 @@ class TranslationQueue:
             name = task['name']
             description = task['description']
             source_lang = task['source_lang']
-            
+
             # Update status to translating
             listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
             if listing:
                 listing.translation_status = 'translating'
                 session.commit()
-            
+
             print(f"[TRANSLATION] Starting translation for listing {listing_id}")
             translations = translate_listing(name, description, source_lang)
-            
+
             for lang, content in translations.items():
                 translation = ListingTranslation(
                     listing_id=listing_id,
@@ -292,19 +293,19 @@ class TranslationQueue:
                     description=content['description']
                 )
                 session.add(translation)
-            
+
             # Update status to completed
             if listing:
                 listing.translation_status = 'completed'
                 session.commit()
-            
+
             session.commit()
             print(f"[TRANSLATION] Completed translations for listing {listing_id}: {list(translations.keys())}")
         except Exception as e:
             print(f"[TRANSLATION] Error generating translations: {e}")
             import traceback
             traceback.print_exc()
-            
+
             # Update status to failed
             listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
             if listing:
@@ -324,20 +325,20 @@ async def scan_with_virustotal(file_path: str) -> Dict[str, Any]:
     """
     if not VIRUSTOTAL_API_KEY:
         raise HTTPException(status_code=500, detail="VirusTotal API key not configured")
-    
+
     # Wait for rate limit
     await vt_rate_limiter.acquire()
-    
+
     # Calculate file hash
     sha256_hash = hashlib.sha256()
     async with aiofiles.open(file_path, 'rb') as f:
         while chunk := await f.read(8192):
             sha256_hash.update(chunk)
     file_hash = sha256_hash.hexdigest()
-    
+
     async with httpx.AsyncClient() as client:
         headers = {"x-apikey": VIRUSTOTAL_API_KEY}
-        
+
         # Step 1: Check if file already analyzed
         await vt_rate_limiter.acquire()
         response = await client.get(
@@ -345,7 +346,7 @@ async def scan_with_virustotal(file_path: str) -> Dict[str, Any]:
             headers=headers,
             timeout=30.0
         )
-        
+
         if response.status_code == 200:
             # File already analyzed
             return {
@@ -353,52 +354,52 @@ async def scan_with_virustotal(file_path: str) -> Dict[str, Any]:
                 "source": "cache",
                 "data": response.json()
             }
-        
+
         # Step 2: Upload file for analysis
         await vt_rate_limiter.acquire()
-        
+
         async with aiofiles.open(file_path, 'rb') as f:
             file_content = await f.read()
-        
-        files = {"file": (os.path.basename(file_path), file_content)}
+
+        upload_files = {"file": (os.path.basename(file_path), file_content)}
         upload_response = await client.post(
             f"{VIRUSTOTAL_BASE_URL}/files",
             headers=headers,
-            files=files,
+            files=upload_files,
             timeout=60.0
         )
-        
+
         if upload_response.status_code not in [200, 201]:
             raise HTTPException(
-                status_code=500, 
+                status_code=500,
                 detail=f"VirusTotal upload failed: {upload_response.text}"
             )
-        
+
         analysis_id = upload_response.json()["data"]["id"]
-        
+
         # Step 3: Poll for results (max 10 attempts, with rate limiting)
         for attempt in range(10):
             print(f"[VIRUSTOTAL] Polling attempt {attempt + 1}/10 for analysis {analysis_id}")
             await asyncio.sleep(15)  # Wait between polls
             await vt_rate_limiter.acquire()
-            
+
             analysis_response = await client.get(
                 f"{VIRUSTOTAL_BASE_URL}/analyses/{analysis_id}",
                 headers=headers,
                 timeout=30.0
             )
-            
+
             if analysis_response.status_code == 200:
                 analysis_data = analysis_response.json()
                 status = analysis_data["data"]["attributes"]["status"]
-                
+
                 if status == "completed":
                     return {
                         "status": "completed",
                         "source": "fresh",
                         "data": analysis_data
                     }
-        
+
         # Timeout waiting for analysis
         return {
             "status": "pending",
@@ -417,15 +418,15 @@ def analyze_virustotal_results(vt_result: Dict[str, Any]) -> Dict[str, Any]:
             "reason": "scan_incomplete",
             "details": vt_result
         }
-    
+
     data = vt_result.get("data", {})
     attributes = data.get("attributes", {})
     stats = attributes.get("stats", {})
-    
+
     malicious = stats.get("malicious", 0)
     suspicious = stats.get("suspicious", 0)
     total = sum(stats.values()) if stats else 0
-    
+
     # Thresholds
     if malicious > 0:
         return {
@@ -436,7 +437,7 @@ def analyze_virustotal_results(vt_result: Dict[str, Any]) -> Dict[str, Any]:
             "total_engines": total,
             "details": stats
         }
-    
+
     if suspicious > 2:
         return {
             "is_safe": False,
@@ -446,7 +447,7 @@ def analyze_virustotal_results(vt_result: Dict[str, Any]) -> Dict[str, Any]:
             "total_engines": total,
             "details": stats
         }
-    
+
     return {
         "is_safe": True,
         "reason": "clean",
@@ -514,11 +515,11 @@ def get_unique_slug(session, name: str) -> str:
     base_slug = generate_slug(name)
     slug = base_slug
     counter = 1
-    
+
     while session.exec(select(Listing).where(Listing.slug == slug)).first():
         slug = f"{base_slug}-{counter}"
         counter += 1
-    
+
     return slug
 
 
@@ -541,7 +542,7 @@ async def create_listing(
     # Check if user is verified
     if not current_user.is_verified:
         raise HTTPException(status_code=403, detail="Please verify your email before creating a listing")
-    
+
     # Validate developer code if provided
     developer_bonus_applied = False
     if developer_code:
@@ -558,62 +559,68 @@ async def create_listing(
         session.commit()
 
     ensure_upload_dir()
-    
+
     # Parse tags
     import json
     try:
         tag_list = json.loads(tags)
     except:
         tag_list = []
-    
+
     # Validate category
     try:
         cat = ProductCategory(category)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid category")
-    
+
     # Generate unique slug
     slug = get_unique_slug(session, name)
-    
+
     # Create listing directory
     listing_dir = os.path.join(UPLOAD_DIR, str(uuid.uuid4()))
     os.makedirs(listing_dir, exist_ok=True)
-    
+
     # Save uploaded files
     file_count = 0
     total_size = 0
     has_skill_md = False
     has_persona_md = False
     has_mcp_manifest = False
-    
-    for file in files:
-        if file.filename:
-            file_path = os.path.join(listing_dir, file.filename)
-            
-            # Ensure directory exists for nested files
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            
-            # Save file
-            content = await file.read()
+
+    for upload in files:
+        if upload.filename:
+            # Sanitize filename: strip path components to prevent traversal
+            safe_name = os.path.basename(upload.filename.replace("\\", "/")).replace("..", "")
+            if not safe_name:
+                continue
+            file_path = os.path.join(listing_dir, safe_name)
+
+            content = await upload.read()
+
+            # Enforce per-file and cumulative size limit
+            total_size += len(content)
+            if total_size > MAX_UPLOAD_BYTES:
+                shutil.rmtree(listing_dir, ignore_errors=True)
+                raise HTTPException(status_code=400, detail=f"Upload exceeds {MAX_UPLOAD_BYTES // (1024*1024)} MB limit")
+
             async with aiofiles.open(file_path, 'wb') as f:
                 await f.write(content)
-            
+
             file_count += 1
-            total_size += len(content)
-            
+
             # Check for required files based on category
-            filename_lower = file.filename.lower()
+            filename_lower = safe_name.lower()
             if filename_lower.endswith('skill.md'):
                 has_skill_md = True
             elif filename_lower.endswith('persona.md'):
                 has_persona_md = True
             elif filename_lower.endswith('mcp.json') or filename_lower.endswith('manifest.json'):
                 has_mcp_manifest = True
-    
+
     # Validate required files based on category
     required_file_missing = False
     required_file_name = ""
-    
+
     if category == 'skill':
         if not has_skill_md:
             required_file_missing = True
@@ -628,7 +635,7 @@ async def create_listing(
         if not has_mcp_manifest:
             required_file_missing = True
             required_file_name = "mcp.json or manifest.json"
-    
+
     if required_file_missing:
         # Log what files were received for debugging
         received_files = [f.filename for f in files if f.filename]
@@ -636,23 +643,23 @@ async def create_listing(
         # Clean up and error
         shutil.rmtree(listing_dir, ignore_errors=True)
         raise HTTPException(status_code=400, detail=f"{required_file_name} is required for {category} listings. Received {len(files)} files: {received_files}")
-    
+
     # Create ZIP file
     zip_path = f"{listing_dir}.zip"
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        for root, dirs, files in os.walk(listing_dir):
-            for file in files:
-                file_path = os.path.join(root, file)
-                arcname = os.path.relpath(file_path, listing_dir)
-                zipf.write(file_path, arcname)
-    
+        for root, dirs, dir_files in os.walk(listing_dir):
+            for fname in dir_files:
+                fpath = os.path.join(root, fname)
+                arcname = os.path.relpath(fpath, listing_dir)
+                zipf.write(fpath, arcname)
+
     # Clean up directory, keep only ZIP
     shutil.rmtree(listing_dir, ignore_errors=True)
-    
+
     # Detect original language
     original_language = detect_language(name + " " + description)
     print(f"[TRANSLATION] Detected language: {original_language}")
-    
+
     # Create listing record
     listing = Listing(
         owner_id=current_user.id,
@@ -673,11 +680,11 @@ async def create_listing(
         scan_progress=0,
         translation_progress=0
     )
-    
+
     session.add(listing)
     session.commit()
     session.refresh(listing)
-    
+
     # Send notification to admin about new listing submission
     try:
         from services.email import send_listing_submission_notification
@@ -693,7 +700,7 @@ async def create_listing(
     except Exception as e:
         print(f"[LISTING] Failed to send admin notification: {e}")
         # Don't fail the listing creation if email fails
-    
+
     # If free, trigger security scan in background
     if LISTING_FEE_CENTS == 0:
         # Start scanning
@@ -701,10 +708,10 @@ async def create_listing(
         listing.virus_scan_status = 'scanning'
         listing.scan_started_at = datetime.utcnow()
         session.commit()
-        
+
         # Add to background scan queue
         await scan_queue.add(listing.id, zip_path)
-        
+
         return {
             "id": str(listing.id),
             "slug": listing.slug,
@@ -712,7 +719,7 @@ async def create_listing(
             "virus_scan_status": "scanning",
             "message": "Listing created. Security scan in progress - check back in a few minutes."
         }
-    
+
     return {
         "id": str(listing.id),
         "slug": listing.slug,
@@ -728,15 +735,15 @@ async def get_my_listings(
     current_user: User = Depends(get_current_user_from_token)
 ):
     """Get all listings for current user"""
-    
+
     print(f"[MY-LISTINGS] Fetching for user: {current_user.id}, email: {current_user.email}")
-    
+
     listings = session.exec(
         select(Listing).where(Listing.owner_id == current_user.id).order_by(Listing.created_at.desc())
     ).all()
-    
+
     print(f"[MY-LISTINGS] Found {len(listings)} listings for user {current_user.id}")
-    
+
     return [
         ListingResponse(
             id=str(l.id),
@@ -769,18 +776,18 @@ async def get_dashboard_stats(
     current_user: User = Depends(get_current_user_from_token)
 ):
     """Get dashboard statistics for current user"""
-    
+
     listings = session.exec(
         select(Listing).where(Listing.owner_id == current_user.id)
     ).all()
-    
+
     products = session.exec(
         select(Product).where(Product.owner_id == current_user.id)
     ).all()
-    
+
     total_revenue = sum(p.price_cents * p.download_count for p in products)
     total_downloads = sum(p.download_count for p in products)
-    
+
     return DashboardStats(
         total_listings=len(listings),
         approved_listings=sum(1 for l in listings if l.status == 'approved'),
@@ -801,15 +808,15 @@ async def get_public_listings(
 ):
     """Get published/approved listings for public browsing"""
     from models import User, Product
-    
+
     query = select(Listing, User, Product).join(User, Listing.owner_id == User.id).outerjoin(Product, Listing.product_id == Product.id).where(Listing.status == 'approved')
-    
+
     # Helper function to get translated content
     def get_listing_content(listing: Listing, language: str):
         """Get listing content in requested language"""
         if language == listing.original_language or language not in SUPPORTED_LANGUAGES:
             return listing.name, listing.description
-        
+
         # Try to get translation
         translation = session.exec(
             select(ListingTranslation).where(
@@ -817,7 +824,7 @@ async def get_public_listings(
                 ListingTranslation.language == language
             )
         ).first()
-        
+
         if translation:
             return translation.name, translation.description
         return listing.name, listing.description
@@ -828,9 +835,9 @@ async def get_public_listings(
         if not result:
             raise HTTPException(status_code=404, detail="Listing not found")
         listing, user, product = result
-        
+
         name, description = get_listing_content(listing, lang)
-        
+
         return [{
             "id": str(listing.id),
             "slug": listing.slug,
@@ -853,16 +860,16 @@ async def get_public_listings(
             },
             "is_verified": product.is_verified if product else False
         }]
-    
+
     if category:
         query = query.where(Listing.category == category)
-    
+
     if search:
         query = query.where(
-            (Listing.name.ilike(f"%{search}%")) | 
+            (Listing.name.ilike(f"%{search}%")) |
             (Listing.description.ilike(f"%{search}%"))
         )
-    
+
     results = session.exec(query.order_by(Listing.created_at.desc())).all()
 
     return [
@@ -1023,22 +1030,22 @@ async def pay_listing_fee(
     current_user: User = Depends(get_current_user_from_token)
 ):
     """Pay listing fee (mock for testing)"""
-    
+
     listing = session.exec(
         select(Listing).where(Listing.id == listing_id, Listing.owner_id == current_user.id)
     ).first()
-    
+
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
-    
+
     if listing.status != 'pending_payment':
         raise HTTPException(status_code=400, detail="Listing is not awaiting payment")
-    
+
     # Mock payment success
     listing.status = 'pending_scan'
     listing.payment_status = "succeeded"
     session.commit()
-    
+
     return {
         "message": "Payment successful. Listing queued for security scan.",
         "status": listing.status
@@ -1055,16 +1062,16 @@ async def process_pending_scans(
     """
     # Find listings that have been scanning for more than 2 minutes
     cutoff_time = datetime.utcnow() - timedelta(minutes=2)
-    
+
     pending_listings = session.exec(
         select(Listing).where(
             Listing.status == 'scanning',
             Listing.scan_started_at < cutoff_time
         )
     ).all()
-    
+
     results = []
-    
+
     for listing in pending_listings:
         try:
             if not listing.file_path or not os.path.exists(listing.file_path):
@@ -1074,11 +1081,11 @@ async def process_pending_scans(
                 session.commit()
                 results.append({"id": str(listing.id), "status": "rejected", "reason": "file_not_found"})
                 continue
-            
+
             # Re-run VirusTotal scan
             vt_result = await scan_with_virustotal(listing.file_path)
             analysis = analyze_virustotal_results(vt_result)
-            
+
             if analysis["is_safe"]:
                 # Approve listing
                 listing.status = 'approved'
@@ -1094,7 +1101,7 @@ async def process_pending_scans(
                 }
                 import json
                 listing.virustotal_report = vt_result.get("data")
-                
+
                 # Create product from listing
                 product = Product(
                     owner_id=listing.owner_id,
@@ -1110,13 +1117,13 @@ async def process_pending_scans(
                 session.add(product)
                 session.commit()
                 session.refresh(product)
-                
+
                 listing.product_id = product.id
                 session.commit()
-                
+
                 # Trigger translations
                 await translation_queue.add(listing.id, listing.name, listing.description, listing.original_language)
-                
+
                 results.append({"id": str(listing.id), "status": "approved", "product_id": str(product.id)})
             else:
                 # Reject listing
@@ -1134,14 +1141,14 @@ async def process_pending_scans(
                 }
                 listing.rejection_reason = f"Security scan failed: {analysis.get('reason')}"
                 session.commit()
-                
+
                 results.append({"id": str(listing.id), "status": "rejected", "reason": analysis.get("reason")})
-                
+
         except Exception as e:
             import traceback
             print(f"[CRON ERROR] Listing {listing.id}: {str(e)}\n{traceback.format_exc()}")
             results.append({"id": str(listing.id), "status": "error", "error": str(e)})
-    
+
     return {
         "processed": len(results),
         "results": results
@@ -1156,34 +1163,34 @@ async def delete_listing(
 ):
     """Delete a listing (owner only)"""
     from models import Review
-    
+
     listing = session.exec(
         select(Listing).where(Listing.id == listing_id)
     ).first()
-    
+
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
-    
+
     # Check if user is the owner
     if str(listing.owner_id) != str(current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized to delete this listing")
-    
+
     # Delete associated product if exists
     if listing.product_id:
         product = session.exec(
             select(Product).where(Product.id == listing.product_id)
         ).first()
         if product:
-            # Delete reviews for this product
-            session.exec(
-                select(Review).where(Review.product_id == product.id)
-            )
+            # Delete reviews before deleting product (FK constraint)
+            reviews = session.exec(select(Review).where(Review.product_id == product.id)).all()
+            for review in reviews:
+                session.delete(review)
             session.delete(product)
-    
+
     # Delete the listing
     session.delete(listing)
     session.commit()
-    
+
     return {"message": "Listing deleted successfully"}
 
 
@@ -1197,14 +1204,14 @@ async def toggle_listing_status(
     listing = session.exec(
         select(Listing).where(Listing.id == listing_id)
     ).first()
-    
+
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
-    
+
     # Check if user is the owner
     if str(listing.owner_id) != str(current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized to modify this listing")
-    
+
     # Toggle by updating the associated product
     if listing.product_id:
         product = session.exec(
@@ -1218,5 +1225,5 @@ async def toggle_listing_status(
                 "message": "Status updated",
                 "is_active": product.is_active
             }
-    
+
     return {"message": "No product associated with this listing"}

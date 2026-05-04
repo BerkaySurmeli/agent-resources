@@ -17,8 +17,6 @@ SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
 
-print(f"[AUTH MODULE] Loaded SECRET_KEY (first 20 chars): {SECRET_KEY[:20]}... (len: {len(SECRET_KEY)})")
-
 # Pydantic models
 class UserSignup(BaseModel):
     email: EmailStr
@@ -53,11 +51,7 @@ def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password):
-    # Truncate to 72 bytes for bcrypt compatibility
-    try:
-        return pwd_context.hash(password[:72])
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Hash error: {str(e)}")
+    return pwd_context.hash(password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -83,31 +77,27 @@ def get_current_user_from_token(
 ) -> User:
     """Extract and validate JWT token from Authorization header"""
     auth_header = request.headers.get("Authorization")
-    
+
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
-    
+
     token = auth_header.split(" ")[1]
-    
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
-        
+
         if not user_id:
-            print(f"[AUTH DEBUG] No user_id in token payload")
             raise HTTPException(status_code=401, detail="Invalid token")
-        
-        print(f"[AUTH DEBUG] Token valid for user_id: {user_id}")
+
         user = session.exec(select(User).where(User.id == user_id)).first()
-        
+
         if not user:
-            print(f"[AUTH DEBUG] User not found: {user_id}")
             raise HTTPException(status_code=401, detail="User not found")
-        
+
         return user
-        
-    except JWTError as e:
-        print(f"[AUTH DEBUG] JWTError: {e}")
+
+    except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 # Routes
@@ -118,21 +108,21 @@ def signup(user_data: UserSignup, session = Depends(get_session)):
         existing = session.exec(select(User).where(User.email == user_data.email)).first()
         if existing:
             raise HTTPException(status_code=400, detail="Email already registered")
-        
+
         # Hash password
-        hashed = pwd_context.hash(user_data.password)
-        
+        hashed = get_password_hash(user_data.password)
+
         # Generate verification token
         import secrets
         verification_token = secrets.token_urlsafe(32)
-        
+
         # Check if email is in waitlist with developer code
         from models import WaitlistEntry
         waitlist_entry = session.exec(
             select(WaitlistEntry).where(WaitlistEntry.email == user_data.email)
         ).first()
         developer_code = waitlist_entry.developer_code if waitlist_entry else None
-        
+
         # Create new user (unverified)
         user = User(
             email=user_data.email,
@@ -147,24 +137,24 @@ def signup(user_data: UserSignup, session = Depends(get_session)):
         session.add(user)
         session.commit()
         session.refresh(user)
-        
+
         # Send verification email via Resend
         try:
             send_verification_email(user_data.email, user_data.name, verification_token)
         except Exception as e:
             print(f"[EMAIL ERROR] Failed to send verification email: {e}")
             # Don't fail signup if email fails, just log it
-        
+
     except HTTPException:
         session.rollback()
         raise
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=500, detail="Server error. Please try again.")
-    
+
     # Create token
     access_token = create_access_token({"sub": str(user.id)})
-    
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -184,21 +174,19 @@ def login(user_data: UserLogin, session = Depends(get_session)):
     admin_user = session.exec(select(AdminUser).where(AdminUser.email == user_data.email)).first()
     if admin_user:
         raise HTTPException(status_code=400, detail="Admin users must use the admin login page")
-    
+
     # Find regular user
     user = session.exec(select(User).where(User.email == user_data.email)).first()
     if not user:
         raise HTTPException(status_code=400, detail="Invalid email or password")
-    
+
     # Verify password
     if not verify_password(user_data.password, user.password_hash):
         raise HTTPException(status_code=400, detail="Invalid email or password")
-    
+
     # Create token
     access_token = create_access_token({"sub": str(user.id)})
-    print(f"[LOGIN DEBUG] Created token for user {user.id}: {access_token[:50]}...")
-    print(f"[LOGIN DEBUG] Using SECRET_KEY (first 10 chars): {SECRET_KEY[:10]}...")
-    
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -219,24 +207,24 @@ def validate_token(
 ):
     """Validate JWT token and return user info"""
     auth_header = request.headers.get("Authorization")
-    
+
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
-    
+
     token = auth_header.split(" ")[1]
-    
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
-        
+
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token")
-        
+
         user = session.exec(select(User).where(User.id == user_id)).first()
-        
+
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
-        
+
         return {
             "id": str(user.id),
             "email": user.email,
@@ -245,7 +233,7 @@ def validate_token(
             "avatar_url": user.avatar_url,
             "is_verified": user.is_verified
         }
-        
+
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
@@ -259,38 +247,38 @@ def become_developer(
     import secrets
     import string
     from services.email import send_developer_welcome_email
-    
+
     # Check if user is already a developer
     if current_user.is_developer:
         raise HTTPException(status_code=400, detail="User is already a developer")
-    
+
     # Generate unique developer code
     code_prefix = "DEV-"
     code_suffix = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
     developer_code = f"{code_prefix}{code_suffix}"
-    
+
     # Check if code already exists (unlikely but possible)
     existing = session.exec(select(User).where(User.developer_code == developer_code)).first()
     while existing:
         code_suffix = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
         developer_code = f"{code_prefix}{code_suffix}"
         existing = session.exec(select(User).where(User.developer_code == developer_code)).first()
-    
+
     # Update user as developer
     current_user.is_developer = True
     current_user.developer_code = developer_code
     current_user.became_developer_at = datetime.utcnow()
-    
+
     try:
         session.commit()
-        
+
         # Send welcome email with developer code
         try:
             send_developer_welcome_email(current_user.email, current_user.name or "Developer", developer_code)
         except Exception as e:
             print(f"[EMAIL ERROR] Failed to send developer welcome email: {e}")
             # Don't fail the request if email fails, but log it
-        
+
         return {
             "message": "Successfully registered as a developer",
             "developer_code": developer_code,
@@ -373,14 +361,11 @@ def change_password(
     # Verify current password
     if not verify_password(request.current_password, current_user.password_hash):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
-    
-    # Hash new password
-    new_password_hash = pwd_context.hash(request.new_password)
-    
-    # Update password
-    current_user.password_hash = new_password_hash
+
+    # Hash new password and update
+    current_user.password_hash = get_password_hash(request.new_password)
     session.commit()
-    
+
     return {"message": "Password updated successfully"}
 
 
@@ -391,17 +376,15 @@ def delete_account(
 ):
     """Delete user account and all associated data"""
     from models import Listing, Product, Transaction, Review, ListingTranslation
-    
+
     try:
         user_id = current_user.id
-        print(f"[DELETE ACCOUNT] Starting deletion for user {user_id}")
-        
+
         # Delete user's reviews first (to avoid foreign key issues)
         reviews = session.exec(select(Review).where(Review.user_id == user_id)).all()
         for review in reviews:
             session.delete(review)
-        print(f"[DELETE ACCOUNT] Deleted {len(reviews)} reviews")
-        
+
         # Delete user's listings and their translations
         listings = session.exec(select(Listing).where(Listing.owner_id == user_id)).all()
         for listing in listings:
@@ -410,15 +393,13 @@ def delete_account(
             for t in translations:
                 session.delete(t)
             session.delete(listing)
-        print(f"[DELETE ACCOUNT] Deleted {len(listings)} listings")
-        
+
         # Delete user's products
         products = session.exec(select(Product).where(Product.owner_id == user_id)).all()
         for product in products:
             session.delete(product)
-        print(f"[DELETE ACCOUNT] Deleted {len(products)} products")
-        
-        # Note: We keep transactions for record-keeping but anonymize them
+
+        # Keep transactions for record-keeping but anonymize them
         transactions = session.exec(
             select(Transaction).where(
                 (Transaction.buyer_id == user_id) | (Transaction.seller_id == user_id)
@@ -429,22 +410,19 @@ def delete_account(
                 t.buyer_id = None
             if t.seller_id == user_id:
                 t.seller_id = None
-        print(f"[DELETE ACCOUNT] Anonymized {len(transactions)} transactions")
-        
+
         # Finally, delete the user
         session.delete(current_user)
         session.commit()
-        print(f"[DELETE ACCOUNT] Successfully deleted user {user_id}")
-        
+
         return {"message": "Account deleted successfully"}
-        
+
     except Exception as e:
         session.rollback()
-        error_msg = str(e)
-        print(f"[DELETE ACCOUNT ERROR] {error_msg}")
+        print(f"[DELETE ACCOUNT ERROR] {e}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Failed to delete account: {error_msg}")
+        raise HTTPException(status_code=500, detail="Failed to delete account")
 
 
 # User Purchases
@@ -455,7 +433,7 @@ def get_user_purchases(
 ):
     """Get current user's purchase history"""
     from models import Transaction, Product, User
-    
+
     transactions = session.exec(
         select(Transaction, Product, User)
         .join(Product, Transaction.product_id == Product.id)
@@ -463,7 +441,7 @@ def get_user_purchases(
         .where(Transaction.buyer_id == current_user.id)
         .order_by(Transaction.created_at.desc())
     ).all()
-    
+
     return [
         {
             "id": str(t.id),
@@ -486,14 +464,14 @@ def get_user_reviews(
 ):
     """Get current user's reviews"""
     from models import Review, Product
-    
+
     reviews = session.exec(
         select(Review, Product)
         .join(Product, Review.product_id == Product.id)
         .where(Review.user_id == current_user.id)
         .order_by(Review.created_at.desc())
     ).all()
-    
+
     return [
         {
             "id": str(r.id),
@@ -516,20 +494,20 @@ def delete_user_review(
     """Delete a review owned by the current user"""
     from models import Review
     from uuid import UUID
-    
+
     review = session.exec(
         select(Review).where(
             Review.id == UUID(review_id),
             Review.user_id == current_user.id
         )
     ).first()
-    
+
     if not review:
         raise HTTPException(status_code=404, detail="Review not found")
-    
+
     session.delete(review)
     session.commit()
-    
+
     return {"message": "Review deleted successfully"}
 
 

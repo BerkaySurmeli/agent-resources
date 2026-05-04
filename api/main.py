@@ -1,9 +1,6 @@
 from contextlib import asynccontextmanager
-# Build: 2026-04-16-1146
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
-from sqlmodel import create_engine
 from core.config import settings
 from models import SQLModel
 from routes import waitlist, payments, auth, admin, listings, products, developers, search, contact, admin_metrics, downloads
@@ -11,12 +8,8 @@ import re
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    engine = create_engine(settings.DATABASE_URL, echo=settings.DB_ECHO)
-    app.state.engine = engine
+    # Startup — engine is managed by core.database with connection pooling
     yield
-    # Shutdown
-    engine.dispose()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -42,22 +35,22 @@ class DynamicCORSMiddleware:
         self.allow_credentials = allow_credentials
         self.allow_methods = allow_methods or ["*"]
         self.allow_headers = allow_headers or ["*"]
-    
+
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
-        
+
         request = Request(scope, receive)
         origin = request.headers.get("origin", "")
-        
+
         # Check if origin matches any pattern
         allowed = False
         for pattern in self.allow_origins_patterns:
             if re.match(pattern, origin):
                 allowed = True
                 break
-        
+
         if request.method == "OPTIONS":
             # Handle preflight
             headers = {
@@ -69,11 +62,11 @@ class DynamicCORSMiddleware:
                 headers["Access-Control-Allow-Origin"] = origin
                 if self.allow_credentials:
                     headers["Access-Control-Allow-Credentials"] = "true"
-            
+
             response = Response(status_code=200, headers=headers)
             await response(scope, receive, send)
             return
-        
+
         # Wrap send to add CORS headers and cache control
         async def wrapped_send(message):
             if message["type"] == "http.response.start":
@@ -87,7 +80,7 @@ class DynamicCORSMiddleware:
                 headers.append((b"pragma", b"no-cache"))
                 message["headers"] = headers
             await send(message)
-        
+
         await self.app(scope, receive, wrapped_send)
 
 # CORS patterns - supports exact URLs and regex patterns
@@ -123,15 +116,3 @@ app.include_router(downloads.router)
 @app.get("/health")
 async def health():
     return {"status": "online", "db_ready": True, "version": "1.0.0"}
-
-@app.get("/test-auth")
-async def test_auth():
-    return {"message": "Auth routes should be at /auth/signup and /auth/login"}
-# Deploy Mon Apr  6 12:14:37 PDT 2026
-# Force rebuild Thu Apr 16 13:12:17 PDT 2026
-# Deploy Thu Apr 16 13:35:33 PDT 2026
-
-@app.get("/test-deploy")
-async def test_deploy():
-    return {"message": "New code deployed", "timestamp": "2026-04-16-1340"}
-# Deploy Thu Apr 16 17:34:54 PDT 2026

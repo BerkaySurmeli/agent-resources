@@ -58,14 +58,14 @@ async def get_product_detail(
 ):
     """Get detailed product information for the owner"""
     product = session.exec(select(Product).where(Product.slug == slug)).first()
-    
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    
+
     # Check if user is the owner
     if str(product.owner_id) != str(current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized to view this product")
-    
+
     return ProductDetailResponse(
         id=str(product.id),
         slug=product.slug,
@@ -89,14 +89,14 @@ async def update_product(
 ):
     """Update product details"""
     product = session.exec(select(Product).where(Product.slug == slug)).first()
-    
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    
+
     # Check if user is the owner
     if str(product.owner_id) != str(current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized to update this product")
-    
+
     # Update fields
     if update_data.name is not None:
         product.name = update_data.name
@@ -104,10 +104,10 @@ async def update_product(
         product.description = update_data.description
     if update_data.price_cents is not None:
         product.price_cents = update_data.price_cents
-    
+
     session.commit()
     session.refresh(product)
-    
+
     return ProductDetailResponse(
         id=str(product.id),
         slug=product.slug,
@@ -130,21 +130,21 @@ async def get_product_reviews(
 ):
     """Get all reviews for a product (owner only)"""
     product = session.exec(select(Product).where(Product.slug == slug)).first()
-    
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    
+
     # Check if user is the owner
     if str(product.owner_id) != str(current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized to view these reviews")
-    
+
     reviews = session.exec(
         select(Review, User)
         .join(User, Review.user_id == User.id, isouter=True)
         .where(Review.product_id == product.id)
         .order_by(Review.created_at.desc())
     ).all()
-    
+
     return [
         ReviewResponse(
             id=str(review.id),
@@ -165,23 +165,23 @@ async def get_product_stats(
 ):
     """Get product statistics (owner only)"""
     product = session.exec(select(Product).where(Product.slug == slug)).first()
-    
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    
+
     # Check if user is the owner
     if str(product.owner_id) != str(current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized to view these stats")
-    
+
     # Get review stats
     review_stats = session.exec(
         select(func.count(Review.id), func.avg(Review.rating))
         .where(Review.product_id == product.id)
     ).first()
-    
+
     total_reviews = review_stats[0] if review_stats else 0
     average_rating = float(review_stats[1]) if review_stats and review_stats[1] else 0.0
-    
+
     # Get sales stats
     sales_stats = session.exec(
         select(func.count(Transaction.id), func.sum(Transaction.amount_cents))
@@ -190,10 +190,10 @@ async def get_product_stats(
             Transaction.status == "completed"
         )
     ).first()
-    
+
     total_sales = sales_stats[0] if sales_stats else 0
     total_revenue_cents = int(sales_stats[1]) if sales_stats and sales_stats[1] else 0
-    
+
     return ProductStatsResponse(
         total_reviews=total_reviews,
         average_rating=average_rating,
@@ -211,19 +211,19 @@ async def create_review(
 ):
     """Create a review for a product"""
     product = session.exec(select(Product).where(Product.slug == slug)).first()
-    
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    
+
     # Check if user already reviewed this product
     existing = session.exec(
         select(Review)
         .where(Review.product_id == product.id, Review.user_id == current_user.id)
     ).first()
-    
+
     if existing:
         raise HTTPException(status_code=400, detail="You have already reviewed this product")
-    
+
     # Check if user purchased this product
     purchase = session.exec(
         select(Transaction)
@@ -233,7 +233,7 @@ async def create_review(
             Transaction.status == "completed"
         )
     ).first()
-    
+
     review = Review(
         user_id=current_user.id,
         product_id=product.id,
@@ -241,10 +241,10 @@ async def create_review(
         comment=comment,
         is_verified_purchase=purchase is not None
     )
-    
+
     session.add(review)
     session.commit()
-    
+
     return {"message": "Review created successfully", "review_id": str(review.id)}
 
 
@@ -264,10 +264,10 @@ async def delete_product(
     if str(product.owner_id) != str(current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized to delete this product")
 
-    # Delete associated reviews first
-    session.exec(
-        select(Review).where(Review.product_id == product.id)
-    )
+    # Delete associated reviews first (FK constraint)
+    reviews = session.exec(select(Review).where(Review.product_id == product.id)).all()
+    for review in reviews:
+        session.delete(review)
 
     # Delete the product
     session.delete(product)

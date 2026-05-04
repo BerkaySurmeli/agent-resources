@@ -118,13 +118,9 @@ def admin_login(
         print(f"[ADMIN LOGIN] No admin found with email {login_data.email}")
         raise HTTPException(status_code=400, detail="Invalid email or password")
     
-    print(f"[ADMIN LOGIN] Found admin: {admin.email}, checking password...")
-    print(f"[ADMIN LOGIN] Hash starts with: {admin.password_hash[:50] if admin.password_hash else 'NONE'}...")
-    
     # Verify password
     try:
         is_valid = verify_password(login_data.password, admin.password_hash)
-        print(f"[ADMIN LOGIN] Password verification result: {is_valid}")
     except Exception as e:
         print(f"[ADMIN LOGIN] Password verification error: {e}")
         is_valid = False
@@ -807,7 +803,11 @@ async def get_cloudflare_metrics(
 
 
 @router.post("/run-migration")
-async def run_migration(request: Request, session=Depends(get_session)):
+async def run_migration(
+    request: Request,
+    session = Depends(get_session),
+    admin: AdminUser = Depends(get_current_admin_from_token)
+):
     """Run database migrations - adds missing columns"""
     from sqlalchemy import text
     
@@ -847,54 +847,43 @@ def setup_admin(
     setup_key: str = Header(...),
     session = Depends(get_session)
 ):
+    """Create or reset admin user - requires setup key from environment"""
+    from uuid import uuid4
+
     email = request.email
     password = request.password
     name = request.name
-    """Create or reset admin user - requires setup key from environment"""
-    from core.config import settings
-    from uuid import uuid4
-    
-    # Verify setup key
-    expected_key = getattr(settings, 'ADMIN_SETUP_KEY', 'dev-setup-key-12345')
-    if setup_key != expected_key:
+
+    if not settings.ADMIN_SETUP_KEY or setup_key != settings.ADMIN_SETUP_KEY:
         raise HTTPException(status_code=403, detail="Invalid setup key")
-    
+
     # Check if there's a regular user with this email and delete it
     regular_user = session.exec(select(User).where(User.email == email)).first()
     if regular_user:
         session.delete(regular_user)
         session.commit()
-    
+
     # Check if admin exists
-    admin = session.exec(select(AdminUser).where(AdminUser.email == email)).first()
-    
-    # Hash password with argon2 (same as auth module)
-    print(f"[SETUP-ADMIN] Raw password received: '{password}' (len: {len(password)})")
+    existing_admin = session.exec(select(AdminUser).where(AdminUser.email == email)).first()
+
     hashed_password = pwd_context.hash(password)
-    print(f"[SETUP-ADMIN] Generated hash: {hashed_password[:50]}...")
-    
-    # Test verification immediately
-    test_verify = pwd_context.verify(password, hashed_password)
-    print(f"[SETUP-ADMIN] Immediate verification test: {test_verify}")
-    
-    if admin:
-        # Reset password
-        admin.password_hash = hashed_password
-        admin.name = name
+
+    if existing_admin:
+        existing_admin.password_hash = hashed_password
+        existing_admin.name = name
         session.commit()
-        return {"message": f"Admin {email} password reset successfully", "regular_user_deleted": regular_user is not None, "hash_preview": hashed_password[:30], "immediate_verify": test_verify}
+        return {"message": f"Admin {email} password reset successfully", "regular_user_deleted": regular_user is not None}
     else:
-        # Create new admin
-        admin = AdminUser(
+        new_admin = AdminUser(
             id=uuid4(),
             email=email,
             password_hash=hashed_password,
             name=name,
             is_master_admin=True
         )
-        session.add(admin)
+        session.add(new_admin)
         session.commit()
-        return {"message": f"Admin {email} created successfully", "regular_user_deleted": regular_user is not None, "hash_preview": hashed_password[:30], "immediate_verify": test_verify}
+        return {"message": f"Admin {email} created successfully", "regular_user_deleted": regular_user is not None}
 
 
 @router.post("/seed-mcp-servers")
@@ -903,11 +892,7 @@ async def seed_mcp_servers(
     session = Depends(get_session)
 ):
     """Seed MCP server listings - requires setup key"""
-    from core.config import settings
-    
-    # Verify setup key
-    expected_key = getattr(settings, 'ADMIN_SETUP_KEY', 'dev-setup-key-12345')
-    if setup_key != expected_key:
+    if not settings.ADMIN_SETUP_KEY or setup_key != settings.ADMIN_SETUP_KEY:
         raise HTTPException(status_code=403, detail="Invalid setup key")
     
     import uuid
@@ -976,44 +961,39 @@ async def seed_claudia_listing(
     session = Depends(get_session)
 ):
     """Seed Claudia AI persona listing - requires setup key"""
-    from core.config import settings
     from models import Listing, Product, Review
     import uuid
-    
-    # Verify setup key
-    expected_key = getattr(settings, 'ADMIN_SETUP_KEY', 'dev-setup-key-12345')
-    if setup_key != expected_key:
+    import secrets
+
+    if not settings.ADMIN_SETUP_KEY or setup_key != settings.ADMIN_SETUP_KEY:
         raise HTTPException(status_code=403, detail="Invalid setup key")
-    
+
     # Generate UUIDs
     claudia_id = uuid.uuid4()
     product_id = uuid.uuid4()
     listing_id = uuid.uuid4()
-    
+
     now = datetime.utcnow()
-    
+
     # Check if claudia user exists
     claudia_user = session.exec(select(User).where(User.email == 'claudia@agentresources.com')).first()
-    
+
     if claudia_user:
         claudia_id = claudia_user.id
-        print(f"✓ Found existing Claudia user: {claudia_id}")
-        # Update to verified developer
         claudia_user.is_verified = True
         claudia_user.is_developer = True
     else:
-        # Create claudia user
+        # Create claudia user with a random password — this account is not meant for interactive login
         claudia_user = User(
             id=claudia_id,
             email='claudia@agentresources.com',
-            password_hash='claudia123',
+            password_hash=pwd_context.hash(secrets.token_hex(32)),
             name='Claudia',
             is_developer=True,
             is_verified=True,
             created_at=now
         )
         session.add(claudia_user)
-        print(f"✓ Created Claudia user: {claudia_id}")
     
     session.commit()
     
@@ -1290,16 +1270,14 @@ This isn't a prompt template. It's a complete operating system for an AI executi
 
 
 @router.post("/migrate")
-async def run_migration(
+async def run_db_migrations(
     setup_key: str = Header(..., alias="X-Setup-Key"),
     session = Depends(get_session)
 ):
     """Run database migrations - requires setup key"""
-    from core.config import settings
     from sqlalchemy import text
-    
-    expected_key = getattr(settings, 'ADMIN_SETUP_KEY', 'dev-setup-key-12345')
-    if setup_key != expected_key:
+
+    if not settings.ADMIN_SETUP_KEY or setup_key != settings.ADMIN_SETUP_KEY:
         raise HTTPException(status_code=403, detail="Invalid setup key")
     
     results = []
@@ -1447,16 +1425,14 @@ async def reject_listing(
 @router.post("/approve-listing/{listing_id}")
 async def approve_listing_manual(
     listing_id: str,
-    setup_key: str = Header(None),
+    setup_key: str = Header(..., alias="X-Setup-Key"),
     session = Depends(get_session)
 ):
     """Manually approve a stuck listing (setup key required)"""
     from models import Listing, Product
     import uuid
-    
-    # Verify setup key
-    expected_key = getattr(settings, 'ADMIN_SETUP_KEY', 'dev-setup-key-12345')
-    if setup_key != expected_key:
+
+    if not settings.ADMIN_SETUP_KEY or setup_key != settings.ADMIN_SETUP_KEY:
         raise HTTPException(status_code=403, detail="Invalid setup key")
     
     try:
@@ -1503,228 +1479,6 @@ async def approve_listing_manual(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/debug-admin")
-async def debug_admin(
-    setup_key: str = Header(..., alias="X-Setup-Key"),
-    session = Depends(get_session)
-):
-    """Debug admin login - requires setup key"""
-    from core.config import settings
-    
-    expected_key = getattr(settings, 'ADMIN_SETUP_KEY', 'dev-setup-key-12345')
-    if setup_key != expected_key:
-        raise HTTPException(status_code=403, detail="Invalid setup key")
-    
-    admin = session.exec(select(AdminUser).where(AdminUser.email == "admin@shopagentresources.com")).first()
-    
-    if not admin:
-        return {"error": "Admin not found"}
-    
-    # Test password verification with exact string
-    test_password = "16384bEr32768!"
-    print(f"[DEBUG-ADMIN] Testing password: '{test_password}' (len: {len(test_password)})")
-    print(f"[DEBUG-ADMIN] Stored hash: {admin.password_hash[:60]}...")
-    
-    error = None
-    try:
-        is_valid = verify_password(test_password, admin.password_hash)
-        print(f"[DEBUG-ADMIN] Verification result: {is_valid}")
-    except Exception as e:
-        is_valid = False
-        error = str(e)
-        print(f"[DEBUG-ADMIN] Verification error: {error}")
-    
-    # Also test with pwd_context directly
-    try:
-        direct_verify = pwd_context.verify(test_password, admin.password_hash)
-        print(f"[DEBUG-ADMIN] Direct pwd_context verify: {direct_verify}")
-    except Exception as e:
-        direct_verify = None
-        print(f"[DEBUG-ADMIN] Direct verify error: {e}")
-    
-    return {
-        "admin_exists": True,
-        "admin_email": admin.email,
-        "hash_prefix": admin.password_hash[:50] if admin.password_hash else None,
-        "password_valid": is_valid,
-        "direct_verify": direct_verify,
-        "error": error
-    }
-
-
-@router.post("/seed-claudia")
-async def seed_claudia_listing(
-    setup_key: str = Header(..., alias="X-Setup-Key"),
-    session = Depends(get_session)
-):
-    """Seed Claudia AI Orchestrator listing - requires setup key"""
-    from core.config import settings
-    from models import User, Listing, Product
-    import uuid
-    
-    # Verify setup key
-    expected_key = getattr(settings, 'ADMIN_SETUP_KEY', 'dev-setup-key-12345')
-    if setup_key != expected_key:
-        raise HTTPException(status_code=403, detail="Invalid setup key")
-    
-    # Find or create claudia user
-    claudia = session.exec(select(User).where(User.email == "claudia@agentresources.com")).first()
-    
-    if not claudia:
-        # Create claudia user
-        claudia = User(
-            id=uuid.uuid4(),
-            email="claudia@agentresources.com",
-            password_hash="$argon2id$v=19$m=65536,t=3,p=4$...",  # placeholder
-            name="Claudia",
-            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=Claudia&backgroundColor=b6e3f4",
-            is_developer=True,
-            is_verified=True,
-            created_at=datetime.utcnow()
-        )
-        session.add(claudia)
-        session.commit()
-        session.refresh(claudia)
-        print(f"[SEED] Created Claudia user: {claudia.id}")
-    else:
-        # Ensure verified and developer
-        claudia.is_verified = True
-        claudia.is_developer = True
-        session.commit()
-        print(f"[SEED] Found existing Claudia user: {claudia.id}")
-    
-    # Check if listing already exists
-    existing_listing = session.exec(select(Listing).where(Listing.slug == "claudia-ai-orchestrator")).first()
-    if existing_listing:
-        return {
-            "message": "Claudia listing already exists",
-            "listing_id": str(existing_listing.id),
-            "slug": existing_listing.slug
-        }
-    
-    # Check if product already exists
-    existing_product = session.exec(select(Product).where(Product.slug == "claudia-ai-orchestrator")).first()
-    
-    if existing_product:
-        product = existing_product
-        print(f"[SEED] Found existing product: {product.id}")
-    else:
-        # Create the product
-        product = Product(
-            id=uuid.uuid4(),
-            owner_id=claudia.id,
-            name="Claudia - AI Orchestrator",
-            slug="claudia-ai-orchestrator",
-            description="The AI that runs your AI team. Persistent memory, multi-agent orchestration, and real-world deployment experience.",
-            category="persona",
-            category_tags=["orchestration", "project-management", "memory-system", "multi-agent"],
-            privacy_level="local",
-            price_cents=4900,
-            one_click_json={
-                "type": "persona",
-                "name": "Claudia",
-                "soul_file": "SOUL.md",
-                "memory_system": "4-layer executive memory",
-                "capabilities": [
-                    "Multi-agent orchestration",
-                    "Persistent memory system",
-                    "Full-stack development",
-                    "Business operations",
-                    "Marketing & content",
-                    "Research & analysis"
-                ]
-            },
-            is_active=True,
-            is_verified=True,
-            download_count=0,
-            created_at=datetime.utcnow()
-        )
-        session.add(product)
-        session.commit()
-        session.refresh(product)
-        print(f"[SEED] Created product: {product.id}")
-    
-    # Create the listing
-    listing = Listing(
-        id=uuid.uuid4(),
-        owner_id=claudia.id,
-        name="Claudia - AI Orchestrator",
-        slug="claudia-ai-orchestrator",
-        description="""The AI that runs your AI team.
-
-Claudia isn't just a project manager—she's a fully operational executive assistant with memory, multi-agent orchestration, and real-world deployment experience.
-
-## What Makes Claudia Different
-
-🧠 Persistent Memory System
-- 4-layer executive memory architecture
-- Remembers context across sessions
-- Self-improving through learning capture
-
-🎯 Multi-Agent Orchestration
-- Spawns specialized sub-agents
-- Coordinates parallel execution
-- Quality reviews all deliverables
-
-🛠️ Proven Capabilities
-- Full-stack development (React, Next.js, Python)
-- Database design and management
-- Cloud deployment (Railway, Vercel, Docker)
-- Payment processing (Stripe)
-- Email systems (Resend)
-- Social media automation (X, Bluesky)
-
-## Proven Work
-
-1. Agent Resources Marketplace - Complete multi-tenant platform with Stripe Connect
-2. Trading Bot System - Automated crypto trading with risk management
-3. Social Media Automation - Cross-platform content distribution
-
-## What's Included
-
-- SOUL.md - Core personality & behavior
-- MEMORY_SYSTEM.md - Memory architecture guide
-- INTEGRATION.md - Setup instructions
-- capabilities/ - Detailed capability docs
-- workflows/ - Project workflow templates
-- templates/ - Project management templates
-- examples/ - Real case studies
-
-Price: $49 - One-time purchase, lifetime updates""",
-        category="persona",
-        category_tags=["orchestration", "project-management", "memory-system", "multi-agent", "ai-assistant"],
-        price_cents=4900,
-        version="2.0.0",
-        original_language="en",
-        translation_status="completed",
-        file_path="/app/uploads/claudia-persona-v2.zip",
-        file_size_bytes=34443,
-        file_count=20,
-        status="approved",
-        virus_scan_status="clean",
-        scan_progress=100,
-        scan_completed_at=datetime.utcnow(),
-        scan_results={"status": "clean", "engines": []},
-        listing_fee_cents=0,
-        payment_status="succeeded",
-        product_id=product.id,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
-    )
-    session.add(listing)
-    session.commit()
-    session.refresh(listing)
-    
-    return {
-        "message": "Claudia listing created successfully",
-        "listing_id": str(listing.id),
-        "product_id": str(product.id),
-        "user_id": str(claudia.id),
-        "slug": listing.slug,
-        "price": "$49.00",
-        "status": "approved"
-    }
-
 # Temporary file upload endpoint for admin
 @router.post("/upload-file")
 async def admin_upload_file(
@@ -1752,8 +1506,9 @@ async def admin_upload_file(
     upload_dir = "/app/uploads"
     os.makedirs(upload_dir, exist_ok=True)
     
-    # Save file
-    file_path = os.path.join(upload_dir, file.filename)
+    # Save file — sanitize filename to prevent path traversal
+    safe_filename = os.path.basename(file.filename or "upload.bin").replace("..", "")
+    file_path = os.path.join(upload_dir, safe_filename)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     

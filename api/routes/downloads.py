@@ -97,10 +97,6 @@ async def download_purchased_file(
     if not metadata:
         raise HTTPException(status_code=404, detail="Could not read file")
     
-    # Update download count
-    product.download_count += 1
-    session.commit()
-    
     # Serve file with proper headers
     filename = os.path.basename(file_path)
     

@@ -48,36 +48,36 @@ async def create_checkout_session(
     session = Depends(get_session)
 ):
     """Create Stripe checkout session for cart items using real listings"""
-    
+
     line_items = []
     total_amount_cents = 0
     listing_ids = []
-    
+
     for cart_item in request.items:
         # Get listing from database
         listing = session.exec(
             select(Listing).where(Listing.id == cart_item.listing_id)
         ).first()
-        
+
         if not listing:
             raise HTTPException(
-                status_code=404, 
+                status_code=404,
                 detail=f"Listing {cart_item.listing_id} not found"
             )
-        
+
         # Check if listing is available for purchase
         if listing.virus_scan_status != 'clean':
             raise HTTPException(
                 status_code=400,
                 detail=f"Listing '{listing.name}' is not available for purchase (security scan pending)"
             )
-        
+
         if listing.status != 'approved':
             raise HTTPException(
                 status_code=400,
                 detail=f"Listing '{listing.name}' is not approved for sale"
             )
-        
+
         # Add to line items
         line_items.append({
             'price_data': {
@@ -90,13 +90,13 @@ async def create_checkout_session(
             },
             'quantity': cart_item.quantity,
         })
-        
+
         total_amount_cents += listing.price_cents * cart_item.quantity
         listing_ids.append(str(listing.id))
-    
+
     if not line_items:
         raise HTTPException(status_code=400, detail="No valid items in cart")
-    
+
     try:
         # Create Stripe checkout session
         checkout_session = stripe.checkout.Session.create(
@@ -112,12 +112,12 @@ async def create_checkout_session(
                 'platform': 'agent-resources'
             }
         )
-        
+
         return {
             "session_id": checkout_session.id,
             "url": checkout_session.url
         }
-    
+
     except stripe.error.StripeError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -125,10 +125,10 @@ async def create_checkout_session(
 @router.post("/webhook")
 async def stripe_webhook(request: Request, background_tasks: BackgroundTasks):
     """Handle Stripe webhook events"""
-    
+
     payload = await request.body()
     sig_header = request.headers.get('stripe-signature')
-    
+
     try:
         event = stripe.Webhook.construct_event(
             payload, sig_header, STRIPE_WEBHOOK_SECRET
@@ -137,37 +137,37 @@ async def stripe_webhook(request: Request, background_tasks: BackgroundTasks):
         raise HTTPException(status_code=400, detail="Invalid payload")
     except stripe.error.SignatureVerificationError:
         raise HTTPException(status_code=400, detail="Invalid signature")
-    
+
     # Handle checkout completion
     if event['type'] == 'checkout.session.completed':
         session_data = event['data']['object']
         await handle_successful_payment(session_data, background_tasks)
-    
+
     return {"status": "success"}
 
 
 async def handle_successful_payment(session_data: dict, background_tasks: BackgroundTasks):
     """Process successful payment and create transactions"""
-    
+
     from core.database import get_session
     db_session = next(get_session())
-    
+
     try:
         listing_ids_str = session_data.get('metadata', {}).get('listing_ids', '')
         customer_email = session_data.get('customer_email')
         stripe_payment_intent_id = session_data.get('payment_intent')
-        
+
         if not listing_ids_str:
             print("[WEBHOOK] No listing IDs in session metadata")
             return
-        
+
         listing_ids = listing_ids_str.split(',')
-        
+
         # Find or create user
         user = db_session.exec(
             select(User).where(User.email == customer_email)
         ).first()
-        
+
         if not user:
             # Create user account for guest checkout
             user = User(
@@ -178,21 +178,32 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
             db_session.add(user)
             db_session.commit()
             db_session.refresh(user)
-        
+
         # Create transactions for each listing
         for listing_id in listing_ids:
             listing = db_session.exec(
                 select(Listing).where(Listing.id == listing_id)
             ).first()
-            
+
             if not listing:
                 continue
-            
+
+            # Idempotency: skip if we already recorded this payment intent for this listing
+            existing_txn = db_session.exec(
+                select(Transaction).where(
+                    Transaction.stripe_payment_intent_id == stripe_payment_intent_id,
+                    Transaction.product_id == listing.product_id
+                )
+            ).first()
+            if existing_txn:
+                print(f"[WEBHOOK] Duplicate webhook for payment_intent={stripe_payment_intent_id}, listing={listing_id} — skipping")
+                continue
+
             # Calculate fees
             total_amount_cents = listing.price_cents
             platform_fee_cents = int(total_amount_cents * PLATFORM_FEE_PERCENT)
             seller_amount_cents = total_amount_cents - platform_fee_cents
-            
+
             # Create transaction record
             transaction = Transaction(
                 id=uuid.uuid4(),
@@ -204,9 +215,9 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
                 stripe_payment_intent_id=stripe_payment_intent_id,
                 status="completed"
             )
-            
+
             db_session.add(transaction)
-            
+
             # Increment download count on product
             if listing.product_id:
                 product = db_session.exec(
@@ -214,7 +225,7 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
                 ).first()
                 if product:
                     product.download_count += 1
-            
+
             # Send emails in background
             background_tasks.add_task(
                 send_purchase_confirmation,
@@ -222,7 +233,7 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
                 listing.name,
                 total_amount_cents / 100
             )
-            
+
             # Get seller email for notification
             seller = db_session.exec(
                 select(User).where(User.id == listing.owner_id)
@@ -234,10 +245,10 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
                     listing.name,
                     seller_amount_cents / 100
                 )
-        
+
         db_session.commit()
         print(f"[WEBHOOK] Processed payment for {len(listing_ids)} items")
-        
+
     except Exception as e:
         print(f"[WEBHOOK ERROR] {e}")
         import traceback
@@ -250,14 +261,14 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
 @router.get("/session/{session_id}")
 async def get_session(session_id: str, session = Depends(get_session)):
     """Get checkout session details and purchase status"""
-    
+
     try:
         stripe_session = stripe.checkout.Session.retrieve(session_id)
-        
+
         # Get transactions for this payment
         payment_intent = stripe_session.get('payment_intent')
         transactions = []
-        
+
         if payment_intent:
             txns = session.exec(
                 select(Transaction).where(
@@ -273,7 +284,7 @@ async def get_session(session_id: str, session = Depends(get_session)):
                 }
                 for t in txns
             ]
-        
+
         return {
             "status": stripe_session.payment_status,
             "customer_email": stripe_session.customer_email,
@@ -290,7 +301,7 @@ async def get_my_purchases(
     session = Depends(get_session)
 ):
     """Get all purchases for current user"""
-    
+
     transactions = session.exec(
         select(Transaction, Product, User)
         .join(Product, Transaction.product_id == Product.id)
@@ -298,7 +309,7 @@ async def get_my_purchases(
         .where(Transaction.buyer_id == current_user.id)
         .order_by(Transaction.created_at.desc())
     ).all()
-    
+
     return [
         {
             "id": str(t.Transaction.id),
@@ -327,10 +338,10 @@ async def get_my_sales(
     session = Depends(get_session)
 ):
     """Get all sales for current user (developer)"""
-    
+
     if not current_user.is_developer:
         raise HTTPException(status_code=403, detail="Only developers can view sales")
-    
+
     transactions = session.exec(
         select(Transaction, Product, User)
         .join(Product, Transaction.product_id == Product.id)
@@ -338,12 +349,12 @@ async def get_my_sales(
         .where(Transaction.seller_id == current_user.id)
         .order_by(Transaction.created_at.desc())
     ).all()
-    
+
     total_earnings = sum(
-        t.Transaction.amount_cents - t.Transaction.platform_fee_cents 
+        t.Transaction.amount_cents - t.Transaction.platform_fee_cents
         for t in transactions
     )
-    
+
     return {
         "total_earnings_cents": total_earnings,
         "total_sales": len(transactions),
@@ -376,10 +387,10 @@ async def get_earnings_summary(
     session = Depends(get_session)
 ):
     """Get earnings summary for developer dashboard"""
-    
+
     if not current_user.is_developer:
         raise HTTPException(status_code=403, detail="Only developers can view earnings")
-    
+
     # Get all completed sales
     transactions = session.exec(
         select(Transaction)
@@ -388,12 +399,12 @@ async def get_earnings_summary(
             Transaction.status == "completed"
         )
     ).all()
-    
+
     total_sales = len(transactions)
     total_revenue_cents = sum(t.amount_cents for t in transactions)
     total_fees_cents = sum(t.platform_fee_cents for t in transactions)
     net_earnings_cents = total_revenue_cents - total_fees_cents
-    
+
     # Calculate next payout date (next Monday)
     from datetime import datetime, timedelta
     today = datetime.utcnow()
@@ -401,7 +412,7 @@ async def get_earnings_summary(
     if days_until_monday == 0:
         days_until_monday = 7  # If today is Monday, next payout is next Monday
     next_payout_date = (today + timedelta(days=days_until_monday)).date().isoformat()
-    
+
     return {
         "total_sales": total_sales,
         "total_revenue_cents": total_revenue_cents,
@@ -424,10 +435,10 @@ async def create_connect_account(
     session = Depends(get_session)
 ):
     """Create Stripe Connect account and return onboarding URL"""
-    
+
     if not current_user.is_developer:
         raise HTTPException(status_code=403, detail="Only developers can connect Stripe accounts")
-    
+
     try:
         # Create Stripe Connect Express account
         account = stripe.Account.create(
@@ -444,12 +455,12 @@ async def create_connect_account(
                 'platform': 'agent-resources'
             }
         )
-        
+
         # Update user with Stripe Connect ID
         current_user.stripe_connect_id = account.id
         current_user.stripe_status = 'pending'
         session.commit()
-        
+
         # Create onboarding link
         base_url = str(request.base_url).rstrip('/')
         account_link = stripe.AccountLink.create(
@@ -458,13 +469,13 @@ async def create_connect_account(
             return_url=f'{base_url}/payments/connect/return?account_id={account.id}',
             type='account_onboarding'
         )
-        
+
         return {
             "onboarding_url": account_link.url,
             "account_id": account.id,
             "status": "pending"
         }
-        
+
     except stripe.error.StripeError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -475,32 +486,32 @@ async def get_connect_status(
     session = Depends(get_session)
 ):
     """Get Stripe Connect account status"""
-    
+
     if not current_user.is_developer:
         raise HTTPException(status_code=403, detail="Only developers can view Stripe status")
-    
+
     if not current_user.stripe_connect_id:
         return {
             "connected": False,
             "status": "not_started",
             "message": "Stripe account not connected"
         }
-    
+
     try:
         # Fetch latest account status from Stripe
         account = stripe.Account.retrieve(current_user.stripe_connect_id)
-        
+
         # Update local status
         current_user.stripe_charges_enabled = account.charges_enabled
         current_user.stripe_payouts_enabled = account.payouts_enabled
-        
+
         if account.charges_enabled and account.payouts_enabled:
             current_user.stripe_status = 'active'
         elif current_user.stripe_status != 'active':
             current_user.stripe_status = 'pending'
-        
+
         session.commit()
-        
+
         return {
             "connected": True,
             "status": current_user.stripe_status,
@@ -509,7 +520,7 @@ async def get_connect_status(
             "account_id": current_user.stripe_connect_id,
             "requirements": account.requirements.currently_due if hasattr(account, 'requirements') else []
         }
-        
+
     except stripe.error.StripeError as e:
         return {
             "connected": False,
@@ -525,10 +536,10 @@ async def refresh_connect_link(
     session = Depends(get_session)
 ):
     """Refresh Stripe Connect onboarding link"""
-    
+
     if not current_user.is_developer or not current_user.stripe_connect_id:
         raise HTTPException(status_code=400, detail="No Stripe account found")
-    
+
     try:
         base_url = str(request.base_url).rstrip('/')
         account_link = stripe.AccountLink.create(
@@ -537,9 +548,9 @@ async def refresh_connect_link(
             return_url=f'{base_url}/payments/connect/return?account_id={current_user.stripe_connect_id}',
             type='account_onboarding'
         )
-        
+
         return {"onboarding_url": account_link.url}
-        
+
     except stripe.error.StripeError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -550,35 +561,35 @@ async def connect_return(
     session = Depends(get_session)
 ):
     """Handle Stripe Connect onboarding return"""
-    
+
     # Find user by Stripe account ID
     user = session.exec(
         select(User).where(User.stripe_connect_id == account_id)
     ).first()
-    
+
     if not user:
         raise HTTPException(status_code=404, detail="Account not found")
-    
+
     try:
         # Check account status
         account = stripe.Account.retrieve(account_id)
-        
+
         user.stripe_charges_enabled = account.charges_enabled
         user.stripe_payouts_enabled = account.payouts_enabled
-        
+
         if account.charges_enabled and account.payouts_enabled:
             user.stripe_status = 'active'
         else:
             user.stripe_status = 'pending'
-        
+
         session.commit()
-        
+
         return {
             "status": "success",
             "account_status": user.stripe_status,
             "charges_enabled": account.charges_enabled,
             "payouts_enabled": account.payouts_enabled
         }
-        
+
     except stripe.error.StripeError as e:
         raise HTTPException(status_code=400, detail=str(e))
