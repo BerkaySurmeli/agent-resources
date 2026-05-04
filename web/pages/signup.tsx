@@ -56,7 +56,7 @@ function ResendVerification({ email }: { email: string }) {
       <button
         onClick={handleResend}
         disabled={resending}
-        className="w-full bg-gray-800 text-gray-300 py-3 rounded-xl font-medium hover:bg-gray-700 transition-colors border border-gray-700 disabled:opacity-50"
+        className="w-full btn-secondary w-full justify-center disabled:opacity-50"
       >
         {resending ? 'Resending...' : 'Resend Verification Email'}
       </button>
@@ -119,38 +119,38 @@ export default function Signup() {
 
   if (showVerificationMessage) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center px-6">
+      <div className="min-h-screen bg-cream-100 flex items-center justify-center px-6">
         <Head>
           <title>{t.signup.verifyTitle} | Agent Resources</title>
         </Head>
 
         <div className="w-full max-w-md">
-          <div className="bg-gray-800 rounded-2xl border border-gray-700 p-8 text-center">
-            <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white rounded-2xl border border-cream-300 shadow-warm p-8 text-center">
+            <div className="w-16 h-16 bg-terra-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-terra-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-semibold text-white mb-4">{t.signup.verifyTitle}</h1>
-            <p className="text-gray-400 mb-6">
+            <h1 className="text-2xl font-semibold text-ink-900 mb-4">{t.signup.verifyTitle}</h1>
+            <p className="text-ink-500 mb-6">
               {t.signup.verifyMessage.replace('{email}', email)}
             </p>
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-6 text-left">
-              <p className="text-sm text-yellow-400">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 text-left">
+              <p className="text-sm text-amber-800">
                 <strong>{t.common.important || 'Important:'}</strong> {t.signup.verifyImportant}
               </p>
             </div>
             <div className="space-y-3">
               <button
                 onClick={() => router.push('/login')}
-                className="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
+                className="btn-primary w-full justify-center"
               >
                 {t.signup.goToLogin}
               </button>
               <ResendVerification email={email} />
               <button
                 onClick={() => window.location.reload()}
-                className="w-full bg-gray-800 text-gray-300 py-3 rounded-xl font-medium hover:bg-gray-700 transition-colors border border-gray-700"
+                className="w-full btn-secondary w-full justify-center"
               >
                 {t.signup.verifiedRefresh}
               </button>
@@ -162,7 +162,7 @@ export default function Signup() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center px-6 py-12">
+    <div className="min-h-screen bg-cream-100 flex items-center justify-center px-6 py-12">
       <Head>
         <title>{t.auth.signUp} | Agent Resources</title>
       </Head>
@@ -172,20 +172,20 @@ export default function Signup() {
           <Link href="/" className="inline-flex items-center gap-3 mb-6">
             <Logo variant="icon" size="xl" />
           </Link>
-          <h1 className="text-2xl font-semibold text-white">{t.signup.title}</h1>
-          <p className="text-gray-400 mt-2">{t.signup.subtitle}</p>
+          <h1 className="text-2xl font-semibold text-ink-900">{t.signup.title}</h1>
+          <p className="text-ink-500 mt-2">{t.signup.subtitle}</p>
         </div>
 
-        <div className="bg-gray-800 rounded-2xl border border-gray-700 p-8">
+        <div className="bg-white rounded-2xl border border-cream-300 shadow-warm p-8">
           {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg mb-6 text-sm">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 text-sm">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-ink-700 mb-2">
                 {t.signup.fullName}
               </label>
               <input
@@ -193,13 +193,13 @@ export default function Signup() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-gray-900 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                className="input"
                 placeholder="John Doe"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-ink-700 mb-2">
                 {t.signup.email}
               </label>
               <input
@@ -207,13 +207,13 @@ export default function Signup() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-gray-900 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                className="input"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-ink-700 mb-2">
                 {t.signup.password}
               </label>
               <input
@@ -221,14 +221,14 @@ export default function Signup() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-gray-900 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                className="input"
                 placeholder="••••••••"
               />
-              <p className="text-xs text-gray-500 mt-1">{t.signup.passwordMinLength}</p>
+              <p className="text-xs text-ink-400 mt-1">{t.signup.passwordMinLength}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-ink-700 mb-2">
                 {t.signup.confirmPassword}
               </label>
               <input
@@ -236,7 +236,7 @@ export default function Signup() {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-gray-900 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                className="input"
                 placeholder="••••••••"
               />
             </div>
@@ -244,7 +244,7 @@ export default function Signup() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -261,9 +261,9 @@ export default function Signup() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-400">
+            <p className="text-ink-500">
               {t.signup.hasAccount}{' '}
-              <Link href="/login" className="text-blue-400 hover:text-blue-300 font-medium">
+              <Link href="/login" className="text-terra-600 hover:text-terra-700 font-medium">
                 {t.signup.signIn}
               </Link>
             </p>

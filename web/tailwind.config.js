@@ -8,78 +8,75 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Primary brand colors
-        primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#172554',
+        // Warm cream backgrounds — the foundation of the Anthropic aesthetic
+        cream: {
+          50:  '#FDFCF9',
+          100: '#FAF7F2',
+          200: '#F5EDE0',
+          300: '#EDDFCC',
+          400: '#E2CEB6',
+          500: '#D4B99A',
         },
-        // Secondary accent (cyan/teal for highlights)
-        accent: {
-          50: '#ecfeff',
-          100: '#cffafe',
-          200: '#a5f3fc',
-          300: '#67e8f9',
-          400: '#22d3ee',
-          500: '#06b6d4',
-          600: '#0891b2',
-          700: '#0e7490',
-          800: '#155e75',
-          900: '#164e63',
-          950: '#083344',
+        // Warm charcoal text
+        ink: {
+          50:  '#F5F3F0',
+          100: '#E8E3DD',
+          200: '#C9BFB5',
+          300: '#A8998C',
+          400: '#857567',
+          500: '#6B5E52',
+          600: '#54473C',
+          700: '#3D332A',
+          800: '#2A221A',
+          900: '#1C1510',
+          950: '#100D09',
         },
-        // Dark theme backgrounds - richer, deeper colors
-        dark: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
+        // Terracotta / coral — primary action color
+        terra: {
+          50:  '#FDF2EE',
+          100: '#FAE0D6',
+          200: '#F4BBA8',
+          300: '#EB9078',
+          400: '#DF6B50',
+          500: '#CC5132',  // main CTA
+          600: '#B5442A',
+          700: '#943823',
+          800: '#732D1D',
+          900: '#522019',
+        },
+        // Soft slate for secondary elements
+        warm: {
+          50:  '#F9F7F5',
+          100: '#F2EEE9',
+          200: '#E5DDD4',
+          300: '#D1C5BA',
+          400: '#B8A99A',
+          500: '#9E8D7E',
+          600: '#7F6F62',
+          700: '#635649',
+          800: '#463D35',
+          900: '#2E2820',
         },
       },
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        // Custom dark gradients
-        'dark-main': 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
-        'dark-card': 'linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
-        'glow-blue': 'radial-gradient(circle at center, rgba(37, 99, 235, 0.15) 0%, transparent 70%)',
-        'glow-accent': 'radial-gradient(circle at center, rgba(6, 182, 212, 0.1) 0%, transparent 70%)',
+      fontFamily: {
+        serif: ['"DM Serif Display"', 'Georgia', 'serif'],
+        sans:  ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
       },
       boxShadow: {
-        'glow': '0 0 20px rgba(37, 99, 235, 0.3)',
-        'glow-accent': '0 0 20px rgba(6, 182, 212, 0.2)',
-        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
-        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3)',
+        'warm-sm': '0 1px 3px 0 rgba(60, 40, 20, 0.08)',
+        'warm':    '0 4px 12px 0 rgba(60, 40, 20, 0.10), 0 1px 3px 0 rgba(60, 40, 20, 0.06)',
+        'warm-md': '0 8px 24px 0 rgba(60, 40, 20, 0.12), 0 2px 6px 0 rgba(60, 40, 20, 0.06)',
+        'warm-lg': '0 16px 40px 0 rgba(60, 40, 20, 0.14), 0 4px 10px 0 rgba(60, 40, 20, 0.08)',
+        'terra':   '0 4px 14px 0 rgba(204, 81, 50, 0.30)',
       },
       animation: {
-        'fade-in': 'fadeIn 0.5s ease-out',
-        'slide-up': 'slideUp 0.5s ease-out',
+        'fade-in':   'fadeIn 0.4s ease-out',
+        'slide-up':  'slideUp 0.4s ease-out',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
       keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        slideUp: {
-          '0%': { transform: 'translateY(20px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
+        fadeIn:  { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+        slideUp: { '0%': { transform: 'translateY(16px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
       },
     },
   },

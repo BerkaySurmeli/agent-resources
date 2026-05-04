@@ -16,54 +16,50 @@ export default function Navbar() {
   const handleLogout = () => {
     logout();
     setDropdownOpen(false);
-    // Force a page refresh to ensure all components update
     window.location.href = '/';
   };
 
+  const navLink = (href: string, label: string) => {
+    const active = router.pathname === href || (href !== '/' && router.pathname.startsWith(href));
+    return (
+      <Link
+        href={href}
+        className={`text-sm font-medium transition-colors ${
+          active ? 'text-ink-900' : 'text-ink-500 hover:text-ink-800'
+        }`}
+      >
+        {label}
+      </Link>
+    );
+  };
+
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-slate-900/80 backdrop-blur-md border-b border-white/10 z-50">
+    <nav className="sticky top-0 z-50 bg-cream-100/90 backdrop-blur-md border-b border-cream-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="group flex items-center gap-3">
-            <Logo variant="full" size="md" textClassName="text-white group-hover:text-blue-400 transition-colors" />
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <Logo variant="full" size="md" textClassName="text-ink-900 group-hover:text-terra-500 transition-colors" />
           </Link>
 
-          {/* Navigation Links */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link
-              href="/listings"
-              className={`text-sm transition-colors ${router.pathname.startsWith('/listings') ? 'text-white font-medium' : 'text-slate-400 hover:text-white'}`}
-            >
-              Listings
-            </Link>
-            <Link
-              href="/blog"
-              className={`text-sm transition-colors ${router.pathname === '/blog' ? 'text-white font-medium' : 'text-slate-400 hover:text-white'}`}
-            >
-              Blog
-            </Link>
-            <Link
-              href="/wizard"
-              className={`text-sm transition-colors ${router.pathname === '/wizard' ? 'text-white font-medium' : 'text-slate-400 hover:text-white'}`}
-            >
-              Build Your Team
-            </Link>
-            {user?.isDeveloper && (
-              <Link
-                href="/sell"
-                className={`text-sm transition-colors ${router.pathname === '/sell' ? 'text-white font-medium' : 'text-slate-400 hover:text-white'}`}
-              >
-                Sell
-              </Link>
-            )}
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-7">
+            {navLink('/listings', 'Listings')}
+            {navLink('/blog', 'Blog')}
+            {navLink('/wizard', 'Build Your Team')}
+            {user?.isDeveloper && navLink('/sell', 'Sell')}
           </div>
 
-          {/* Cart & User Section */}
-          <div className="flex items-center gap-4">
+          {/* Right side */}
+          <div className="flex items-center gap-3">
+            {/* Cart */}
+            <Link href="/cart" className="relative p-2 text-ink-500 hover:text-ink-800 transition-colors">
+              <CartIcon />
+            </Link>
+
             {/* Mobile hamburger */}
             <button
-              className="md:hidden p-2 text-slate-300 hover:text-white transition-colors"
+              className="md:hidden p-2 text-ink-500 hover:text-ink-800 transition-colors"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label="Toggle menu"
             >
@@ -77,70 +73,48 @@ export default function Navbar() {
                 </svg>
               )}
             </button>
-            <Link href="/cart" className="relative p-2 text-slate-300 hover:text-white transition-colors">
-              <CartIcon />
-            </Link>
+
+            {/* User / auth */}
             {user ? (
-              <div className="relative">
-                <button 
+              <div className="relative hidden md:block">
+                <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2 text-sm text-slate-300 hover:text-white transition-colors"
+                  className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-lg text-sm font-medium text-ink-700 hover:bg-cream-200 transition-colors"
                 >
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium">
-                    {user.initials}
+                  <div className="w-7 h-7 bg-terra-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    {user.name?.charAt(0).toUpperCase() || 'U'}
                   </div>
-                  <span className="hidden sm:block">{user.name}</span>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <span>{user.name?.split(' ')[0]}</span>
+                  <svg className="w-3.5 h-3.5 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
 
-                {/* Dropdown */}
                 {dropdownOpen && (
                   <>
-                    <div 
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setDropdownOpen(false)}
-                    />
-                    <div className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-50 py-1">
-                      <Link 
-                        href="/dashboard" 
-                        className="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
-                        onClick={() => setDropdownOpen(false)}
-                      >
+                    <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
+                    <div className="absolute right-0 mt-1.5 w-48 bg-white border border-cream-300 rounded-xl shadow-warm-md z-50 py-1.5 overflow-hidden">
+                      <Link href="/dashboard" className="block px-4 py-2.5 text-sm text-ink-700 hover:bg-cream-100 transition-colors" onClick={() => setDropdownOpen(false)}>
                         Dashboard
                       </Link>
-                      <Link 
-                        href="/settings" 
-                        className="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
-                        onClick={() => setDropdownOpen(false)}
-                      >
+                      <Link href="/settings" className="block px-4 py-2.5 text-sm text-ink-700 hover:bg-cream-100 transition-colors" onClick={() => setDropdownOpen(false)}>
                         Settings
                       </Link>
-                      <div className="border-t border-slate-700 my-1" />
-                      <button 
-                        onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-slate-700 hover:text-red-300 transition-colors"
-                      >
-                        Logout
+                      <hr className="my-1 border-cream-200" />
+                      <button onClick={handleLogout} className="block w-full text-left px-4 py-2.5 text-sm text-terra-600 hover:bg-cream-100 transition-colors">
+                        Log out
                       </button>
                     </div>
                   </>
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-3">
-                <Link 
-                  href="/login" 
-                  className="text-sm text-slate-300 hover:text-white transition-colors"
-                >
-                  Log In
+              <div className="hidden md:flex items-center gap-2">
+                <Link href="/login" className="text-sm font-medium text-ink-600 hover:text-ink-900 transition-colors px-3 py-1.5">
+                  Log in
                 </Link>
-                <Link 
-                  href="/signup" 
-                  className="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Sign Up
+                <Link href="/signup" className="btn-primary !py-2 !px-4 !text-sm">
+                  Sign up
                 </Link>
               </div>
             )}
@@ -150,36 +124,30 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-slate-900/95 border-t border-white/10 px-4 py-4 space-y-3">
-          <Link href="/listings" className="block text-sm text-slate-300 hover:text-white transition-colors py-2" onClick={() => setMobileOpen(false)}>
-            Listings
-          </Link>
-          <Link href="/blog" className="block text-sm text-slate-300 hover:text-white transition-colors py-2" onClick={() => setMobileOpen(false)}>
-            Blog
-          </Link>
-          <Link href="/wizard" className="block text-sm gradient-flow-text hover:opacity-80 transition-opacity py-2" onClick={() => setMobileOpen(false)}>
-            Build Your Team
-          </Link>
+        <div className="md:hidden bg-cream-100 border-t border-cream-300 px-4 py-4 space-y-1">
+          {[
+            { href: '/listings', label: 'Listings' },
+            { href: '/blog', label: 'Blog' },
+            { href: '/wizard', label: 'Build Your Team' },
+            ...(user?.isDeveloper ? [{ href: '/sell', label: 'Sell' }] : []),
+          ].map(({ href, label }) => (
+            <Link key={href} href={href} className="block text-sm font-medium text-ink-700 hover:text-ink-900 py-2.5 transition-colors" onClick={() => setMobileOpen(false)}>
+              {label}
+            </Link>
+          ))}
+
+          <hr className="border-cream-300 my-2" />
+
           {user ? (
             <>
-              <Link href="/dashboard" className="block text-sm text-slate-300 hover:text-white transition-colors py-2" onClick={() => setMobileOpen(false)}>
-                Dashboard
-              </Link>
-              <Link href="/settings" className="block text-sm text-slate-300 hover:text-white transition-colors py-2" onClick={() => setMobileOpen(false)}>
-                Settings
-              </Link>
-              <button onClick={handleLogout} className="block w-full text-left text-sm text-red-400 hover:text-red-300 transition-colors py-2">
-                Logout
-              </button>
+              <Link href="/dashboard" className="block text-sm font-medium text-ink-700 py-2.5" onClick={() => setMobileOpen(false)}>Dashboard</Link>
+              <Link href="/settings" className="block text-sm font-medium text-ink-700 py-2.5" onClick={() => setMobileOpen(false)}>Settings</Link>
+              <button onClick={handleLogout} className="block w-full text-left text-sm font-medium text-terra-600 py-2.5">Log out</button>
             </>
           ) : (
-            <div className="flex gap-3 pt-2">
-              <Link href="/login" className="text-sm text-slate-300 hover:text-white transition-colors" onClick={() => setMobileOpen(false)}>
-                Log In
-              </Link>
-              <Link href="/signup" className="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" onClick={() => setMobileOpen(false)}>
-                Sign Up
-              </Link>
+            <div className="flex gap-3 pt-1">
+              <Link href="/login" className="text-sm font-medium text-ink-700 py-2" onClick={() => setMobileOpen(false)}>Log in</Link>
+              <Link href="/signup" className="btn-primary !py-2 !px-4 !text-sm" onClick={() => setMobileOpen(false)}>Sign up</Link>
             </div>
           )}
         </div>

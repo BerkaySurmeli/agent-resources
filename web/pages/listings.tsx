@@ -161,61 +161,48 @@ export default function Listings() {
     }
   };
 
+  const categoryColors: Record<string, string> = {
+    persona:    'bg-blue-50 text-blue-700 border-blue-200',
+    skill:      'bg-purple-50 text-purple-700 border-purple-200',
+    mcp_server: 'bg-green-50 text-green-700 border-green-200',
+  };
+
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-cream-100">
       <Head>
         <title>Browse Listings | Agent Resources</title>
-        <meta name="description" content="Browse AI personas, skills, and MCP servers for your OpenClaw environment" />
+        <meta name="description" content="Browse AI personas, skills, and MCP servers for autonomous agents." />
       </Head>
 
       <Navbar />
 
-      <main className="pt-20 pb-12 px-6">
+      <main className="pt-10 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-semibold text-white mb-2">{t.listings.title}</h1>
-            <p className="text-gray-400">{t.listings.subtitle}</p>
+            <h1 className="heading-serif text-4xl text-ink-900 mb-2">{t.listings.title}</h1>
+            <p className="text-ink-500">{t.listings.subtitle}</p>
           </div>
 
-          {/* Search */}
-          <div className="relative mb-6">
-            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder={t.listings.searchPlaceholder}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-lg"
-            />
-          </div>
-
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            {/* Categories */}
-            <div className="flex gap-2 flex-wrap">
-              {categories.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    selectedCategory === cat.id 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              ))}
+          {/* Search + Filters row */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-5">
+            <div className="relative flex-1">
+              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder={t.listings.searchPlaceholder}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="input pl-10"
+              />
             </div>
 
-            {/* Sort */}
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-300 text-sm focus:outline-none focus:border-blue-500"
+              onChange={e => setSortBy(e.target.value)}
+              className="input sm:w-44"
             >
               {sortOptions.map(opt => (
                 <option key={opt.id} value={opt.id}>{opt.label}</option>
@@ -223,82 +210,83 @@ export default function Listings() {
             </select>
           </div>
 
+          {/* Category pills */}
+          <div className="flex gap-2 flex-wrap mb-6">
+            {categories.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                  selectedCategory === cat.id
+                    ? 'bg-terra-500 text-white border-terra-500'
+                    : 'bg-white text-ink-600 border-cream-300 hover:border-terra-300 hover:text-terra-600'
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+
           {/* Results count */}
-          <p className="text-gray-500 mb-6">{filteredListings.length} {t.listings.listingsFound}</p>
+          <p className="text-ink-400 text-sm mb-6">{filteredListings.length} {t.listings.listingsFound}</p>
 
           {/* Loading */}
           {loading && (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <div className="flex items-center justify-center py-16">
+              <div className="w-8 h-8 border-2 border-terra-400 border-t-transparent rounded-full animate-spin" />
             </div>
           )}
 
-          {/* Listings Grid */}
+          {/* Listings grid */}
           {!loading && (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
               {filteredListings.map(listing => (
-                <div
-                  key={listing.slug}
-                  className="group block bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden hover:border-blue-500/50 hover:shadow-lg transition-all duration-300"
-                >
-                  {/* Card Header with Avatar */}
-                  <div className="relative h-28 bg-gradient-to-br from-gray-800 to-gray-900 p-5">
+                <div key={listing.slug} className="card card-hover flex flex-col overflow-hidden group">
+                  {/* Card top — avatar + name */}
+                  <div className="p-5 pb-4 border-b border-cream-200">
                     <div className="flex items-center gap-3">
-                      {/* Avatar - use seller avatar if available, otherwise generate from name */}
                       {listing.seller?.avatar_url ? (
-                        <img 
-                          src={listing.seller.avatar_url} 
+                        <img
+                          src={listing.seller.avatar_url}
                           alt={listing.seller.name}
-                          className="w-14 h-14 rounded-xl object-cover shadow-lg"
+                          className="w-12 h-12 rounded-xl object-cover border border-cream-200"
                         />
                       ) : (
-                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-lg text-white text-xl font-bold">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+                          style={{ background: 'linear-gradient(135deg, #CC5132, #DF6B50)' }}>
                           {listing.seller?.name?.charAt(0).toUpperCase() || '?'}
                         </div>
                       )}
-                      <div className="flex-1 min-w-0">
-                        {/* Listing Name */}
-                        <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors truncate">
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-ink-900 truncate group-hover:text-terra-600 transition-colors">
                           {listing.name}
                         </h3>
-                        {/* Developer Name */}
-                        <p className="text-sm text-gray-400 truncate">{listing.seller?.name || 'Unknown'}</p>
+                        <p className="text-xs text-ink-400 truncate">{listing.seller?.name || 'Anonymous'}</p>
                       </div>
-                      {(listing.status === 'scanning' || listing.status === 'pending_scan') && (
-                        <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-400 animate-pulse flex-shrink-0">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          Scanning
-                        </span>
-                      )}
                     </div>
                   </div>
 
-                  {/* Card Body */}
-                  <div className="p-5">
-                    {/* Description */}
-                    <p className="text-gray-400 text-sm mb-3 line-clamp-2">{listing.description}</p>
+                  {/* Body */}
+                  <div className="p-5 flex flex-col flex-1">
+                    <p className="text-ink-500 text-sm leading-relaxed line-clamp-2 mb-4">{listing.description}</p>
 
-                    {/* Tags & Category Row */}
-                    <div className="flex items-center gap-2 mb-4 flex-wrap">
-                      <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${getCategoryColor(listing.category)}`}>
+                    {/* Tags */}
+                    <div className="flex items-center gap-1.5 flex-wrap mb-5">
+                      <span className={`badge border ${categoryColors[listing.category] || 'bg-warm-100 text-warm-700 border-warm-200'}`}>
                         {getCategoryIcon(listing.category)}
                         {getCategoryName(listing.category, categories)}
                       </span>
                       {listing.tags?.slice(0, 2).map((tag, i) => (
-                        <span key={i} className="text-xs text-gray-500 bg-gray-700/50 px-2 py-1 rounded-full">
-                          {tag}
-                        </span>
+                        <span key={i} className="badge bg-cream-200 text-ink-500 border-cream-300">{tag}</span>
                       ))}
                       {listing.tags && listing.tags.length > 2 && (
-                        <span className="text-xs text-gray-500">+{listing.tags.length - 2}</span>
+                        <span className="text-xs text-ink-400">+{listing.tags.length - 2}</span>
                       )}
                     </div>
 
-                    {/* Price & Actions */}
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-700">
-                      <span className="text-xl font-bold text-white">{formatPrice(listing.price_cents)}</span>
+                    {/* Price + actions — pinned to bottom */}
+                    <div className="mt-auto flex items-center justify-between pt-4 border-t border-cream-200">
+                      <span className="text-lg font-bold text-ink-900">{formatPrice(listing.price_cents)}</span>
                       <div className="flex items-center gap-2">
                         {isAvailableForPurchase(listing) ? (
                           <>
@@ -308,35 +296,27 @@ export default function Listings() {
                                 slug: listing.slug,
                                 name: listing.name,
                                 price: Math.round(listing.price_cents) / 100,
-                                category: listing.category
+                                category: listing.category,
                               })}
                               disabled={isInCart(listing.slug)}
-                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
                                 isInCart(listing.slug)
-                                  ? 'bg-green-500/20 text-green-400 cursor-default'
-                                  : 'bg-blue-600 text-white hover:bg-blue-500'
+                                  ? 'bg-green-50 text-green-700 border-green-200 cursor-default'
+                                  : 'btn-primary !py-1.5 !px-3 !text-sm !shadow-none'
                               }`}
                             >
                               {isInCart(listing.slug) ? '✓ In Cart' : t.listings.addToCart}
                             </button>
-                            <Link
-                              href={`/listings/${listing.slug}`}
-                              className="bg-gray-700 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
-                            >
+                            <Link href={`/listings/${listing.slug}`} className="btn-secondary !py-1.5 !px-3 !text-sm">
                               {t.listings.view}
                             </Link>
                           </>
                         ) : (
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-yellow-400 bg-yellow-500/10 px-2 py-1 rounded">
-                              {listing.virus_scan_status === 'scanning' 
-                                ? (t.settings?.scanInProgress || 'Scan in progress')
-                                : (t.settings?.itemNotAvailable || 'Not available')}
+                            <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-lg">
+                              {listing.virus_scan_status === 'scanning' ? 'Scanning…' : 'Unavailable'}
                             </span>
-                            <Link
-                              href={`/listings/${listing.slug}`}
-                              className="bg-gray-700 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
-                            >
+                            <Link href={`/listings/${listing.slug}`} className="btn-secondary !py-1.5 !px-3 !text-sm">
                               {t.listings.view}
                             </Link>
                           </div>
@@ -350,11 +330,11 @@ export default function Listings() {
           )}
 
           {!loading && filteredListings.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500">{t.listings.noListingsFound}</p>
-              <button 
+            <div className="text-center py-16">
+              <p className="text-ink-400 mb-3">{t.listings.noListingsFound}</p>
+              <button
                 onClick={() => { setSelectedCategory('all'); setSearchQuery(''); }}
-                className="text-blue-400 hover:underline mt-2"
+                className="text-terra-600 hover:text-terra-700 text-sm font-medium"
               >
                 {t.listings.clearFilters}
               </button>

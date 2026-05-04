@@ -8,39 +8,35 @@ interface LogoProps {
 }
 
 const sizes = {
-  sm: { icon: 32, text: 'text-sm' },
-  md: { icon: 40, text: 'text-base' },
-  lg: { icon: 48, text: 'text-lg' },
-  xl: { icon: 60, text: 'text-xl' },
+  sm: { icon: 28, text: 'text-sm' },
+  md: { icon: 34, text: 'text-base' },
+  lg: { icon: 42, text: 'text-lg' },
+  xl: { icon: 56, text: 'text-xl' },
 };
 
 export function Logo({ variant = 'full', className = '', size = 'md', textClassName = '' }: LogoProps) {
-  const sizeConfig = sizes[size];
-  
-  if (variant === 'icon') {
-    return (
-      <div 
-        className={`bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30 ${className}`}
-        style={{ width: sizeConfig.icon, height: sizeConfig.icon }}
-        aria-label="Agent Resources"
-      >
-        <span className="text-white font-bold" style={{ fontSize: sizeConfig.icon * 0.4 }}>AR</span>
-      </div>
-    );
-  }
-  
+  const s = sizes[size];
+
+  const icon = (
+    <div
+      className={`flex-shrink-0 rounded-xl flex items-center justify-center ${className}`}
+      style={{
+        width: s.icon,
+        height: s.icon,
+        background: 'linear-gradient(135deg, #CC5132 0%, #DF6B50 100%)',
+      }}
+      aria-label="Agent Resources"
+    >
+      <span className="text-white font-bold tracking-tight" style={{ fontSize: s.icon * 0.38 }}>AR</span>
+    </div>
+  );
+
+  if (variant === 'icon') return icon;
+
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
-      {/* Beveled Icon with gradient and shadow */}
-      <div 
-        className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30 flex-shrink-0"
-        style={{ width: sizeConfig.icon, height: sizeConfig.icon }}
-      >
-        <span className="text-white font-bold" style={{ fontSize: sizeConfig.icon * 0.4 }}>AR</span>
-      </div>
-      
-      {/* Text */}
-      <span className={`font-semibold whitespace-nowrap ${sizeConfig.text} ${textClassName}`}>
+    <div className={`flex items-center gap-2.5 ${className}`}>
+      {icon}
+      <span className={`font-semibold whitespace-nowrap ${s.text} ${textClassName}`}>
         Agent Resources
       </span>
     </div>
