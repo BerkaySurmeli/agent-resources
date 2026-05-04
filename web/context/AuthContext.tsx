@@ -82,9 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const parsedUser = JSON.parse(saved);
         setUser(parsedUser);
-      } catch (err) {
-        console.error('Failed to parse saved user:', err);
-        // Clear invalid data
+      } catch {
         removeLocalStorage('ar-user');
         removeLocalStorage('ar-token');
       }
@@ -103,8 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             const parsedUser = JSON.parse(e.newValue);
             setUser(parsedUser);
-          } catch (err) {
-            console.error('Failed to parse updated user:', err);
+          } catch {
+            // ignore malformed storage event
           }
         } else {
           setUser(null);
@@ -249,8 +247,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(userData);
         setLocalStorage('ar-user', JSON.stringify(userData));
       }
-    } catch (err) {
-      console.error('Failed to refresh user:', err);
+    } catch {
+      // user remains at current cached state
     }
   };
 

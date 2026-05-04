@@ -609,10 +609,7 @@ async def create_listing(
             required_file_name = "mcp.json or manifest.json"
 
     if required_file_missing:
-        # Log what files were received for debugging
         received_files = [f.filename for f in files if f.filename]
-        print(f"[DEBUG] {required_file_name} not found for category '{category}'. Received files: {received_files}")
-        # Clean up and error
         shutil.rmtree(listing_dir, ignore_errors=True)
         raise HTTPException(status_code=400, detail=f"{required_file_name} is required for {category} listings. Received {len(files)} files: {received_files}")
 

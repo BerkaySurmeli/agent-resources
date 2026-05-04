@@ -27,8 +27,8 @@ export default function PayoutSection() {
         const data = await response.json();
         setStatus(data);
       }
-    } catch (err) {
-      console.error('Failed to fetch Stripe status:', err);
+    } catch {
+      // status remains null; UI handles the missing state
     } finally {
       setLoading(false);
     }
@@ -87,6 +87,10 @@ export default function PayoutSection() {
       });
 
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to refresh onboarding');
+      }
 
       if (data.onboarding_url) {
         window.location.href = data.onboarding_url;

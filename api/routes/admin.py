@@ -832,10 +832,9 @@ async def run_migration(
         raise HTTPException(status_code=500, detail=f"Migration failed: {str(e)}")
 
 
-# Temporary endpoint to create/reset admin - remove after use
 class SetupAdminRequest(BaseModel):
-    email: str = "admin@shopagentresources.com"
-    password: str = "admin123!"
+    email: str
+    password: str
     name: str = "Admin"
 
 @router.post("/setup-admin")

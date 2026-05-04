@@ -36,8 +36,8 @@ export default function VerifyEmail() {
               userData.isVerified = true;
               localStorage.setItem('ar-user', JSON.stringify(userData));
             }
-          } catch (e) {
-            console.error('Failed to update localStorage:', e);
+          } catch {
+            // non-critical; auth context re-fetches on next load
           }
         }
       } else {

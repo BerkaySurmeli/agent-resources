@@ -130,14 +130,11 @@ export default function Dashboard() {
         const listingsData = await listingsRes.json();
         setListings(listingsData);
       } else if (listingsRes.status === 401) {
-        // Token expired or invalid
-        console.error('Token expired or invalid');
         setError('Your session has expired. Please log in again.');
         setLoading(false);
         return;
       } else {
         const errorText = await listingsRes.text();
-        console.error('Listings fetch error:', listingsRes.status, errorText);
         setError(`Failed to fetch listings: ${listingsRes.status} ${errorText.substring(0, 100)}`);
       }
       
@@ -150,11 +147,9 @@ export default function Dashboard() {
         const statsData = await statsRes.json();
         setStats(statsData);
       } else {
-        const errorData = await statsRes.json().catch(() => ({}));
-        console.error('Stats fetch error:', errorData);
+        await statsRes.json().catch(() => ({}));
       }
     } catch (err: any) {
-      console.error('Dashboard error:', err);
       setError(`Failed to load dashboard data: ${err.message}`);
     } finally {
       setLoading(false);

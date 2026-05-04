@@ -55,8 +55,8 @@ export default function GlobalSearch() {
         setResults(data);
         setShowResults(true);
       }
-    } catch (err) {
-      console.error('Search error:', err);
+    } catch {
+      // search results remain empty on error
     } finally {
       setLoading(false);
     }

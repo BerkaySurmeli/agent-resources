@@ -43,8 +43,8 @@ export default function NotificationsSection() {
         const data = await response.json();
         setPrefs(data);
       }
-    } catch (err) {
-      console.error('Failed to load preferences:', err);
+    } catch {
+      // prefs stay at defaults
     } finally {
       setLoading(false);
     }

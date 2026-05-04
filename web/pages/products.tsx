@@ -65,7 +65,11 @@ export default function Products() {
       });
       
       const data = await response.json();
-      
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Checkout failed');
+      }
+
       if (data.url) {
         window.location.href = data.url;
       }

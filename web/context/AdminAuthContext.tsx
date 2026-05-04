@@ -66,9 +66,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
       try {
         const parsedAdmin = JSON.parse(saved);
         setAdmin(parsedAdmin);
-      } catch (err) {
-        console.error('Failed to parse saved admin:', err);
-        // Clear invalid data
+      } catch {
         removeLocalStorage('ar-admin');
         removeLocalStorage('ar-admin-token');
       }

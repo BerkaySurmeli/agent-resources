@@ -192,8 +192,8 @@ export default function AdminDashboard() {
 
       // Fetch Cloudflare metrics
       await fetchCloudflareMetrics();
-    } catch (err) {
-      console.error('Failed to fetch dashboard data:', err);
+    } catch {
+      // errors surfaced per-section by empty state
     } finally {
       setLoading(false);
     }
@@ -211,8 +211,8 @@ export default function AdminDashboard() {
         const data = await res.json();
         setMetrics(data);
       }
-    } catch (err) {
-      console.error('Failed to fetch Cloudflare metrics:', err);
+    } catch {
+      // metrics remain empty; non-critical
     } finally {
       setMetricsLoading(false);
     }
@@ -243,8 +243,7 @@ export default function AdminDashboard() {
         const error = await res.json();
         alert(error.detail || 'Failed to delete user');
       }
-    } catch (err) {
-      console.error('Failed to delete user:', err);
+    } catch {
       alert('Failed to delete user');
     }
   };
@@ -274,8 +273,7 @@ export default function AdminDashboard() {
         const error = await res.json();
         alert(error.detail || 'Failed to delete admin');
       }
-    } catch (err) {
-      console.error('Failed to delete admin:', err);
+    } catch {
       alert('Failed to delete admin');
     }
   };
@@ -306,8 +304,7 @@ export default function AdminDashboard() {
         const error = await res.json();
         alert(error.detail || 'Failed to approve listing');
       }
-    } catch (err) {
-      console.error('Failed to approve listing:', err);
+    } catch {
       alert('Failed to approve listing');
     }
   };
@@ -343,8 +340,7 @@ export default function AdminDashboard() {
         const error = await res.json();
         alert(error.detail || 'Failed to reject listing');
       }
-    } catch (err) {
-      console.error('Failed to reject listing:', err);
+    } catch {
       alert('Failed to reject listing');
     }
   };

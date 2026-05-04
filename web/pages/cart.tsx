@@ -30,8 +30,8 @@ export default function Cart() {
         });
         // Clear the pending cart after restoration
         sessionStorage.removeItem('ar-pending-cart');
-      } catch (e) {
-        console.error('Failed to restore pending cart:', e);
+      } catch {
+        // silently skip malformed pending cart
       }
     }
   }, [addToCart, items]);
@@ -79,7 +79,6 @@ export default function Cart() {
         throw new Error('No checkout URL received');
       }
     } catch (err: any) {
-      console.error('Checkout error:', err);
       setError(err.message || 'Failed to create checkout session');
     } finally {
       setLoading(false);
