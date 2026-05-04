@@ -39,6 +39,3 @@ class Settings(BaseSettings):
             print("[CONFIG] WARNING: ADMIN_SETUP_KEY is not set — privileged setup endpoints are disabled")
 
 settings = Settings()
-
-print(f"[CONFIG] SECRET_KEY configured: {bool(settings.SECRET_KEY)}")
-print(f"[CONFIG] CLOUDFLARE_API_TOKEN configured: {bool(settings.CLOUDFLARE_API_TOKEN)}")

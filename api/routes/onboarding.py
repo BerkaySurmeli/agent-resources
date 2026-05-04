@@ -8,6 +8,7 @@ import os
 import httpx
 
 from core.database import get_session
+from core.config import settings
 from models import Listing, User, Transaction
 from routes.auth import get_current_user_from_token
 
@@ -15,6 +16,9 @@ router = APIRouter(prefix="/onboarding", tags=["Onboarding"])
 
 # Minimum required OpenClaw version
 MIN_OPENCLAW_VERSION = "0.1.0"
+
+# Public API base URL for generated installer scripts
+_API_BASE_URL = os.environ.get("PUBLIC_API_URL", "https://api.shopagentresources.com")
 
 
 @router.get("/openclaw-version")
@@ -233,7 +237,7 @@ echo "🚀 Setting up your AI team..."
         script += '''
 # Get latest OpenClaw version info from Agent Resources API
 echo "🔍 Checking OpenClaw version..."
-VERSION_INFO=$(curl -s "https://agent-resources-api-dev-production.up.railway.app/onboarding/openclaw-version" 2>/dev/null || echo '{"min_version":"0.1.0"}')
+VERSION_INFO=$(curl -s "{_API_BASE_URL}/onboarding/openclaw-version" 2>/dev/null || echo '{"min_version":"0.1.0"}')
 MIN_VERSION=$(echo "$VERSION_INFO" | grep -o '"min_version":"[^"]*"' | cut -d'"' -f4)
 LATEST_VERSION=$(echo "$VERSION_INFO" | grep -o '"latest_version":"[^"]*"' | cut -d'"' -f4)
 [ -z "$MIN_VERSION" ] && MIN_VERSION="0.1.0"
@@ -332,7 +336,7 @@ Write-Host "🚀 Setting up your AI team..." -ForegroundColor Cyan
 # Get latest OpenClaw version info from Agent Resources API
 Write-Host "🔍 Checking OpenClaw version..." -ForegroundColor Cyan
 try {{
-    $versionInfo = Invoke-RestMethod -Uri "https://agent-resources-api-dev-production.up.railway.app/onboarding/openclaw-version" -TimeoutSec 10
+    $versionInfo = Invoke-RestMethod -Uri "{_API_BASE_URL}/onboarding/openclaw-version" -TimeoutSec 10
     $minVersion = $versionInfo.min_version
     $latestVersion = $versionInfo.latest_version
 }} catch {{

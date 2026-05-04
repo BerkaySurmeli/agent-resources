@@ -329,14 +329,18 @@ export default function ManageProduct() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-1">Price (cents)</label>
-                      <input
-                        type="number"
-                        value={editForm.price_cents}
-                        onChange={(e) => setEditForm({...editForm, price_cents: parseInt(e.target.value) || 0})}
-                        className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500"
-                      />
-                      <p className="text-sm text-slate-400 mt-1">Current: {formatPrice(editForm.price_cents)}</p>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">Price (USD)</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={(editForm.price_cents / 100).toFixed(2)}
+                          onChange={(e) => setEditForm({...editForm, price_cents: Math.round(parseFloat(e.target.value || '0') * 100)})}
+                          className="w-full pl-7 pr-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
                     </div>
                     <div className="flex gap-3">
                       <button
@@ -416,7 +420,7 @@ export default function ManageProduct() {
                       <div key={review.id} className="border-b border-white/10 pb-4 last:border-0">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-slate-900">{review.user_name}</span>
+                            <span className="font-medium text-white">{review.user_name}</span>
                             {review.is_verified_purchase && (
                               <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded">
                                 Verified Purchase

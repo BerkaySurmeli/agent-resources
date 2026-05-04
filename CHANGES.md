@@ -57,6 +57,27 @@ A full-pass audit and hardening of the Agent Resources marketplace codebase. Cha
 
 ---
 
+## Third Pass: Dead Code, Session Leak, Unregistered Router, Config Noise
+
+### `api/routes/payments_connect.py` — DELETED
+- **Deleted dead code file.** This file was never imported in `main.py`, so none of its routes were ever served. It contained 5 separate bugs: `await request.body()` called without `await` (sync handler), `Product` not imported, `asyncio.create_task()` called from a synchronous context, wrong `get_current_user` function signature, and hardcoded production URLs. Removing it eliminates future confusion and the risk of someone accidentally importing it.
+
+### `api/routes/payments.py`
+- **Fixed session leak in webhook handler.** `handle_successful_payment` used `next(get_session())` to obtain a DB session — this bypasses the context manager and the session is never properly closed or returned to the pool if an exception occurs before `db_session.close()`. Replaced with `with Session(engine) as db_session:` which guarantees cleanup. Also removed the now-redundant manual `rollback()` / `close()` calls in the finally block (the context manager handles both).
+
+### `api/routes/onboarding.py`
+- **Registered in `main.py`.** The entire `/onboarding/*` router was never mounted — `generate-complete-package` and `openclaw-version` endpoints were unreachable. Added to `main.py`.
+- **Removed hardcoded Railway dev URL from generated scripts.** The bash and PowerShell installer scripts embedded a literal `https://agent-resources-api-dev-production.up.railway.app` URL. Scripts sent to end-users would always point at the dev server. Now reads `PUBLIC_API_URL` env var (defaulting to the production URL) so the right endpoint is used per environment.
+
+### `api/core/config.py`
+- **Removed noisy module-level print statements.** Two `print()` calls ran unconditionally at import time, logging `SECRET_KEY configured: True` and `CLOUDFLARE_API_TOKEN configured: True/False` on every cold start and every import in tests. The meaningful warnings (RESEND key missing, ADMIN_SETUP_KEY missing) are already inside `__init__` — the redundant lines are removed.
+
+### `web/pages/dashboard/products/[slug].tsx`
+- **Fixed "Price (cents)" edit field.** The edit form for price showed a raw integer cents field labelled "Price (cents)" — confusing and error-prone for sellers. Replaced with a dollar-denominated `$X.XX` input that converts to/from cents on change.
+- **Fixed invisible reviewer name.** Review author names were rendered `text-slate-900` (near-black) against a dark `bg-white/5` card, making them invisible. Changed to `text-white`.
+
+---
+
 ## Second Pass: Multi-item Cart & Frontend Fixes
 
 ### `api/models.py`
@@ -96,6 +117,13 @@ A full-pass audit and hardening of the Agent Resources marketplace codebase. Cha
 | Double counter increment | 1 download_count fix |
 | Event loop blocking | 1 translation service (requests → httpx) |
 | Dead / duplicate code | 3 removed (test endpoints, duplicate route, redundant engine) |
+| Dead code with 5 bugs | payments_connect.py deleted |
+| Session leak in webhook | next(get_session()) → Session(engine) context manager |
+| Unregistered router | /onboarding/* endpoints now reachable |
+| Hardcoded dev URL in scripts | PUBLIC_API_URL env var used in installer scripts |
+| Config noise on import | 2 redundant print() calls removed |
+| Invisible UI text | Review author name color fixed |
+| Confusing price field | Price edit now shows $USD not raw cents |
 | Multi-item cart crash | Transaction unique constraint replaced with composite index |
 | Account deletion crash | buyer_id/seller_id made Optional to allow anonymization |
 | Wrong API endpoint | Admin Cloudflare metrics URL corrected |

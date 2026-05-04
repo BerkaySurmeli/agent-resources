@@ -149,113 +149,103 @@ async def stripe_webhook(request: Request, background_tasks: BackgroundTasks):
 async def handle_successful_payment(session_data: dict, background_tasks: BackgroundTasks):
     """Process successful payment and create transactions"""
 
-    from core.database import get_session
-    db_session = next(get_session())
+    from core.database import engine
+    from sqlmodel import Session as DBSession
+
+    listing_ids_str = session_data.get('metadata', {}).get('listing_ids', '')
+    customer_email = session_data.get('customer_email')
+    stripe_payment_intent_id = session_data.get('payment_intent')
+
+    if not listing_ids_str:
+        print("[WEBHOOK] No listing IDs in session metadata")
+        return
+
+    listing_ids = listing_ids_str.split(',')
 
     try:
-        listing_ids_str = session_data.get('metadata', {}).get('listing_ids', '')
-        customer_email = session_data.get('customer_email')
-        stripe_payment_intent_id = session_data.get('payment_intent')
-
-        if not listing_ids_str:
-            print("[WEBHOOK] No listing IDs in session metadata")
-            return
-
-        listing_ids = listing_ids_str.split(',')
-
-        # Find or create user
-        user = db_session.exec(
-            select(User).where(User.email == customer_email)
-        ).first()
-
-        if not user:
-            # Create user account for guest checkout
-            user = User(
-                email=customer_email,
-                name=customer_email.split('@')[0],
-                is_verified=True  # Auto-verify since they paid
-            )
-            db_session.add(user)
-            db_session.commit()
-            db_session.refresh(user)
-
-        # Create transactions for each listing
-        for listing_id in listing_ids:
-            listing = db_session.exec(
-                select(Listing).where(Listing.id == listing_id)
+        with DBSession(engine) as db_session:
+            # Find or create user
+            user = db_session.exec(
+                select(User).where(User.email == customer_email)
             ).first()
 
-            if not listing:
-                continue
-
-            # Idempotency: skip if we already recorded this payment intent for this listing
-            existing_txn = db_session.exec(
-                select(Transaction).where(
-                    Transaction.stripe_payment_intent_id == stripe_payment_intent_id,
-                    Transaction.product_id == listing.product_id
+            if not user:
+                user = User(
+                    email=customer_email,
+                    name=customer_email.split('@')[0],
+                    is_verified=True
                 )
-            ).first()
-            if existing_txn:
-                print(f"[WEBHOOK] Duplicate webhook for payment_intent={stripe_payment_intent_id}, listing={listing_id} — skipping")
-                continue
+                db_session.add(user)
+                db_session.commit()
+                db_session.refresh(user)
 
-            # Calculate fees
-            total_amount_cents = listing.price_cents
-            platform_fee_cents = int(total_amount_cents * PLATFORM_FEE_PERCENT)
-            seller_amount_cents = total_amount_cents - platform_fee_cents
-
-            # Create transaction record
-            transaction = Transaction(
-                id=uuid.uuid4(),
-                buyer_id=user.id,
-                seller_id=listing.owner_id,
-                product_id=listing.product_id,  # Link to published product
-                amount_cents=total_amount_cents,
-                platform_fee_cents=platform_fee_cents,
-                stripe_payment_intent_id=stripe_payment_intent_id,
-                status="completed"
-            )
-
-            db_session.add(transaction)
-
-            # Increment download count on product
-            if listing.product_id:
-                product = db_session.exec(
-                    select(Product).where(Product.id == listing.product_id)
+            for listing_id in listing_ids:
+                listing = db_session.exec(
+                    select(Listing).where(Listing.id == listing_id)
                 ).first()
-                if product:
-                    product.download_count += 1
 
-            # Send emails in background
-            background_tasks.add_task(
-                send_purchase_confirmation,
-                customer_email,
-                listing.name,
-                total_amount_cents / 100
-            )
+                if not listing:
+                    continue
 
-            # Get seller email for notification
-            seller = db_session.exec(
-                select(User).where(User.id == listing.owner_id)
-            ).first()
-            if seller:
+                # Idempotency: skip duplicate webhook deliveries
+                existing_txn = db_session.exec(
+                    select(Transaction).where(
+                        Transaction.stripe_payment_intent_id == stripe_payment_intent_id,
+                        Transaction.product_id == listing.product_id
+                    )
+                ).first()
+                if existing_txn:
+                    print(f"[WEBHOOK] Duplicate webhook for payment_intent={stripe_payment_intent_id}, listing={listing_id} — skipping")
+                    continue
+
+                total_amount_cents = listing.price_cents
+                platform_fee_cents = int(total_amount_cents * PLATFORM_FEE_PERCENT)
+                seller_amount_cents = total_amount_cents - platform_fee_cents
+
+                transaction = Transaction(
+                    id=uuid.uuid4(),
+                    buyer_id=user.id,
+                    seller_id=listing.owner_id,
+                    product_id=listing.product_id,
+                    amount_cents=total_amount_cents,
+                    platform_fee_cents=platform_fee_cents,
+                    stripe_payment_intent_id=stripe_payment_intent_id,
+                    status="completed"
+                )
+                db_session.add(transaction)
+
+                if listing.product_id:
+                    product = db_session.exec(
+                        select(Product).where(Product.id == listing.product_id)
+                    ).first()
+                    if product:
+                        product.download_count += 1
+
                 background_tasks.add_task(
-                    send_sale_notification,
-                    seller.email,
+                    send_purchase_confirmation,
+                    customer_email,
                     listing.name,
-                    seller_amount_cents / 100
+                    total_amount_cents / 100
                 )
 
-        db_session.commit()
-        print(f"[WEBHOOK] Processed payment for {len(listing_ids)} items")
+                seller = db_session.exec(
+                    select(User).where(User.id == listing.owner_id)
+                ).first()
+                if seller:
+                    background_tasks.add_task(
+                        send_sale_notification,
+                        seller.email,
+                        listing.name,
+                        seller_amount_cents / 100
+                    )
+
+            db_session.commit()
+            print(f"[WEBHOOK] Processed payment for {len(listing_ids)} items")
 
     except Exception as e:
         print(f"[WEBHOOK ERROR] {e}")
         import traceback
         traceback.print_exc()
-        db_session.rollback()
-    finally:
-        db_session.close()
 
 
 @router.get("/session/{session_id}")
