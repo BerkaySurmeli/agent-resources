@@ -313,14 +313,16 @@ export default function AdminDashboard() {
   };
 
   const handleRejectListing = async (listingId: string) => {
-    const reason = prompt('Please enter a reason for rejection:');
+    const rawReason = prompt('Please enter a reason for rejection:');
+    if (!rawReason) return;
+    const reason = rawReason.trim().substring(0, 500);
     if (!reason) return;
 
     const token = getAdminToken();
     try {
       const res = await fetch(`${API_URL}/admin/listings/${listingId}/reject`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },

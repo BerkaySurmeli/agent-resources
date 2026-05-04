@@ -199,6 +199,11 @@ A full-pass audit and hardening of the Agent Resources marketplace codebase. Cha
 | Invalid price crashes listing submission | sell.tsx validates price is a valid non-negative number |
 | Fake fallback listings in wizard | wizard.tsx removes fallback items with non-existent IDs that would fail at checkout |
 | Bundle discount math lost sub-dollar precision | wizard.tsx discount calculated in cents, not rounded dollars |
+| Password DoS via unbounded length | auth.py enforces max 128 chars on all password fields |
+| ValueError exposed on bad review ID | auth.py delete_review wraps UUID() in try/except |
+| Settings page flashes "sign in" on load | settings.tsx now shows spinner while auth context loads |
+| Health endpoint always returned db_ready=True | main.py now runs SELECT 1 to verify actual DB connectivity |
+| Rejection reason unsanitized | admin/dashboard.tsx trims and caps reason at 500 chars |
 | Unregistered router | /onboarding/* endpoints now reachable |
 | Hardcoded dev URL in scripts | PUBLIC_API_URL env var used in installer scripts |
 | Config noise on import | 2 redundant print() calls removed |

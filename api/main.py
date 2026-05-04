@@ -116,4 +116,12 @@ app.include_router(onboarding.router)
 
 @app.get("/health")
 async def health():
-    return {"status": "online", "db_ready": True, "version": "1.0.0"}
+    from core.database import engine
+    from sqlmodel import Session, text
+    try:
+        with Session(engine) as session:
+            session.exec(text("SELECT 1"))
+        db_ready = True
+    except Exception:
+        db_ready = False
+    return {"status": "online", "db_ready": db_ready, "version": "1.0.0"}

@@ -22,7 +22,7 @@ interface NavItem {
 }
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { t } = useLanguage();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
@@ -37,6 +37,14 @@ export default function Settings() {
       }
     }
   }, [router.isReady, router.query]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!user) {
     return (

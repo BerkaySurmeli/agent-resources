@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from sqlmodel import select
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
@@ -20,16 +20,16 @@ ACCESS_TOKEN_EXPIRE_DAYS = 7
 # Pydantic models
 class UserSignup(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(min_length=8, max_length=128)
     name: str
 
 class UserLogin(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(max_length=128)
 
 class ChangePasswordRequest(BaseModel):
-    current_password: str
-    new_password: str
+    current_password: str = Field(max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
 
 from typing import Optional
 
@@ -493,9 +493,14 @@ def delete_user_review(
     from models import Review
     from uuid import UUID
 
+    try:
+        review_uuid = UUID(review_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid review ID")
+
     review = session.exec(
         select(Review).where(
-            Review.id == UUID(review_id),
+            Review.id == review_uuid,
             Review.user_id == current_user.id
         )
     ).first()
