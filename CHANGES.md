@@ -111,6 +111,23 @@ A full-pass audit and hardening of the Agent Resources marketplace codebase. Cha
 ### `api/routes/auth.py`
 - **Fixed verification token never expiring when timestamp is absent.** `verify_email` only checked the 24-hour expiry if `verification_sent_at` was set. Tokens created before this field existed (or if it was never set) would remain valid forever. Now treats a missing `verification_sent_at` as expired, matching the safe default.
 
+---
+
+## Seventh Pass: XSS, Event Loop Blocking, Frontend Logic Bugs
+
+### `api/services/email.py`
+- **Fixed HTML injection (XSS) in all email templates.** Every method that interpolates user data (`name`, `product_name`, `listing_name`, `developer_name`, `category`, `subject`, `message`) directly into HTML strings was vulnerable to XSS — an attacker could craft a name containing `<script>` tags that would execute in the email client. Added `from html import escape` and added `name = escape(name)` (etc.) at the top of each affected method body.
+
+### `api/routes/listings.py`
+- **Fixed event loop blocking for translation and language detection.** `detect_language()` and `translate_listing()` in `services/translation.py` use synchronous `httpx.Client` — calling these directly from async handlers or async background tasks blocks the entire asyncio event loop for the duration of the HTTP call (up to 30 seconds). Both call sites now use `await asyncio.to_thread(...)` to run the blocking code in a thread pool without blocking the loop.
+
+### `web/pages/sell.tsx`
+- **Fixed invalid price silently becoming 0.** The listing creation form used `parseInt(formData.price) * 100` without validating the input. If price was empty or non-numeric, `parseInt` returned `NaN`, which became 0 cents, creating a free listing unintentionally. Added explicit validation: `parseFloat(formData.price)`, NaN/negative check, and proper cents conversion with `Math.round(priceNum * 100)`.
+
+### `web/pages/wizard.tsx`
+- **Removed fake fallback listings that would crash checkout.** When the API failed to load listings, the wizard fell back to hardcoded items with IDs like `'fallback-claudia'`. These IDs don't exist in the backend, so any user who selected and checked out a fallback item would get a payment error. Removed the fallback arrays — if the API is unavailable, the wizard shows empty sections.
+- **Fixed bundle discount math precision.** The 15% bundle discount was computed as `Math.round(total * 0.15)` where `total` was in dollars, rounding to the nearest whole dollar and discarding cents. Refactored to compute `totalCents` as integer cents, apply discount in cents, then derive display values.
+
 ### `api/routes/onboarding.py`
 - **Registered in `main.py`.** The entire `/onboarding/*` router was never mounted — `generate-complete-package` and `openclaw-version` endpoints were unreachable. Added to `main.py`.
 - **Removed hardcoded Railway dev URL from generated scripts.** The bash and PowerShell installer scripts embedded a literal `https://agent-resources-api-dev-production.up.railway.app` URL. Scripts sent to end-users would always point at the dev server. Now reads `PUBLIC_API_URL` env var (defaulting to the production URL) so the right endpoint is used per environment.
@@ -177,6 +194,11 @@ A full-pass audit and hardening of the Agent Resources marketplace codebase. Cha
 | Temp/debug endpoints in production | 3 endpoints removed from admin.py (upload-file, fix-file-path, debug-listing) |
 | Rating not validated | products.py create_review now enforces 1–5 range |
 | Verification token never expires | auth.py verify_email now treats missing timestamp as expired |
+| HTML injection (XSS) in emails | email.py escapes all user-supplied strings with html.escape() |
+| Sync HTTP blocking event loop in translations | listings.py wraps detect_language and translate_listing in asyncio.to_thread() |
+| Invalid price crashes listing submission | sell.tsx validates price is a valid non-negative number |
+| Fake fallback listings in wizard | wizard.tsx removes fallback items with non-existent IDs that would fail at checkout |
+| Bundle discount math lost sub-dollar precision | wizard.tsx discount calculated in cents, not rounded dollars |
 | Unregistered router | /onboarding/* endpoints now reachable |
 | Hardcoded dev URL in scripts | PUBLIC_API_URL env var used in installer scripts |
 | Config noise on import | 2 redundant print() calls removed |

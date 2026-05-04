@@ -86,24 +86,9 @@ export default function Wizard() {
     l.virus_scan_status === 'clean'
   );
 
-  // Fallback data if no listings available
-  const fallbackOrchestrators: Listing[] = [
-    { id: 'fallback-claudia', slug: 'claudia-project-manager', name: 'Claudia', description: 'Coordinates projects, delegates tasks, tracks progress', category: 'persona', price_cents: 4900, tags: ['orchestrator'], virus_scan_status: 'clean' }
-  ];
-
-  const fallbackTeamMembers: Listing[] = [
-    { id: 'fallback-chen', slug: 'chen-developer', name: 'Chen', description: 'Writes code, builds features, fixes bugs', category: 'persona', price_cents: 5900, tags: ['developer'], virus_scan_status: 'clean' },
-    { id: 'fallback-adrian', slug: 'adrian-ux-designer', name: 'Adrian', description: 'Designs interfaces, writes copy, creates experiences', category: 'persona', price_cents: 4900, tags: ['designer'], virus_scan_status: 'clean' },
-  ];
-
-  const fallbackMcpServers: Listing[] = [
-    { id: 'fallback-github', slug: 'mcp-github', name: 'GitHub MCP', description: 'Create repos, manage issues, review PRs', category: 'mcp_server', price_cents: 99, tags: ['development'], virus_scan_status: 'clean' },
-    { id: 'fallback-slack', slug: 'mcp-slack', name: 'Slack MCP', description: 'Send messages, manage channels', category: 'mcp_server', price_cents: 99, tags: ['communication'], virus_scan_status: 'clean' },
-  ];
-
-  const displayOrchestrators = orchestrators.length > 0 ? orchestrators : fallbackOrchestrators;
-  const displayTeamMembers = teamMembers.length > 0 ? teamMembers : fallbackTeamMembers;
-  const displayMcpServers = mcpServers.length > 0 ? mcpServers : fallbackMcpServers;
+  const displayOrchestrators = orchestrators;
+  const displayTeamMembers = teamMembers;
+  const displayMcpServers = mcpServers;
 
   const toggleTeamMember = (id: string) => {
     setSelectedTeam(prev =>
@@ -132,9 +117,12 @@ export default function Wizard() {
     ...displayMcpServers.filter(m => selectedMCPs.includes(m.id))
   ];
 
-  const total = selectedItems.reduce((sum, item) => sum + (item.price_cents / 100), 0);
-  const bundleDiscount = selectedItems.length >= 3 ? Math.round(total * 0.15) : 0;
-  const finalTotal = total - bundleDiscount;
+  const totalCents = selectedItems.reduce((sum, item) => sum + item.price_cents, 0);
+  const bundleDiscountCents = selectedItems.length >= 3 ? Math.round(totalCents * 0.15) : 0;
+  const finalTotalCents = totalCents - bundleDiscountCents;
+  const total = totalCents / 100;
+  const bundleDiscount = bundleDiscountCents / 100;
+  const finalTotal = finalTotalCents / 100;
 
   const handleCheckout = () => {
     // Add all items to cart with proper IDs

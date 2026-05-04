@@ -269,18 +269,25 @@ export default function Sell() {
 
       // Validate required files based on category
       if (!hasRequiredFile()) {
-        const requiredFile = formData.category === 'skill' ? 'SKILL.md' : 
-                            formData.category === 'persona' ? 'SKILL.md or PERSONA.md' : 
+        const requiredFile = formData.category === 'skill' ? 'SKILL.md' :
+                            formData.category === 'persona' ? 'SKILL.md or PERSONA.md' :
                             'mcp.json or manifest.json';
         throw new Error(`Please include a ${requiredFile} file for ${formData.category} listings`);
       }
-      
+
+      // Validate price
+      const priceNum = parseFloat(formData.price);
+      if (formData.price === '' || isNaN(priceNum) || priceNum < 0) {
+        throw new Error('Please enter a valid price (0 for free)');
+      }
+      const priceCents = Math.round(priceNum * 100);
+
       // Create FormData
       const data = new FormData();
       data.append('name', formData.name);
       data.append('description', formData.description);
       data.append('category', formData.category);
-      data.append('price_cents', String(parseInt(formData.price) * 100));
+      data.append('price_cents', String(priceCents));
       data.append('version', formData.version || '1.0.0');
       data.append('tags', JSON.stringify(formData.tags));
       

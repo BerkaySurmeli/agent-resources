@@ -1,5 +1,6 @@
 """Email service using Resend API"""
 import resend
+from html import escape
 from core.config import settings
 
 # Initialize Resend with API key
@@ -26,9 +27,10 @@ class EmailService:
         if not settings.RESEND_API_KEY:
             print("[EMAIL ERROR] Resend API key not configured")
             raise Exception("Email service not configured. Please contact support.")
-        
+
+        name = escape(name)
         verification_url = f"https://shopagentresources.com/verify-email?token={token}"
-        
+
         html_content = f"""
 <!DOCTYPE html>
 <html>
@@ -102,9 +104,10 @@ The Agent Resources Team
         if not settings.RESEND_API_KEY:
             print("[EMAIL ERROR] Resend API key not configured")
             raise Exception("Email service not configured. Please contact support.")
-        
+
+        name = escape(name)
         reset_url = f"https://shopagentresources.com/reset-password?token={token}"
-        
+
         html_content = f"""
 <!DOCTYPE html>
 <html>
@@ -178,7 +181,12 @@ The Agent Resources Team
         if not settings.RESEND_API_KEY:
             print("[EMAIL ERROR] Resend API key not configured")
             raise Exception("Email service not configured.")
-        
+
+        name = escape(name)
+        category = escape(category)
+        subject = escape(subject)
+        message = escape(message)
+
         html_content = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -252,6 +260,8 @@ This email was sent via the Agent Resources contact form.
     @staticmethod
     def send_developer_welcome_email(to_email: str, name: str, developer_code: str) -> dict:
         """Send welcome email to new developers with their developer code"""
+        name = escape(name)
+        developer_code = escape(developer_code)
         if not settings.RESEND_API_KEY:
             print("[EMAIL ERROR] Resend API key not configured")
             raise Exception("Email service not configured. Please contact support.")
@@ -351,7 +361,9 @@ def send_purchase_confirmation(to_email: str, product_name: str, amount: float) 
     if not settings.RESEND_API_KEY:
         print(f"[EMAIL] Purchase confirmation (dry run): {to_email} bought {product_name} for ${amount}")
         return {"id": "dry-run"}
-    
+
+    product_name = escape(product_name)
+
     html_content = f"""
 <!DOCTYPE html>
 <html>
@@ -440,7 +452,10 @@ def send_listing_submission_notification(listing_name: str, developer_name: str,
     if not settings.RESEND_API_KEY:
         print(f"[EMAIL] Listing submission notification (dry run): {listing_name} by {developer_name}")
         return {"id": "dry-run"}
-    
+
+    listing_name = escape(listing_name)
+    developer_name = escape(developer_name)
+
     status_color = "#22c55e" if virus_scan_status == "clean" else "#eab308" if virus_scan_status == "scanning" else "#64748b"
     status_text = "Clean" if virus_scan_status == "clean" else "Scanning" if virus_scan_status == "scanning" else "Pending"
     
@@ -539,7 +554,9 @@ def send_sale_notification(to_email: str, product_name: str, earnings: float) ->
     if not settings.RESEND_API_KEY:
         print(f"[EMAIL] Sale notification (dry run): {to_email} sold {product_name} for ${earnings}")
         return {"id": "dry-run"}
-    
+
+    product_name = escape(product_name)
+
     html_content = f"""
 <!DOCTYPE html>
 <html>

@@ -258,7 +258,7 @@ class TranslationQueue:
                     session.commit()
 
                 print(f"[TRANSLATION] Starting translation for listing {listing_id}")
-                translations = translate_listing(name, description, source_lang)
+                translations = await asyncio.to_thread(translate_listing, name, description, source_lang)
 
                 for lang, content in translations.items():
                     translation = ListingTranslation(
@@ -628,8 +628,8 @@ async def create_listing(
     # Clean up directory, keep only ZIP
     shutil.rmtree(listing_dir, ignore_errors=True)
 
-    # Detect original language
-    original_language = detect_language(name + " " + description)
+    # Detect original language (run in thread — httpx.Client is synchronous)
+    original_language = await asyncio.to_thread(detect_language, name + " " + description)
     print(f"[TRANSLATION] Detected language: {original_language}")
 
     # Create listing record
