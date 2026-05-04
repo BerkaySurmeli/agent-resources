@@ -655,13 +655,12 @@ async def get_cloudflare_metrics(
     
     # Check cache (5 minute TTL)
     cache_ttl = 300  # 5 minutes
-    if (_cloudflare_metrics_cache["data"] and 
-        _cloudflare_metrics_cache["timestamp"] and 
-        (now - _cloudflare_metrics_cache["timestamp"]).seconds < cache_ttl):
-        print("[CLOUDFLARE] Returning cached metrics")
+    if (_cloudflare_metrics_cache["data"] and
+        _cloudflare_metrics_cache["timestamp"] and
+        (now - _cloudflare_metrics_cache["timestamp"]).total_seconds() < cache_ttl):
         cached_data = _cloudflare_metrics_cache["data"].copy()
         cached_data["cached"] = True
-        cached_data["cacheAge"] = (now - _cloudflare_metrics_cache["timestamp"]).seconds
+        cached_data["cacheAge"] = int((now - _cloudflare_metrics_cache["timestamp"]).total_seconds())
         return cached_data
     
     try:
@@ -798,8 +797,6 @@ async def get_cloudflare_metrics(
         _cloudflare_metrics_cache["timestamp"] = now
         
         return demo_data
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching metrics: {str(e)}")
 
 
 @router.post("/run-migration")
@@ -1477,101 +1474,3 @@ async def approve_listing_manual(
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
-
-
-# Temporary file upload endpoint for admin
-@router.post("/upload-file")
-async def admin_upload_file(
-    listing_id: str,
-    file: UploadFile = File(...),
-    current_admin: AdminUser = Depends(get_current_admin_from_token),
-    session = Depends(get_session)
-):
-    """Temporary endpoint for admin to upload files directly"""
-    import os
-    import shutil
-    from uuid import UUID
-    
-    # Get listing
-    try:
-        listing_uuid = UUID(listing_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid listing ID")
-    
-    listing = session.get(Listing, listing_uuid)
-    if not listing:
-        raise HTTPException(status_code=404, detail="Listing not found")
-    
-    # Ensure uploads directory exists
-    upload_dir = "/app/uploads"
-    os.makedirs(upload_dir, exist_ok=True)
-    
-    # Save file — sanitize filename to prevent path traversal
-    safe_filename = os.path.basename(file.filename or "upload.bin").replace("..", "")
-    file_path = os.path.join(upload_dir, safe_filename)
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    
-    # Update listing with file info
-    listing.file_path = file_path
-    listing.file_size_bytes = os.path.getsize(file_path)
-    session.commit()
-    
-    return {
-        "message": "File uploaded successfully",
-        "file_path": file_path,
-        "file_size": listing.file_size_bytes
-    }
-
-# Temporary endpoint to fix file path
-@router.post("/fix-file-path")
-def fix_file_path(
-    listing_id: str,
-    file_path: str,
-    current_admin: AdminUser = Depends(get_current_admin_from_token),
-    session = Depends(get_session)
-):
-    """Temporary endpoint to fix file path"""
-    from uuid import UUID
-    
-    try:
-        listing_uuid = UUID(listing_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid listing ID")
-    
-    listing = session.get(Listing, listing_uuid)
-    if not listing:
-        raise HTTPException(status_code=404, detail="Listing not found")
-    
-    listing.file_path = file_path
-    session.commit()
-    
-    return {"message": "File path updated", "file_path": file_path}
-
-# Debug endpoint to check listing
-@router.get("/debug-listing/{listing_id}")
-def debug_listing(
-    listing_id: str,
-    current_admin: AdminUser = Depends(get_current_admin_from_token),
-    session = Depends(get_session)
-):
-    """Debug endpoint to check listing details"""
-    from uuid import UUID
-    
-    try:
-        listing_uuid = UUID(listing_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid listing ID")
-    
-    listing = session.get(Listing, listing_uuid)
-    if not listing:
-        raise HTTPException(status_code=404, detail="Listing not found")
-    
-    return {
-        "id": str(listing.id),
-        "name": listing.name,
-        "file_path": listing.file_path,
-        "file_path_type": type(listing.file_path).__name__,
-        "file_size_bytes": listing.file_size_bytes,
-        "status": listing.status
-    }

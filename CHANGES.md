@@ -89,6 +89,28 @@ A full-pass audit and hardening of the Agent Resources marketplace codebase. Cha
 ### `web/pages/index.tsx`
 - **Fixed hardcoded API URLs.** The landing page waitlist fetch calls (`/waitlist/count/` and `/waitlist/`) were hardcoded to `https://api.shopagentresources.com` rather than using `NEXT_PUBLIC_API_URL` like every other page in the project. Added `const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com'` and updated all three fetch calls to use it.
 
+---
+
+## Sixth Pass: Security, Dead Code, and Logic Bugs in Remaining Routes
+
+### `api/routes/admin.py`
+- **Fixed Cloudflare cache TTL bug.** The 5-minute cache check used `(now - timestamp).seconds`, which returns only the seconds component of the timedelta (0–59), not the total elapsed seconds. A cached response would therefore be considered stale after ~1 minute instead of 5. Changed to `.total_seconds()`.
+- **Removed dead `except` block.** A duplicate `except Exception as e: raise HTTPException(...)` immediately followed another `except` block inside the same `try`. The second handler could never execute. Removed.
+- **Removed three temporary/debug endpoints.** `POST /admin/upload-file`, `POST /admin/fix-file-path`, and `GET /admin/debug-listing/{id}` were marked as temporary but never removed. The upload and fix-file-path endpoints had path traversal risks; the debug endpoint disclosed internal field types. All three removed.
+
+### `api/routes/admin_metrics.py`
+- **Removed misleading pageviews fallback heuristic.** If Cloudflare returned zero pageviews (or less than 10% of requests), the code silently replaced `total_pageviews` with `total_requests`. This produced meaningless and inflated metrics. Removed — if the Cloudflare API returns zero, zero is returned.
+
+### `api/routes/downloads.py`
+- **Fixed path traversal via database-sourced file path.** `listing.file_path` was used directly to serve files without verifying the resolved path is inside `UPLOAD_DIR`. A compromised or manually-edited database entry could point to any file on the server (e.g. `/etc/passwd`). Now uses `os.path.realpath()` on both sides and checks the file path starts with `UPLOAD_DIR + os.sep`.
+- **Fixed HTTP header injection in Content-Disposition.** Filenames were interpolated directly into the header value with `f'attachment; filename="{filename}"'`. A filename containing a quote or newline could inject additional headers. Changed to RFC 5987 encoding: `filename*=UTF-8''<percent-encoded>`.
+
+### `api/routes/products.py`
+- **Added rating range validation.** `POST /{slug}/reviews` accepted any integer for `rating`. Values outside 1–5 (e.g. 0, -1, 999) were stored in the database without error. Now returns HTTP 400 if the value is outside the 1–5 range.
+
+### `api/routes/auth.py`
+- **Fixed verification token never expiring when timestamp is absent.** `verify_email` only checked the 24-hour expiry if `verification_sent_at` was set. Tokens created before this field existed (or if it was never set) would remain valid forever. Now treats a missing `verification_sent_at` as expired, matching the safe default.
+
 ### `api/routes/onboarding.py`
 - **Registered in `main.py`.** The entire `/onboarding/*` router was never mounted — `generate-complete-package` and `openclaw-version` endpoints were unreachable. Added to `main.py`.
 - **Removed hardcoded Railway dev URL from generated scripts.** The bash and PowerShell installer scripts embedded a literal `https://agent-resources-api-dev-production.up.railway.app` URL. Scripts sent to end-users would always point at the dev server. Now reads `PUBLIC_API_URL` env var (defaulting to the production URL) so the right endpoint is used per environment.
@@ -147,6 +169,14 @@ A full-pass audit and hardening of the Agent Resources marketplace codebase. Cha
 | Session leaks in waitlist routes | 3 handlers in waitlist.py fixed |
 | Debug console.log in login pages | Removed from login.tsx and admin/login.tsx |
 | Hardcoded API URL on landing page | index.tsx now uses NEXT_PUBLIC_API_URL env var |
+| Path traversal in file downloads | downloads.py now validates file_path is within UPLOAD_DIR |
+| HTTP header injection in downloads | filename now RFC 5987 encoded in Content-Disposition |
+| Cache TTL calculation bug | .seconds → .total_seconds() in admin Cloudflare cache check |
+| Dead unreachable except block | Duplicate except in admin.py Cloudflare handler removed |
+| Misleading metrics fallback | pageviews guessing heuristic removed from admin_metrics.py |
+| Temp/debug endpoints in production | 3 endpoints removed from admin.py (upload-file, fix-file-path, debug-listing) |
+| Rating not validated | products.py create_review now enforces 1–5 range |
+| Verification token never expires | auth.py verify_email now treats missing timestamp as expired |
 | Unregistered router | /onboarding/* endpoints now reachable |
 | Hardcoded dev URL in scripts | PUBLIC_API_URL env var used in installer scripts |
 | Config noise on import | 2 redundant print() calls removed |

@@ -76,10 +76,6 @@ def get_cloudflare_analytics(hours: int = 24):
                 total_requests = sum(g.get("sum", {}).get("requests", 0) for g in groups)
                 total_bandwidth = sum(g.get("sum", {}).get("bytes", 0) for g in groups)
                 total_pageviews = sum(g.get("sum", {}).get("pageViews", 0) or 0 for g in groups)
-
-                if total_pageviews == 0 or total_pageviews < total_requests * 0.1:
-                    total_pageviews = total_requests
-
                 total_uniques = sum(g.get("uniq", {}).get("uniques", 0) or 0 for g in groups)
 
                 return {

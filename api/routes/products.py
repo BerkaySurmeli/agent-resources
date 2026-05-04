@@ -210,6 +210,9 @@ async def create_review(
     current_user: User = Depends(get_current_user_from_token)
 ):
     """Create a review for a product"""
+    if not 1 <= rating <= 5:
+        raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
+
     product = session.exec(select(Product).where(Product.slug == slug)).first()
 
     if not product:

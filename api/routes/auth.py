@@ -298,11 +298,9 @@ def verify_email(token: str, session = Depends(get_session)):
     if not user:
         raise HTTPException(status_code=400, detail="Invalid verification token")
 
-    # Check if token is expired (24 hours)
-    if user.verification_sent_at:
-        time_diff = datetime.utcnow() - user.verification_sent_at
-        if time_diff > timedelta(hours=24):
-            raise HTTPException(status_code=400, detail="Verification link expired")
+    # Check if token is expired (24 hours); no timestamp means token predates expiry tracking — reject it
+    if not user.verification_sent_at or (datetime.utcnow() - user.verification_sent_at) > timedelta(hours=24):
+        raise HTTPException(status_code=400, detail="Verification link expired")
 
     # Mark user as verified
     user.is_verified = True

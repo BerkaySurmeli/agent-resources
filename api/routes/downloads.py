@@ -9,6 +9,7 @@ from typing import Optional
 from datetime import datetime
 import os
 import mimetypes
+from urllib.parse import quote
 
 from core.config import settings
 from core.database import get_session
@@ -80,33 +81,40 @@ async def download_purchased_file(
     
     # Determine file path
     file_path = listing.file_path
-    
+
     # If file_path is relative, make it absolute
     if not file_path.startswith("/"):
         file_path = os.path.join(UPLOAD_DIR, file_path)
-    
+
+    # Ensure the resolved path is within UPLOAD_DIR (path traversal guard)
+    real_upload_dir = os.path.realpath(UPLOAD_DIR)
+    real_file_path = os.path.realpath(file_path)
+    if not real_file_path.startswith(real_upload_dir + os.sep):
+        raise HTTPException(status_code=403, detail="Access denied")
+
     # Check if file exists
-    if not os.path.exists(file_path):
+    if not os.path.exists(real_file_path):
         raise HTTPException(
-            status_code=404, 
+            status_code=404,
             detail="File not found on server"
         )
-    
+
     # Get file metadata
-    metadata = get_file_metadata(file_path)
+    metadata = get_file_metadata(real_file_path)
     if not metadata:
         raise HTTPException(status_code=404, detail="Could not read file")
-    
-    # Serve file with proper headers
-    filename = os.path.basename(file_path)
-    
+
+    # Serve file with proper headers — quote filename to prevent header injection
+    filename = os.path.basename(real_file_path)
+    encoded_filename = quote(filename)
+
     return FileResponse(
-        path=file_path,
+        path=real_file_path,
         filename=filename,
         media_type=metadata["mime_type"],
         headers={
-            "Content-Disposition": f'attachment; filename="{filename}"',
-            "X-Product-Name": product.name,
+            "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}",
+            "X-Product-Name": quote(product.name),
             "X-Download-Count": str(product.download_count)
         }
     )
