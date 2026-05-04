@@ -7,6 +7,7 @@ import os
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import secrets
 from sqlmodel import select
 from core.database import get_session
 from models import User, Product
@@ -31,7 +32,7 @@ def seed_claudia_and_products():
             claudia = User(
                 id=uuid4(),
                 email="claudia@agentresources.com",
-                password_hash=pwd_context.hash("claudia123"),  # Default password
+                password_hash=pwd_context.hash(secrets.token_hex(32)),
                 name="Claudia",
                 avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=Claudia&backgroundColor=b6e3f4",
                 is_developer=True,
