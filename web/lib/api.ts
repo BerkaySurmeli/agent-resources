@@ -1,2 +1,1 @@
-// Central API configuration - Updated 2026-04-16
-export const API_URL = 'https://api.shopagentresources.com';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';

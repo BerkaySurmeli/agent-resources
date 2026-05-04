@@ -111,8 +111,7 @@ export default function Listings() {
         const data = await res.json();
         setListings(data);
       }
-    } catch (err) {
-      console.error('Failed to fetch listings:', err);
+    } catch {
     } finally {
       setLoading(false);
     }
