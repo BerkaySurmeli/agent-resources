@@ -4,12 +4,29 @@ from sqlmodel import select
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from collections import defaultdict
+import time
 from core.database import get_session
 from core.config import settings
 from models import User, AdminUser
 from services.email import send_verification_email, EmailService
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+# In-memory rate limiter: max 10 attempts per IP per 15 minutes
+_rate_store: dict = defaultdict(list)
+_RATE_WINDOW = 900  # seconds
+_RATE_MAX = 10
+
+def _check_rate_limit(request: Request):
+    ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    attempts = _rate_store[ip]
+    # Drop expired entries
+    _rate_store[ip] = [t for t in attempts if now - t < _RATE_WINDOW]
+    if len(_rate_store[ip]) >= _RATE_MAX:
+        raise HTTPException(status_code=429, detail="Too many attempts. Please try again later.")
+    _rate_store[ip].append(now)
 
 # Security - use argon2 which doesn't have the 72-byte limit
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -102,7 +119,8 @@ def get_current_user_from_token(
 
 # Routes
 @router.post("/signup", response_model=TokenResponse)
-def signup(user_data: UserSignup, session = Depends(get_session)):
+def signup(request: Request, user_data: UserSignup, session = Depends(get_session)):
+    _check_rate_limit(request)
     try:
         # Check if user exists
         existing = session.exec(select(User).where(User.email == user_data.email)).first()
@@ -169,15 +187,12 @@ def signup(user_data: UserSignup, session = Depends(get_session)):
     }
 
 @router.post("/login", response_model=TokenResponse)
-def login(user_data: UserLogin, session = Depends(get_session)):
-    # First check if this email belongs to an admin - admins cannot use regular login
-    admin_user = session.exec(select(AdminUser).where(AdminUser.email == user_data.email)).first()
-    if admin_user:
-        raise HTTPException(status_code=400, detail="Admin users must use the admin login page")
+def login(request: Request, user_data: UserLogin, session = Depends(get_session)):
+    _check_rate_limit(request)
 
-    # Find regular user
+    # Find regular user (admins use a separate login; don't reveal which path failed)
     user = session.exec(select(User).where(User.email == user_data.email)).first()
-    if not user:
+    if not user or not user.password_hash:
         raise HTTPException(status_code=400, detail="Invalid email or password")
 
     # Verify password
@@ -315,6 +330,7 @@ def resend_verification(
     session = Depends(get_session)
 ):
     """Resend verification email"""
+    _check_rate_limit(request)
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated")
