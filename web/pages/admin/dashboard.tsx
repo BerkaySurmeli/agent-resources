@@ -204,7 +204,7 @@ export default function AdminDashboard() {
     const token = getAdminToken();
     
     try {
-      const res = await fetch(`${API_URL}/admin/metrics/cloudflare`, {
+      const res = await fetch(`${API_URL}/admin/metrics/`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -638,7 +638,7 @@ export default function AdminDashboard() {
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               <a
-                                href={`https://shopagentresources.com/listings/${l.id}`}
+                                href={`/listings/${l.id}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:text-blue-800 text-sm"

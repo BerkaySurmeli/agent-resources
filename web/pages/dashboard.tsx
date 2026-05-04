@@ -128,7 +128,6 @@ export default function Dashboard() {
       
       if (listingsRes.ok) {
         const listingsData = await listingsRes.json();
-        console.log('Listings fetched:', listingsData.length, listingsData);
         setListings(listingsData);
       } else if (listingsRes.status === 401) {
         // Token expired or invalid
@@ -159,6 +158,25 @@ export default function Dashboard() {
       setError(`Failed to load dashboard data: ${err.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePayFee = async (listingId: string) => {
+    const token = localStorage.getItem('ar-token');
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/listings/${listingId}/pay-fee`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        fetchDashboardData();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.detail || 'Failed to process listing fee');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to process listing fee');
     }
   };
 
@@ -385,7 +403,10 @@ export default function Dashboard() {
                             
                             {/* Pay Fee Button - Only for pending_payment */}
                             {listing.status === 'pending_payment' && (
-                              <button className="text-blue-400 hover:text-blue-300 text-sm font-medium">
+                              <button
+                                onClick={() => handlePayFee(listing.id)}
+                                className="text-blue-400 hover:text-blue-300 text-sm font-medium"
+                              >
                                 {t.dashboard.payFee}
                               </button>
                             )}

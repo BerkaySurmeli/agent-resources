@@ -57,6 +57,31 @@ A full-pass audit and hardening of the Agent Resources marketplace codebase. Cha
 
 ---
 
+## Second Pass: Multi-item Cart & Frontend Fixes
+
+### `api/models.py`
+- **Fixed `Transaction.stripe_payment_intent_id` unique constraint.** The column had `unique=True`, which is a DB-level single-column unique index. A Stripe checkout for multiple items produces one `payment_intent_id` shared by all line items. The webhook creates one `Transaction` per listing, so the second insert would violate the constraint and crash the entire multi-item purchase. Changed to `index=True` (plain index, no uniqueness) — idempotency is enforced by a new composite index on `(stripe_payment_intent_id, product_id)` instead, which is what the webhook guard in `payments.py` actually queries.
+- **Made `buyer_id` and `seller_id` Optional.** Both were declared as non-Optional `UUID`, but `delete_account` in `auth.py` was setting them to `None` to anonymize historical transaction records without deleting them. This would fail at the SQLModel validation layer. Changed to `Optional[UUID]` to match the actual intent.
+
+### `api/migrations/016_fix_transactions_schema.sql`
+- **New migration** to apply the model changes above to an existing database: drops the `NOT NULL` constraints on `buyer_id`/`seller_id`, drops the single-column unique constraint on `stripe_payment_intent_id`, and creates the composite `uq_transactions_intent_product` unique index.
+
+### `web/pages/cart.tsx`
+- **Removed misleading platform fee line.** The order summary was showing "Platform Fee (10%)" as a buyer cost, which is incorrect — the 10% fee is deducted from the seller's payout. Buyers pay the listed price, full stop. Removed the fee row and updated the copy.
+
+### `web/pages/dashboard.tsx`
+- **Removed debug `console.log`** that was logging all fetched listing objects to the browser console in production.
+- **Fixed broken "Pay Fee" button.** The button had no `onClick` handler — clicking it did nothing. Wired it to a new `handlePayFee()` function that calls `POST /listings/{id}/pay-fee` and refreshes the dashboard on success.
+
+### `web/pages/admin/dashboard.tsx`
+- **Fixed wrong Cloudflare metrics endpoint.** The admin UI was calling `/admin/metrics/cloudflare` (which doesn't exist); the actual backend route is `/admin/metrics/`. Fixed.
+- **Removed hardcoded production URL.** The listing "View" link was pointing to `https://shopagentresources.com/listings/${id}` — a hardcoded production domain. Changed to a relative `/listings/${id}` path so it works in any environment.
+
+### `web/components/settings/PurchasesSection.tsx`
+- **Fixed broken "View details" link.** The link navigated to `/products/${slug}` but listing detail pages are served at `/listings/${slug}`. Fixed to use the correct path.
+
+---
+
 ## Summary
 
 | Area | Issues Fixed |
@@ -71,3 +96,9 @@ A full-pass audit and hardening of the Agent Resources marketplace codebase. Cha
 | Double counter increment | 1 download_count fix |
 | Event loop blocking | 1 translation service (requests → httpx) |
 | Dead / duplicate code | 3 removed (test endpoints, duplicate route, redundant engine) |
+| Multi-item cart crash | Transaction unique constraint replaced with composite index |
+| Account deletion crash | buyer_id/seller_id made Optional to allow anonymization |
+| Wrong API endpoint | Admin Cloudflare metrics URL corrected |
+| Broken frontend links | Products detail link, admin listing view link fixed |
+| Missing button handler | Dashboard "Pay Fee" button wired to backend |
+| Misleading UI copy | Cart platform fee row removed (fee is seller-side, not buyer-side) |

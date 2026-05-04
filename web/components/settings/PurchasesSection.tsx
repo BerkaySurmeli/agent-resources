@@ -187,8 +187,8 @@ export default function PurchasesSection() {
                   <tr key={purchase.transaction_id} className="hover:bg-gray-700/30">
                     <td className="px-6 py-4">
                       <p className="font-medium text-white">{purchase.product_name}</p>
-                      <Link 
-                        href={`/products/${purchase.product_slug}`}
+                      <Link
+                        href={`/listings/${purchase.product_slug}`}
                         className="text-sm text-blue-400 hover:text-blue-300"
                       >
                         View details →

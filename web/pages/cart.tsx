@@ -152,10 +152,6 @@ export default function Cart() {
                     <span>Subtotal ({items.length} items)</span>
                     <span>${Number(total).toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-400">
-                    <span>Platform Fee (10%)</span>
-                    <span>${(total * 0.10).toFixed(2)}</span>
-                  </div>
                 </div>
 
                 <div className="border-t border-gray-700 pt-4 mb-6">
@@ -164,7 +160,7 @@ export default function Cart() {
                     <span>${Number(total).toFixed(2)}</span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    Includes 10% platform fee
+                    One-time purchase. No subscription.
                   </p>
                 </div>
 

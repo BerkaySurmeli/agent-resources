@@ -128,12 +128,12 @@ class Transaction(SQLModel, table=True):
     __tablename__ = "transactions"
     
     id: UUID = Field(default_factory=uuid4, primary_key=True)
-    buyer_id: UUID = Field(foreign_key="users.id")
-    seller_id: UUID = Field(foreign_key="users.id")
+    buyer_id: Optional[UUID] = Field(default=None, foreign_key="users.id")
+    seller_id: Optional[UUID] = Field(default=None, foreign_key="users.id")
     product_id: UUID = Field(foreign_key="products.id")
     amount_cents: int
     platform_fee_cents: int
-    stripe_payment_intent_id: str = Field(unique=True)
+    stripe_payment_intent_id: str = Field(index=True)
     stripe_transfer_id: Optional[str] = Field(default=None, unique=True)
     status: str = Field(default="pending")
     created_at: datetime = Field(default_factory=datetime.utcnow)
