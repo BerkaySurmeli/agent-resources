@@ -15,6 +15,13 @@ export default function Cart() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Sync email field when user loads asynchronously
+  useEffect(() => {
+    if (user?.email && !email) {
+      setEmail(user.email);
+    }
+  }, [user?.email]);
+
   // Restore cart if user navigated back from payment page
   useEffect(() => {
     const pendingCart = sessionStorage.getItem('ar-pending-cart');

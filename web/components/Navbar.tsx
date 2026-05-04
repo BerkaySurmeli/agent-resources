@@ -11,6 +11,7 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const { itemCount } = useCart();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -30,28 +31,35 @@ export default function Navbar() {
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center gap-8">
-            <Link 
-              href="/listings" 
-              className="text-sm text-slate-300 hover:text-white transition-colors"
-            >
+            <Link href="/listings" className="text-sm text-slate-300 hover:text-white transition-colors">
               Listings
             </Link>
-            <Link 
-              href="/blog" 
-              className="text-sm text-slate-300 hover:text-white transition-colors"
-            >
+            <Link href="/blog" className="text-sm text-slate-300 hover:text-white transition-colors">
               Blog
             </Link>
-            <Link 
-              href="/wizard" 
-              className="text-sm gradient-flow-text hover:opacity-80 transition-opacity"
-            >
+            <Link href="/wizard" className="text-sm gradient-flow-text hover:opacity-80 transition-opacity">
               Build Your Team
             </Link>
           </div>
 
           {/* Cart & User Section */}
           <div className="flex items-center gap-4">
+            {/* Mobile hamburger */}
+            <button
+              className="md:hidden p-2 text-slate-300 hover:text-white transition-colors"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label="Toggle menu"
+            >
+              {mobileOpen ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
             <Link href="/cart" className="relative p-2 text-slate-300 hover:text-white transition-colors">
               <CartIcon />
             </Link>
@@ -122,6 +130,43 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div className="md:hidden bg-slate-900/95 border-t border-white/10 px-4 py-4 space-y-3">
+          <Link href="/listings" className="block text-sm text-slate-300 hover:text-white transition-colors py-2" onClick={() => setMobileOpen(false)}>
+            Listings
+          </Link>
+          <Link href="/blog" className="block text-sm text-slate-300 hover:text-white transition-colors py-2" onClick={() => setMobileOpen(false)}>
+            Blog
+          </Link>
+          <Link href="/wizard" className="block text-sm gradient-flow-text hover:opacity-80 transition-opacity py-2" onClick={() => setMobileOpen(false)}>
+            Build Your Team
+          </Link>
+          {user ? (
+            <>
+              <Link href="/dashboard" className="block text-sm text-slate-300 hover:text-white transition-colors py-2" onClick={() => setMobileOpen(false)}>
+                Dashboard
+              </Link>
+              <Link href="/settings" className="block text-sm text-slate-300 hover:text-white transition-colors py-2" onClick={() => setMobileOpen(false)}>
+                Settings
+              </Link>
+              <button onClick={handleLogout} className="block w-full text-left text-sm text-red-400 hover:text-red-300 transition-colors py-2">
+                Logout
+              </button>
+            </>
+          ) : (
+            <div className="flex gap-3 pt-2">
+              <Link href="/login" className="text-sm text-slate-300 hover:text-white transition-colors" onClick={() => setMobileOpen(false)}>
+                Log In
+              </Link>
+              <Link href="/signup" className="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" onClick={() => setMobileOpen(false)}>
+                Sign Up
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
     </nav>
   );
 }

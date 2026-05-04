@@ -102,7 +102,7 @@ export default function Listings() {
 
   useEffect(() => {
     fetchListings();
-  }, []);
+  }, [language]);
 
   const fetchListings = async () => {
     try {

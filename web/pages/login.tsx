@@ -21,13 +21,14 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     setError('');
     setLoading(true);
 
     try {
       await login(email, password);
-      await router.push('/');
+      const redirect = typeof router.query.redirect === 'string' ? router.query.redirect : '/';
+      await router.push(redirect);
     } catch (err: any) {
       setError(err.message || t.login.invalidCredentials);
     } finally {
