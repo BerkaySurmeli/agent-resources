@@ -21,7 +21,7 @@ ACCESS_TOKEN_EXPIRE_DAYS = 7
 class UserSignup(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
-    name: str
+    name: str = Field(min_length=1, max_length=100)
 
 class UserLogin(BaseModel):
     email: EmailStr

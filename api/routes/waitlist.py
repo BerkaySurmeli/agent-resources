@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Header, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
 from sqlmodel import select, Session as DBSession
 from models import WaitlistEntry
 from core.config import settings
@@ -10,8 +10,8 @@ import secrets
 router = APIRouter(prefix="/waitlist", tags=["Waitlist"])
 
 class WaitlistRequest(BaseModel):
-    email: str
-    source: str = "website"
+    email: EmailStr
+    source: str = Field(default="website", max_length=50)
 
 def generate_developer_code():
     return f"DEV-{secrets.token_hex(4).upper()}"

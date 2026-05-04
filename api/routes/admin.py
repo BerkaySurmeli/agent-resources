@@ -7,7 +7,7 @@ from models import User, Product, Transaction, Review, AdminUser, Listing
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from fastapi import Request
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from core.config import settings
 import httpx
 
@@ -26,7 +26,7 @@ CLOUDFLARE_ZONE_ID = settings.CLOUDFLARE_ZONE_ID
 # Pydantic models
 class AdminLoginRequest(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(max_length=128)
 
 class AdminUserResponse(BaseModel):
     id: str
@@ -106,23 +106,20 @@ def admin_login(
     # First check if this email belongs to a regular user - they cannot use admin login
     regular_user = session.exec(select(User).where(User.email == login_data.email)).first()
     if regular_user:
-        print(f"[ADMIN LOGIN] Regular user found with email {login_data.email}, blocking admin login")
         raise HTTPException(status_code=400, detail="Regular users cannot access admin login. Please use the regular login page.")
-    
+
     # Find admin user
     admin = session.exec(
         select(AdminUser).where(AdminUser.email == login_data.email)
     ).first()
-    
+
     if not admin:
-        print(f"[ADMIN LOGIN] No admin found with email {login_data.email}")
         raise HTTPException(status_code=400, detail="Invalid email or password")
-    
+
     # Verify password
     try:
         is_valid = verify_password(login_data.password, admin.password_hash)
-    except Exception as e:
-        print(f"[ADMIN LOGIN] Password verification error: {e}")
+    except Exception:
         is_valid = False
     
     if not is_valid:

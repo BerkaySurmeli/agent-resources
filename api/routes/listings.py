@@ -347,7 +347,10 @@ async def scan_with_virustotal(file_path: str) -> Dict[str, Any]:
                 detail=f"VirusTotal upload failed: {upload_response.text}"
             )
 
-        analysis_id = upload_response.json()["data"]["id"]
+        upload_data = upload_response.json()
+        analysis_id = upload_data.get("data", {}).get("id")
+        if not analysis_id:
+            raise HTTPException(status_code=500, detail="VirusTotal upload response missing analysis ID")
 
         # Step 3: Poll for results (max 10 attempts, with rate limiting)
         for attempt in range(10):
@@ -363,7 +366,7 @@ async def scan_with_virustotal(file_path: str) -> Dict[str, Any]:
 
             if analysis_response.status_code == 200:
                 analysis_data = analysis_response.json()
-                status = analysis_data["data"]["attributes"]["status"]
+                status = analysis_data.get("data", {}).get("attributes", {}).get("status")
 
                 if status == "completed":
                     return {
@@ -497,13 +500,13 @@ def get_unique_slug(session, name: str) -> str:
 
 @router.post("/create")
 async def create_listing(
-    name: str = Form(...),
-    description: str = Form(...),
-    category: str = Form(...),
-    price_cents: int = Form(...),
-    version: str = Form("1.0.0"),  # Semver version
-    tags: str = Form("[]"),  # JSON string
-    developer_code: str = Form(None),  # Optional developer code for bonus
+    name: str = Form(..., min_length=1, max_length=100),
+    description: str = Form(..., min_length=1, max_length=5000),
+    category: str = Form(..., max_length=50),
+    price_cents: int = Form(..., ge=0, le=100_000_00),
+    version: str = Form("1.0.0", max_length=20),
+    tags: str = Form("[]", max_length=500),  # JSON string
+    developer_code: str = Form(None, max_length=20),  # Optional developer code for bonus
     files: List[UploadFile] = File(...),
     session = Depends(get_session),
     current_user: User = Depends(get_current_user_from_token),
@@ -535,8 +538,9 @@ async def create_listing(
     # Parse tags
     import json
     try:
-        tag_list = json.loads(tags)
-    except:
+        raw_tags = json.loads(tags)
+        tag_list = [str(t)[:50] for t in raw_tags if t][:10]
+    except (json.JSONDecodeError, ValueError):
         tag_list = []
 
     # Validate category
