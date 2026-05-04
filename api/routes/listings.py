@@ -8,7 +8,8 @@ import uuid
 import os
 import shutil
 from models import Listing, ListingStatus, ProductCategory, User, Product, ListingTranslation
-from core.database import get_session
+from core.database import get_session, engine
+from sqlmodel import Session as DBSession
 from routes.auth import get_current_user_from_token
 import aiofiles
 import zipfile
@@ -113,118 +114,94 @@ class ScanQueue:
                 self.processing = False
 
     async def _process_scan(self, task: Dict):
-        from core.database import get_session
-        session = next(get_session())
+        listing_id = task['listing_id']
+        file_path = task['file_path']
+
         try:
-            listing_id = task['listing_id']
-            file_path = task['file_path']
-
-            print(f"[SCAN QUEUE] Processing scan for listing {listing_id}")
-
-            # Get listing details
-            listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
-            if not listing:
-                print(f"[SCAN QUEUE] Listing {listing_id} not found")
-                return
-
-            # Run VirusTotal scan
-            try:
-                vt_result = await scan_with_virustotal(file_path)
-                analysis = analyze_virustotal_results(vt_result)
-
-                if analysis["is_safe"]:
-                    # Approve listing FIRST
-                    listing.status = 'approved'
-                    listing.virus_scan_status = 'clean'
-                    listing.scan_completed_at = datetime.utcnow()
-                    listing.scan_results = {
-                        "virustotal": {
-                            "status": "clean",
-                            "source": vt_result.get("source", "unknown"),
-                            "stats": analysis.get("details", {})
-                        },
-                        "openclaw_analysis": {"status": "passed"}
-                    }
-                    listing.virustotal_report = vt_result.get("data")
-
-                    # Commit the listing status change FIRST
-                    session.commit()
-                    print(f"[SCAN QUEUE] Listing {listing_id} status committed as approved")
-
-                    # Then create product from listing
-                    # Handle category - could be enum or string
-                    category_value = listing.category
-                    if hasattr(category_value, 'value'):
-                        category_value = category_value.value
-
-                    try:
-                        product = Product(
-                            owner_id=listing.owner_id,
-                            name=listing.name,
-                            slug=listing.slug,
-                            description=listing.description,
-                            category=category_value,
-                            category_tags=listing.category_tags,
-                            price_cents=listing.price_cents,
-                            is_active=True,
-                            is_verified=True
-                        )
-                        session.add(product)
-                        session.commit()
-                        session.refresh(product)
-
-                        listing.product_id = product.id
-                        session.commit()
-                        print(f"[SCAN QUEUE] Product created for listing {listing_id}")
-                    except Exception as product_error:
-                        print(f"[SCAN QUEUE] Product creation failed for listing {listing_id}: {product_error}")
-                        # Don't fail the whole operation if product creation fails
-                        # The listing is already approved
-
-                    # Trigger translations
-                    await translation_queue.add(listing.id, listing.name, listing.description, listing.original_language)
-
-                    print(f"[SCAN QUEUE] Listing {listing_id} approved")
-                else:
-                    # Reject listing
-                    listing.status = 'rejected'
-                    listing.virus_scan_status = 'infected'
-                    listing.scan_completed_at = datetime.utcnow()
-                    listing.scan_results = {
-                        "virustotal": {
-                            "status": "suspicious",
-                            "reason": analysis.get("reason"),
-                            "malicious": analysis.get("malicious_count"),
-                            "suspicious": analysis.get("suspicious_count"),
-                            "total": analysis.get("total_engines")
-                        }
-                    }
-                    listing.rejection_reason = f"Security scan failed: {analysis.get('reason')}"
-                    session.commit()
-
-                    print(f"[SCAN QUEUE] Listing {listing_id} rejected: {analysis.get('reason')}")
-
-            except Exception as e:
-                print(f"[SCAN QUEUE] Scan failed for listing {listing_id}: {e}")
-                import traceback
-                traceback.print_exc()
-                # Rollback and start fresh
-                session.rollback()
-                # Re-fetch listing after rollback
+            with DBSession(engine) as session:
                 listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
-                if listing:
-                    listing.status = 'pending_scan'
-                    listing.virus_scan_status = 'failed'
-                    listing.scan_results = {"virustotal": {"status": "error", "error": str(e)}}
-                    session.commit()
+                if not listing:
+                    print(f"[SCAN QUEUE] Listing {listing_id} not found")
+                    return
+
+                try:
+                    vt_result = await scan_with_virustotal(file_path)
+                    analysis = analyze_virustotal_results(vt_result)
+
+                    if analysis["is_safe"]:
+                        listing.status = 'approved'
+                        listing.virus_scan_status = 'clean'
+                        listing.scan_completed_at = datetime.utcnow()
+                        listing.scan_results = {
+                            "virustotal": {
+                                "status": "clean",
+                                "source": vt_result.get("source", "unknown"),
+                                "stats": analysis.get("details", {})
+                            },
+                            "openclaw_analysis": {"status": "passed"}
+                        }
+                        listing.virustotal_report = vt_result.get("data")
+                        session.commit()
+
+                        category_value = listing.category
+                        if hasattr(category_value, 'value'):
+                            category_value = category_value.value
+
+                        try:
+                            product = Product(
+                                owner_id=listing.owner_id,
+                                name=listing.name,
+                                slug=listing.slug,
+                                description=listing.description,
+                                category=category_value,
+                                category_tags=listing.category_tags,
+                                price_cents=listing.price_cents,
+                                is_active=True,
+                                is_verified=True
+                            )
+                            session.add(product)
+                            session.commit()
+                            session.refresh(product)
+                            listing.product_id = product.id
+                            session.commit()
+                        except Exception as product_error:
+                            print(f"[SCAN QUEUE] Product creation failed for listing {listing_id}: {product_error}")
+
+                        await translation_queue.add(listing.id, listing.name, listing.description, listing.original_language)
+                        print(f"[SCAN QUEUE] Listing {listing_id} approved")
+                    else:
+                        listing.status = 'rejected'
+                        listing.virus_scan_status = 'infected'
+                        listing.scan_completed_at = datetime.utcnow()
+                        listing.scan_results = {
+                            "virustotal": {
+                                "status": "suspicious",
+                                "reason": analysis.get("reason"),
+                                "malicious": analysis.get("malicious_count"),
+                                "suspicious": analysis.get("suspicious_count"),
+                                "total": analysis.get("total_engines")
+                            }
+                        }
+                        listing.rejection_reason = f"Security scan failed: {analysis.get('reason')}"
+                        session.commit()
+                        print(f"[SCAN QUEUE] Listing {listing_id} rejected: {analysis.get('reason')}")
+
+                except Exception as e:
+                    print(f"[SCAN QUEUE] Scan failed for listing {listing_id}: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    session.rollback()
+                    listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
+                    if listing:
+                        listing.status = 'pending_scan'
+                        listing.virus_scan_status = 'failed'
+                        listing.scan_results = {"virustotal": {"status": "error", "error": str(e)}}
+                        session.commit()
 
         except Exception as e:
             print(f"[SCAN QUEUE] Fatal error processing listing {listing_id}: {e}")
             import traceback
             traceback.print_exc()
-            session.rollback()
-        finally:
-            session.close()
 
 # Global scan queue
 scan_queue = ScanQueue()
@@ -268,51 +245,46 @@ class TranslationQueue:
                 self.processing = False
 
     async def _process_translation(self, task: Dict):
-        from core.database import get_session
-        session = next(get_session())
+        listing_id = task['listing_id']
+        name = task['name']
+        description = task['description']
+        source_lang = task['source_lang']
+
         try:
-            listing_id = task['listing_id']
-            name = task['name']
-            description = task['description']
-            source_lang = task['source_lang']
+            with DBSession(engine) as session:
+                listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
+                if listing:
+                    listing.translation_status = 'translating'
+                    session.commit()
 
-            # Update status to translating
-            listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
-            if listing:
-                listing.translation_status = 'translating'
+                print(f"[TRANSLATION] Starting translation for listing {listing_id}")
+                translations = translate_listing(name, description, source_lang)
+
+                for lang, content in translations.items():
+                    translation = ListingTranslation(
+                        listing_id=listing_id,
+                        language=lang,
+                        name=content['name'],
+                        description=content['description']
+                    )
+                    session.add(translation)
+
+                if listing:
+                    listing.translation_status = 'completed'
                 session.commit()
-
-            print(f"[TRANSLATION] Starting translation for listing {listing_id}")
-            translations = translate_listing(name, description, source_lang)
-
-            for lang, content in translations.items():
-                translation = ListingTranslation(
-                    listing_id=listing_id,
-                    language=lang,
-                    name=content['name'],
-                    description=content['description']
-                )
-                session.add(translation)
-
-            # Update status to completed
-            if listing:
-                listing.translation_status = 'completed'
-                session.commit()
-
-            session.commit()
-            print(f"[TRANSLATION] Completed translations for listing {listing_id}: {list(translations.keys())}")
+                print(f"[TRANSLATION] Completed translations for listing {listing_id}: {list(translations.keys())}")
         except Exception as e:
             print(f"[TRANSLATION] Error generating translations: {e}")
             import traceback
             traceback.print_exc()
-
-            # Update status to failed
-            listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
-            if listing:
-                listing.translation_status = 'failed'
-                session.commit()
-        finally:
-            session.close()
+            try:
+                with DBSession(engine) as session:
+                    listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
+                    if listing:
+                        listing.translation_status = 'failed'
+                        session.commit()
+            except Exception:
+                pass
 
 # Global translation queue
 translation_queue = TranslationQueue()

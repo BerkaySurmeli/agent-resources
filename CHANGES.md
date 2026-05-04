@@ -65,6 +65,17 @@ A full-pass audit and hardening of the Agent Resources marketplace codebase. Cha
 ### `api/routes/payments.py`
 - **Fixed session leak in webhook handler.** `handle_successful_payment` used `next(get_session())` to obtain a DB session — this bypasses the context manager and the session is never properly closed or returned to the pool if an exception occurs before `db_session.close()`. Replaced with `with Session(engine) as db_session:` which guarantees cleanup. Also removed the now-redundant manual `rollback()` / `close()` calls in the finally block (the context manager handles both).
 
+---
+
+## Fourth Pass: Remaining Session Leaks
+
+### `api/routes/listings.py`
+- **Fixed session leak in `TranslationQueue._process_translation`.** Like `_process_scan`, the translation background worker used `next(get_session())` with a manual `finally: session.close()`. Replaced with `with DBSession(engine) as session:`. The error-path status update (marking translation as `'failed'`) now opens a fresh session rather than reusing a potentially broken one.
+- **Fixed session leak in `ScanQueue._process_scan`.** Same `next(get_session())` pattern replaced with `with DBSession(engine) as session:`.
+
+### `api/routes/waitlist.py`
+- **Fixed three session leaks.** All three route handlers (`join_waitlist`, `get_waitlist_count`, `delete_from_waitlist`) used `next(get_session())` with `finally: session.close()`. All replaced with `with DBSession(engine) as session:` context managers. Also updated top-level imports to use `engine` directly instead of `get_session`.
+
 ### `api/routes/onboarding.py`
 - **Registered in `main.py`.** The entire `/onboarding/*` router was never mounted — `generate-complete-package` and `openclaw-version` endpoints were unreachable. Added to `main.py`.
 - **Removed hardcoded Railway dev URL from generated scripts.** The bash and PowerShell installer scripts embedded a literal `https://agent-resources-api-dev-production.up.railway.app` URL. Scripts sent to end-users would always point at the dev server. Now reads `PUBLIC_API_URL` env var (defaulting to the production URL) so the right endpoint is used per environment.
@@ -119,6 +130,8 @@ A full-pass audit and hardening of the Agent Resources marketplace codebase. Cha
 | Dead / duplicate code | 3 removed (test endpoints, duplicate route, redundant engine) |
 | Dead code with 5 bugs | payments_connect.py deleted |
 | Session leak in webhook | next(get_session()) → Session(engine) context manager |
+| Session leaks in background workers | _process_scan and _process_translation in listings.py fixed |
+| Session leaks in waitlist routes | 3 handlers in waitlist.py fixed |
 | Unregistered router | /onboarding/* endpoints now reachable |
 | Hardcoded dev URL in scripts | PUBLIC_API_URL env var used in installer scripts |
 | Config noise on import | 2 redundant print() calls removed |

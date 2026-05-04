@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
-from sqlmodel import select
+from sqlmodel import select, Session as DBSession
 from models import WaitlistEntry
 from core.config import settings
-from core.database import get_session
+from core.database import engine
 import resend
 import secrets
 
@@ -93,8 +93,7 @@ def send_waitlist_email(email: str):
 @router.post("")
 def join_waitlist(request: WaitlistRequest):
     """Add email to waitlist"""
-    session = next(get_session())
-    try:
+    with DBSession(engine) as session:
         existing = session.exec(select(WaitlistEntry).where(WaitlistEntry.email == request.email)).first()
         if existing:
             return {"status": "already_registered", "message": "You're already on the waitlist!"}
@@ -114,8 +113,6 @@ def join_waitlist(request: WaitlistRequest):
 
         count = session.exec(select(WaitlistEntry)).all()
         total = len(count)
-    finally:
-        session.close()
 
     if is_in_first_50 and developer_code:
         send_welcome_email(request.email, developer_code)
@@ -140,12 +137,9 @@ def join_waitlist(request: WaitlistRequest):
 @router.get("/count/")
 def get_waitlist_count():
     """Get total waitlist count"""
-    session = next(get_session())
-    try:
+    with DBSession(engine) as session:
         entries = session.exec(select(WaitlistEntry)).all()
         count = len(entries)
-    finally:
-        session.close()
     return {"count": count, "spots_remaining": max(0, 50 - count)}
 
 @router.post("/delete/")
@@ -157,13 +151,10 @@ def delete_from_waitlist(
     if not settings.ADMIN_SETUP_KEY or x_setup_key != settings.ADMIN_SETUP_KEY:
         raise HTTPException(status_code=403, detail="Invalid setup key")
 
-    session = next(get_session())
-    try:
+    with DBSession(engine) as session:
         entry = session.exec(select(WaitlistEntry).where(WaitlistEntry.email == request.email)).first()
         if entry:
             session.delete(entry)
             session.commit()
             return {"status": "success", "message": f"{request.email} removed from waitlist"}
         return {"status": "not_found", "message": "Email not found in waitlist"}
-    finally:
-        session.close()
