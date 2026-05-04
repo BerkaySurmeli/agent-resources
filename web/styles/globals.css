@@ -13,38 +13,38 @@
   }
 
   body {
-    background-color: #F4F6FF;
-    color: #0D1123;
+    background-color: #F8F9FA;
+    color: #101828;
     min-height: 100vh;
   }
 
-  /* Blue-mist scrollbar */
+  /* Neutral scrollbar */
   ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: #E4E8FF; }
-  ::-webkit-scrollbar-thumb { background: #A8B4F8; border-radius: 9999px; }
-  ::-webkit-scrollbar-thumb:hover { background: #8596F0; }
+  ::-webkit-scrollbar-track { background: #EAECF0; }
+  ::-webkit-scrollbar-thumb { background: #C8CFD8; border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #98A2B3; }
 
-  ::selection { background: rgba(75, 96, 238, 0.15); color: #0D1123; }
+  ::selection { background: rgba(75, 96, 238, 0.15); color: #101828; }
 }
 
 @layer components {
   /* Core card */
   .card {
     background: #FFFFFF;
-    border: 1px solid #D8DEFF;
+    border: 1px solid #EAECF0;
     border-radius: 1rem;
-    box-shadow: 0 2px 8px 0 rgba(15, 25, 80, 0.06);
+    box-shadow: 0 1px 4px 0 rgba(16, 24, 40, 0.06);
   }
 
-  /* Card hover — lifts + cool shadow + left-stripe via box-shadow (no layout shift) */
+  /* Card hover — lifts + shadow + left-stripe via box-shadow (no layout shift) */
   .card-hover {
     transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
   }
   .card-hover:hover {
-    border-color: #A8B4F8;
+    border-color: #D0D5DD;
     transform: translateY(-2px);
     box-shadow:
-      0 8px 24px 0 rgba(15, 25, 80, 0.10),
+      0 8px 24px 0 rgba(16, 24, 40, 0.10),
       -3px 0 0 0 #4B60EE;
   }
 
@@ -69,37 +69,38 @@
   }
   .btn-primary:active { transform: translateY(0); }
 
-  /* Secondary button — cool outline */
+  /* Secondary button — neutral outline */
   .btn-secondary {
-    background: transparent;
-    color: #262D4D;
+    background: #FFFFFF;
+    color: #344054;
     padding: 0.75rem 1.5rem;
     border-radius: 0.625rem;
     font-weight: 500;
     font-size: 0.9375rem;
-    border: 1.5px solid #CBD2FF;
+    border: 1.5px solid #D0D5DD;
+    box-shadow: 0 1px 2px 0 rgba(16, 24, 40, 0.05);
     transition: background 0.15s ease, border-color 0.15s ease;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
   }
   .btn-secondary:hover {
-    background: #EEF0FF;
-    border-color: #8E95FF;
+    background: #F8F9FA;
+    border-color: #98A2B3;
   }
 
   /* Ghost button */
   .btn-ghost {
     background: transparent;
-    color: #6471A0;
+    color: #475467;
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
     font-weight: 500;
     transition: background 0.15s ease, color 0.15s ease;
   }
   .btn-ghost:hover {
-    background: #EEF0FF;
-    color: #262D4D;
+    background: #EAECF0;
+    color: #1D2939;
   }
 
   /* Input */
@@ -108,12 +109,12 @@
     padding: 0.75rem 1rem;
     border-radius: 0.625rem;
     background: #FFFFFF;
-    border: 1.5px solid #CBD2FF;
-    color: #0D1123;
+    border: 1.5px solid #D0D5DD;
+    color: #101828;
     font-size: 0.9375rem;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
-  .input::placeholder { color: #A8B4F8; }
+  .input::placeholder { color: #98A2B3; }
   .input:focus {
     outline: none;
     border-color: #4B60EE;
@@ -168,7 +169,7 @@
 
   /* Dot-grid pattern — for hero section */
   .bg-dot-grid {
-    background-image: radial-gradient(circle, rgba(75, 96, 238, 0.14) 1px, transparent 1px);
+    background-image: radial-gradient(circle, rgba(16, 24, 40, 0.08) 1px, transparent 1px);
     background-size: 28px 28px;
   }
 

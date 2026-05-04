@@ -8,28 +8,28 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Cool blue-mist backgrounds
+        // Neutral backgrounds — professional gray scale
         cream: {
-          50:  '#FAFBFF',
-          100: '#F4F6FF',  // main page background
-          200: '#E4E8FF',  // borders, dividers, hover
-          300: '#CBD2FF',  // stronger borders
-          400: '#A8B4F8',
-          500: '#8596F0',
+          50:  '#FFFFFF',
+          100: '#F8F9FA',  // main page background
+          200: '#EAECF0',  // borders, dividers, hover states
+          300: '#D0D5DD',  // stronger borders
+          400: '#98A2B3',
+          500: '#667085',
         },
-        // Cool slate-blue text
+        // Cool slate text
         ink: {
-          50:  '#F4F5FA',
-          100: '#E0E3F0',
-          200: '#BCC2DC',
-          300: '#919CC2',
-          400: '#6471A0',
-          500: '#4A5380',
-          600: '#363D63',
-          700: '#262D4D',
-          800: '#181E38',
-          900: '#0D1123',
-          950: '#060810',
+          50:  '#F8F9FB',
+          100: '#EAEDF2',
+          200: '#C8CFD8',
+          300: '#9AA3B0',
+          400: '#667384',
+          500: '#475467',
+          600: '#344054',
+          700: '#1D2939',
+          800: '#101828',
+          900: '#0A0F1C',
+          950: '#050810',
         },
         // Brand blue — primary action color
         terra: {
@@ -76,10 +76,10 @@ module.exports = {
         sans:  ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
       },
       boxShadow: {
-        'warm-sm': '0 1px 3px 0 rgba(15, 25, 80, 0.08)',
-        'warm':    '0 4px 12px 0 rgba(15, 25, 80, 0.10), 0 1px 3px 0 rgba(15, 25, 80, 0.06)',
-        'warm-md': '0 8px 24px 0 rgba(15, 25, 80, 0.12), 0 2px 6px 0 rgba(15, 25, 80, 0.06)',
-        'warm-lg': '0 16px 40px 0 rgba(15, 25, 80, 0.14), 0 4px 10px 0 rgba(15, 25, 80, 0.08)',
+        'warm-sm': '0 1px 3px 0 rgba(16, 24, 40, 0.06)',
+        'warm':    '0 4px 12px 0 rgba(16, 24, 40, 0.08), 0 1px 3px 0 rgba(16, 24, 40, 0.04)',
+        'warm-md': '0 8px 24px 0 rgba(16, 24, 40, 0.10), 0 2px 6px 0 rgba(16, 24, 40, 0.04)',
+        'warm-lg': '0 16px 40px 0 rgba(16, 24, 40, 0.12), 0 4px 10px 0 rgba(16, 24, 40, 0.06)',
         'brand':   '0 4px 14px 0 rgba(75, 96, 238, 0.28)',
       },
       animation: {
