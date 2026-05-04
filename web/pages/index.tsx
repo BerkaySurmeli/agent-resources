@@ -72,7 +72,7 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-dot-grid pointer-events-none" />
           {/* Soft radial fade to hide grid edges */}
           <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, transparent 40%, #F4F6FF 100%)' }} />
+            style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, transparent 40%, #F8F9FA 100%)' }} />
 
           <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20 text-center">
             {/* Eyebrow */}
