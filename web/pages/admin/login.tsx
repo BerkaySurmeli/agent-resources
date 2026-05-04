@@ -20,19 +20,13 @@ export default function AdminLogin() {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('[ADMIN LOGIN] Form submitted', { email });
     setError('');
     setLoading(true);
 
     try {
       await login(email, password);
-      console.log('[ADMIN LOGIN] Login successful');
-      
-      // Redirect to admin dashboard
-      console.log('[ADMIN LOGIN] Redirecting to admin dashboard');
       await router.push('/admin/dashboard');
     } catch (err: any) {
-      console.error('[ADMIN LOGIN] Login failed', err);
       setError(err.message || 'Invalid credentials');
     } finally {
       setLoading(false);

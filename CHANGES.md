@@ -76,6 +76,19 @@ A full-pass audit and hardening of the Agent Resources marketplace codebase. Cha
 ### `api/routes/waitlist.py`
 - **Fixed three session leaks.** All three route handlers (`join_waitlist`, `get_waitlist_count`, `delete_from_waitlist`) used `next(get_session())` with `finally: session.close()`. All replaced with `with DBSession(engine) as session:` context managers. Also updated top-level imports to use `engine` directly instead of `get_session`.
 
+---
+
+## Fifth Pass: Frontend Debug Logging and Hardcoded URLs
+
+### `web/pages/login.tsx`
+- **Removed debug `console.log` calls.** Four `[LOGIN]` log statements were left in the login handler, logging form submission, success, and redirect events to the browser console in production. Removed.
+
+### `web/pages/admin/login.tsx`
+- **Removed debug `console.log` calls.** Same pattern — four `[ADMIN LOGIN]` statements in the admin login handler. Removed.
+
+### `web/pages/index.tsx`
+- **Fixed hardcoded API URLs.** The landing page waitlist fetch calls (`/waitlist/count/` and `/waitlist/`) were hardcoded to `https://api.shopagentresources.com` rather than using `NEXT_PUBLIC_API_URL` like every other page in the project. Added `const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com'` and updated all three fetch calls to use it.
+
 ### `api/routes/onboarding.py`
 - **Registered in `main.py`.** The entire `/onboarding/*` router was never mounted — `generate-complete-package` and `openclaw-version` endpoints were unreachable. Added to `main.py`.
 - **Removed hardcoded Railway dev URL from generated scripts.** The bash and PowerShell installer scripts embedded a literal `https://agent-resources-api-dev-production.up.railway.app` URL. Scripts sent to end-users would always point at the dev server. Now reads `PUBLIC_API_URL` env var (defaulting to the production URL) so the right endpoint is used per environment.
@@ -132,6 +145,8 @@ A full-pass audit and hardening of the Agent Resources marketplace codebase. Cha
 | Session leak in webhook | next(get_session()) → Session(engine) context manager |
 | Session leaks in background workers | _process_scan and _process_translation in listings.py fixed |
 | Session leaks in waitlist routes | 3 handlers in waitlist.py fixed |
+| Debug console.log in login pages | Removed from login.tsx and admin/login.tsx |
+| Hardcoded API URL on landing page | index.tsx now uses NEXT_PUBLIC_API_URL env var |
 | Unregistered router | /onboarding/* endpoints now reachable |
 | Hardcoded dev URL in scripts | PUBLIC_API_URL env var used in installer scripts |
 | Config noise on import | 2 redundant print() calls removed |

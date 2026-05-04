@@ -22,19 +22,13 @@ export default function Login() {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('[LOGIN] Form submitted', { email });
     setError('');
     setLoading(true);
 
     try {
       await login(email, password);
-      console.log('[LOGIN] Login successful');
-      
-      // Regular user - go to home
-      console.log('[LOGIN] Redirecting to home');
       await router.push('/');
     } catch (err: any) {
-      console.error('[LOGIN] Login failed', err);
       setError(err.message || t.login.invalidCredentials);
     } finally {
       setLoading(false);

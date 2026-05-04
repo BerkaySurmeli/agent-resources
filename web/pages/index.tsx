@@ -4,16 +4,18 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import Navbar from '../components/Navbar';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+
 export default function LandingPage() {
   const { t, language, setLanguage, languages } = useLanguage();
-  
+
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [spotsRemaining, setSpotsRemaining] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch('https://api.shopagentresources.com/waitlist/count/')
+    fetch(`${API_URL}/waitlist/count/`)
       .then(res => res.json())
       .then(data => {
         const remaining = Math.max(0, 50 - data.count);
@@ -32,7 +34,7 @@ export default function LandingPage() {
 
     setStatus('loading');
     try {
-      const response = await fetch('https://api.shopagentresources.com/waitlist/', {
+      const response = await fetch(`${API_URL}/waitlist/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -42,7 +44,7 @@ export default function LandingPage() {
         setStatus('success');
         setMessage(lt.successMessage);
         setEmail('');
-        const countRes = await fetch('https://api.shopagentresources.com/waitlist/count/');
+        const countRes = await fetch(`${API_URL}/waitlist/count/`);
         const data = await countRes.json();
         setSpotsRemaining(Math.max(0, 50 - data.count));
       } else {
