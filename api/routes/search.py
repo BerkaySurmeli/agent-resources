@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel
-from sqlmodel import select, or_, func
+from sqlmodel import select, or_, func  # or_ used for product search
 from typing import List
 from models import Product, User
 from core.database import get_session
@@ -65,10 +65,7 @@ async def global_search(
             select(User)
             .where(
                 User.is_developer == True,
-                or_(
-                    func.lower(User.name).contains(query),
-                    func.lower(User.email).contains(query)
-                )
+                func.lower(User.name).contains(query)
             )
             .limit(remaining)
         ).all()

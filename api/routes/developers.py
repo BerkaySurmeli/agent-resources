@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from sqlmodel import select, func
 from typing import List
 from datetime import datetime
+from uuid import UUID
 from models import User, Product, Review, Transaction
 from core.database import get_session
 
@@ -34,7 +35,11 @@ async def get_developer(
     session = Depends(get_session)
 ):
     """Get developer public profile"""
-    user = session.exec(select(User).where(User.id == developer_id)).first()
+    try:
+        dev_uuid = UUID(developer_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid developer ID")
+    user = session.exec(select(User).where(User.id == dev_uuid)).first()
     if not user:
         raise HTTPException(status_code=404, detail="Developer not found")
 
@@ -51,9 +56,13 @@ async def get_developer_listings(
     session = Depends(get_session)
 ):
     """Get all listings by a developer"""
+    try:
+        dev_uuid = UUID(developer_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid developer ID")
     products = session.exec(
         select(Product)
-        .where(Product.owner_id == developer_id, Product.is_active == True)
+        .where(Product.owner_id == dev_uuid, Product.is_active == True)
         .order_by(Product.created_at.desc())
     ).all()
 
@@ -75,17 +84,22 @@ async def get_developer_stats(
     session = Depends(get_session)
 ):
     """Get developer statistics"""
+    try:
+        dev_uuid = UUID(developer_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid developer ID")
+
     # Count listings
     listings_count = session.exec(
         select(func.count(Product.id))
-        .where(Product.owner_id == developer_id)
+        .where(Product.owner_id == dev_uuid)
     ).first() or 0
 
     # Count sales
     sales_count = session.exec(
         select(func.count(Transaction.id))
         .where(
-            Transaction.seller_id == developer_id,
+            Transaction.seller_id == dev_uuid,
             Transaction.status == "completed"
         )
     ).first() or 0
@@ -94,7 +108,7 @@ async def get_developer_stats(
     reviews = session.exec(
         select(Review)
         .join(Product, Review.product_id == Product.id)
-        .where(Product.owner_id == developer_id)
+        .where(Product.owner_id == dev_uuid)
     ).all()
 
     total_reviews = len(reviews)

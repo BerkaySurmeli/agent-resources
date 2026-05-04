@@ -1,16 +1,16 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from core.config import settings
 from services.email import EmailService
 
 router = APIRouter(prefix="/contact", tags=["Contact"])
 
 class ContactForm(BaseModel):
-    name: str
+    name: str = Field(min_length=1, max_length=100)
     email: EmailStr
-    category: str
-    subject: str
-    message: str
+    category: str = Field(min_length=1, max_length=100)
+    subject: str = Field(min_length=1, max_length=200)
+    message: str = Field(min_length=1, max_length=5000)
 
 # Valid categories
 VALID_CATEGORIES = [
@@ -28,14 +28,6 @@ def submit_contact_form(form_data: ContactForm):
     # Validate category
     if form_data.category not in VALID_CATEGORIES:
         raise HTTPException(status_code=400, detail="Invalid category selected")
-    
-    # Validate required fields
-    if not form_data.name.strip():
-        raise HTTPException(status_code=400, detail="Name is required")
-    if not form_data.subject.strip():
-        raise HTTPException(status_code=400, detail="Subject is required")
-    if not form_data.message.strip():
-        raise HTTPException(status_code=400, detail="Message is required")
     
     # Check if Resend is configured
     if not settings.RESEND_API_KEY:

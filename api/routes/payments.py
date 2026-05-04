@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 from sqlmodel import select
 import stripe
@@ -32,7 +32,7 @@ class CartItem(BaseModel):
 
 class CreateCheckoutRequest(BaseModel):
     items: List[CartItem]
-    email: str
+    email: EmailStr
     success_url: str
     cancel_url: str
 
@@ -249,7 +249,7 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
 
 
 @router.get("/session/{session_id}")
-async def get_session(session_id: str, session = Depends(get_session)):
+async def get_checkout_session(session_id: str, session = Depends(get_session)):
     """Get checkout session details and purchase status"""
 
     try:

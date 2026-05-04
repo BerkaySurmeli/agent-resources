@@ -188,10 +188,12 @@ Run: `./setup.sh` (macOS/Linux) or `setup.ps1` (Windows)
 def generate_skill_md(listing: Listing) -> str:
     """Generate SKILL.md content for a listing"""
     tags = ', '.join(f'"{t}"' for t in (listing.category_tags or []))
+    # Sanitize values that go into YAML front matter (no newlines or colons that break YAML)
+    safe_description = (listing.description or "AI agent from Agent Resources")[:80].replace('\n', ' ').replace(':', '-')
     
     return f'''---
 name: {listing.slug}
-description: {listing.description[:80] if listing.description else "AI agent from Agent Resources"}
+description: {safe_description}
 metadata:
   {{
     "openclaw":
@@ -219,6 +221,12 @@ Purchased from [Agent Resources](https://shopagentresources.com/listings/{listin
 '''
 
 
+def _shell_safe_name(name: str) -> str:
+    """Strip characters that could break shell echo statements"""
+    import re
+    return re.sub(r'[^a-zA-Z0-9 _\-.]', '', name)[:80]
+
+
 def generate_setup_script(listings: List[Listing], include_openclaw: bool) -> str:
     """Generate bash setup script"""
     skill_names = ' '.join(l.slug for l in listings)
@@ -234,10 +242,10 @@ echo "🚀 Setting up your AI team..."
 '''
     
     if include_openclaw:
-        script += '''
+        script += f'''
 # Get latest OpenClaw version info from Agent Resources API
 echo "🔍 Checking OpenClaw version..."
-VERSION_INFO=$(curl -s "{_API_BASE_URL}/onboarding/openclaw-version" 2>/dev/null || echo '{"min_version":"0.1.0"}')
+VERSION_INFO=$(curl -s "{_API_BASE_URL}/onboarding/openclaw-version" 2>/dev/null || echo '{{"min_version":"0.1.0"}}')
 MIN_VERSION=$(echo "$VERSION_INFO" | grep -o '"min_version":"[^"]*"' | cut -d'"' -f4)
 LATEST_VERSION=$(echo "$VERSION_INFO" | grep -o '"latest_version":"[^"]*"' | cut -d'"' -f4)
 [ -z "$MIN_VERSION" ] && MIN_VERSION="0.1.0"
@@ -288,20 +296,22 @@ echo "🤖 Installing {len(listings)} AI agents..."
 '''
     
     for listing in listings:
+        safe_name = _shell_safe_name(listing.name)
         script += f'''
-echo "  → Installing {listing.name}..."
+echo "  Installing {safe_name}..."
 cp -r "skills/{listing.slug}" ~/.openclaw/skills/
 '''
-    
+
     script += f'''
 echo ""
-echo "✅ Setup complete!"
+echo "Setup complete!"
 echo ""
 echo "Installed agents:"
 '''
-    
+
     for listing in listings:
-        script += f'''echo "  • {listing.name}"
+        safe_name = _shell_safe_name(listing.name)
+        script += f'''echo "  - {safe_name}"
 '''
     
     script += '''
@@ -332,9 +342,9 @@ Write-Host "🚀 Setting up your AI team..." -ForegroundColor Cyan
 '''
     
     if include_openclaw:
-        script += '''
+        script += f'''
 # Get latest OpenClaw version info from Agent Resources API
-Write-Host "🔍 Checking OpenClaw version..." -ForegroundColor Cyan
+Write-Host "Checking OpenClaw version..." -ForegroundColor Cyan
 try {{
     $versionInfo = Invoke-RestMethod -Uri "{_API_BASE_URL}/onboarding/openclaw-version" -TimeoutSec 10
     $minVersion = $versionInfo.min_version
@@ -381,14 +391,15 @@ Write-Host "🤖 Installing {len(listings)} AI agents..." -ForegroundColor Cyan
 '''
     
     for listing in listings:
+        safe_name = _shell_safe_name(listing.name)
         script += f'''
-Write-Host "  → Installing {listing.name}..." -ForegroundColor Gray
+Write-Host "  Installing {safe_name}..." -ForegroundColor Gray
 Copy-Item -Path "skills\{listing.slug}" -Destination "$skillsDir\" -Recurse -Force
 '''
-    
+
     script += '''
 Write-Host ""
-Write-Host "✅ Setup complete!" -ForegroundColor Green
+Write-Host "Setup complete!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Start using OpenClaw:"
 Write-Host "  openclaw" -ForegroundColor Yellow
