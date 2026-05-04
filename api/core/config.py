@@ -4,9 +4,9 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Agent Resources Marketplace"
     DATABASE_URL: str = "postgresql://user:pass@localhost:5432/openclaw"
     DB_ECHO: bool = False
-    SECRET_KEY: str = "SUPER_SECRET_CHANGE_ME_2026"
-    STRIPE_SECRET_KEY: str = "sk_test_..."
-    STRIPE_PUBLISHABLE_KEY: str = "pk_test_..."
+    SECRET_KEY: str = ""
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_PUBLISHABLE_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
 
     # Admin setup key — required to call privileged setup/seed endpoints
@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.STRIPE_SECRET_KEY = self.STRIPE_SECRET_KEY.strip().replace('\n', '').replace('\r', '')
+
+        if not self.SECRET_KEY:
+            raise ValueError("SECRET_KEY must be set in environment")
+        if not self.STRIPE_SECRET_KEY:
+            raise ValueError("STRIPE_SECRET_KEY must be set in environment")
 
         if self.RESEND_API_KEY:
             print("[EMAIL CONFIG] Using Resend API for email delivery")

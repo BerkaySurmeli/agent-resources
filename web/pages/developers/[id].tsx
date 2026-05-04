@@ -22,28 +22,6 @@ const getDeveloperInfo = (t: any, developerId: string) => {
   return info[developerId] || { role: 'Developer', description: '' };
 };
 
-// Featured developers fallback data - only Claudia is a developer
-const featuredDevelopers: Record<string, { developer: Developer; listings: Listing[]; stats: DeveloperStats }> = {
-  claudia: {
-    developer: {
-      id: 'claudia',
-      name: 'Claudia',
-      avatar_url: '',
-      is_verified: true,
-    },
-    listings: [
-      { id: '1', slug: 'claudia-project-manager', name: 'AI Project Manager', category: 'persona', price_cents: 4900, is_verified: true },
-      { id: '2', slug: 'claudia-team-lead', name: 'AI Team Lead', category: 'persona', price_cents: 5900, is_verified: true },
-      { id: '3', slug: 'claudia-scrum-master', name: 'AI Scrum Master', category: 'skill', price_cents: 3900, is_verified: true },
-    ],
-    stats: {
-      total_listings: 3,
-      total_sales: 128,
-      average_rating: 5.0,
-      total_reviews: 47,
-    },
-  },
-};
 
 interface Developer {
   id: string;
@@ -86,18 +64,6 @@ export default function DeveloperProfile() {
 
   const fetchDeveloperData = async () => {
     try {
-      const developerId = id as string;
-      
-      // Check if it's a featured developer first
-      if (featuredDevelopers[developerId]) {
-        const featured = featuredDevelopers[developerId];
-        setDeveloper(featured.developer);
-        setListings(featured.listings);
-        setStats(featured.stats);
-        setLoading(false);
-        return;
-      }
-      
       // Fetch developer info from API
       const devRes = await fetch(`${API_URL}/developers/${id}`);
       if (!devRes.ok) throw new Error('Developer not found');

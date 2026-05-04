@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Request, Query
 from pydantic import BaseModel
 from sqlmodel import select, func
 from typing import List, Optional
@@ -205,7 +205,7 @@ async def get_product_stats(
 async def create_review(
     slug: str,
     rating: int,
-    comment: Optional[str] = None,
+    comment: Optional[str] = Query(default=None, max_length=2000),
     session = Depends(get_session),
     current_user: User = Depends(get_current_user_from_token)
 ):
