@@ -311,17 +311,17 @@ export default function Listings() {
                                 category: listing.category
                               })}
                               disabled={isInCart(listing.slug)}
-                              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                                 isInCart(listing.slug)
                                   ? 'bg-green-500/20 text-green-400 cursor-default'
-                                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                  : 'bg-blue-600 text-white hover:bg-blue-500'
                               }`}
                             >
-                              {isInCart(listing.slug) ? t.listings.inCart : t.listings.addToCart}
+                              {isInCart(listing.slug) ? '✓ In Cart' : t.listings.addToCart}
                             </button>
                             <Link
                               href={`/listings/${listing.slug}`}
-                              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                              className="bg-gray-700 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
                             >
                               {t.listings.view}
                             </Link>

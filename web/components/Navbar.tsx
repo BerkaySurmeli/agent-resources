@@ -31,15 +31,32 @@ export default function Navbar() {
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center gap-8">
-            <Link href="/listings" className="text-sm text-slate-300 hover:text-white transition-colors">
+            <Link
+              href="/listings"
+              className={`text-sm transition-colors ${router.pathname.startsWith('/listings') ? 'text-white font-medium' : 'text-slate-400 hover:text-white'}`}
+            >
               Listings
             </Link>
-            <Link href="/blog" className="text-sm text-slate-300 hover:text-white transition-colors">
+            <Link
+              href="/blog"
+              className={`text-sm transition-colors ${router.pathname === '/blog' ? 'text-white font-medium' : 'text-slate-400 hover:text-white'}`}
+            >
               Blog
             </Link>
-            <Link href="/wizard" className="text-sm gradient-flow-text hover:opacity-80 transition-opacity">
+            <Link
+              href="/wizard"
+              className={`text-sm transition-colors ${router.pathname === '/wizard' ? 'text-white font-medium' : 'text-slate-400 hover:text-white'}`}
+            >
               Build Your Team
             </Link>
+            {user?.isDeveloper && (
+              <Link
+                href="/sell"
+                className={`text-sm transition-colors ${router.pathname === '/sell' ? 'text-white font-medium' : 'text-slate-400 hover:text-white'}`}
+              >
+                Sell
+              </Link>
+            )}
           </div>
 
           {/* Cart & User Section */}

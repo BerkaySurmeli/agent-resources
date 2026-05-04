@@ -46,6 +46,15 @@ const statusColors: Record<string, string> = {
   payment_failed: 'bg-red-500/20 text-red-400',
 };
 
+const statusLabels: Record<string, string> = {
+  pending_payment: 'Awaiting Payment',
+  pending_scan: 'In Review',
+  scanning: 'Security Scan',
+  approved: 'Live',
+  rejected: 'Rejected',
+  payment_failed: 'Payment Failed',
+};
+
 
 
 const translationStatusColors: Record<string, string> = {
@@ -134,8 +143,7 @@ export default function Dashboard() {
         setLoading(false);
         return;
       } else {
-        const errorText = await listingsRes.text();
-        setError(`Failed to fetch listings: ${listingsRes.status} ${errorText.substring(0, 100)}`);
+        setError('Failed to load your listings. Please refresh the page.');
       }
       
       // Fetch stats
@@ -149,8 +157,8 @@ export default function Dashboard() {
       } else {
         await statsRes.json().catch(() => ({}));
       }
-    } catch (err: any) {
-      setError(`Failed to load dashboard data: ${err.message}`);
+    } catch {
+      setError('Failed to load dashboard data. Please refresh the page.');
     } finally {
       setLoading(false);
     }
@@ -267,7 +275,11 @@ export default function Dashboard() {
               </div>
               <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
                 <p className="text-sm text-gray-400 mb-1">{t.dashboard.totalRevenue}</p>
-                <p className="text-3xl font-bold text-white">{formatPrice(stats.total_revenue_cents)}</p>
+                {stats.total_revenue_cents > 0 ? (
+                  <p className="text-3xl font-bold text-green-400">{formatPrice(stats.total_revenue_cents)}</p>
+                ) : (
+                  <p className="text-base text-slate-500 mt-1">Your first sale is one listing away</p>
+                )}
               </div>
             </div>
           )}
@@ -333,7 +345,7 @@ export default function Dashboard() {
                           <div className="space-y-2">
                             {/* Main Status */}
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[listing.status] || 'bg-gray-500/20 text-gray-400'}`}>
-                              {(t.common as Record<string, string>)[`status${listing.status.replace(/_/g, '').replace(/\b\w/g, l => l.toUpperCase())}`] || listing.status}
+                              {statusLabels[listing.status] || listing.status}
                             </span>
                             
                             {/* Virus Scan Progress */}
