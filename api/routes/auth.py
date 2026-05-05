@@ -426,10 +426,8 @@ async def resend_verification(
     else:
         raise HTTPException(status_code=400, detail="Provide a Bearer token or an email address")
 
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    if user.is_verified:
-        raise HTTPException(status_code=400, detail="Email already verified")
+    if not user or user.is_verified:
+        return {"message": "If that address is registered and unverified, a new email has been sent."}
 
     import secrets
     new_token = secrets.token_urlsafe(32)
@@ -486,6 +484,11 @@ def forgot_password(request: Request, body: ForgotPasswordRequest, session = Dep
     import secrets
     token = secrets.token_urlsafe(32)
 
+    # Persist token before sending email so the link is always resolvable
+    user.password_reset_token = token
+    user.password_reset_sent_at = datetime.utcnow()
+    session.commit()
+
     from services.email import EmailService
     try:
         EmailService.send_password_reset_email(user.email, user.name or user.email.split("@")[0], token)
@@ -493,9 +496,6 @@ def forgot_password(request: Request, body: ForgotPasswordRequest, session = Dep
         print(f"[EMAIL ERROR] Password reset email failed: {e}")
         raise HTTPException(status_code=503, detail="Could not send reset email. Please try again.")
 
-    user.password_reset_token = token
-    user.password_reset_sent_at = datetime.utcnow()
-    session.commit()
     return {"message": "If that address is registered, a reset link has been sent."}
 
 

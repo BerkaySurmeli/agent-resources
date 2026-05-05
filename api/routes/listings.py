@@ -168,6 +168,16 @@ class ScanQueue:
                             category_value = category_value.value
 
                         try:
+                            from services.quality import compute_quality_score
+                            tags = listing.category_tags or []
+                            version = getattr(listing, 'version', None)
+                            q_score = compute_quality_score(
+                                description=listing.description or "",
+                                tags=tags,
+                                version=version,
+                                price_cents=listing.price_cents or 0,
+                                is_verified=True,
+                            )
                             product = Product(
                                 owner_id=listing.owner_id,
                                 name=listing.name,
@@ -177,7 +187,8 @@ class ScanQueue:
                                 category_tags=listing.category_tags,
                                 price_cents=listing.price_cents,
                                 is_active=True,
-                                is_verified=True
+                                is_verified=True,
+                                quality_score=q_score,
                             )
                             session.add(product)
                             session.commit()

@@ -113,10 +113,15 @@ async def get_collection(slug: str, request: Request, session = Depends(get_sess
             from core.config import settings as _s
             try:
                 payload = _jwt.decode(token_str, _s.SECRET_KEY, algorithms=["HS256"])
-                owner_id = payload.get("sub")
-            except JWTError:
+                sub = payload.get("sub")
+                # Verify the user still exists in the DB
+                if sub and str(collection.owner_id) == sub:
+                    from uuid import UUID as _UUID
+                    if session.get(User, _UUID(sub)):
+                        owner_id = sub
+            except (JWTError, Exception):
                 pass
-        if not owner_id or str(collection.owner_id) != owner_id:
+        if not owner_id:
             raise HTTPException(status_code=404, detail="Collection not found")
 
     owner = session.get(User, collection.owner_id)
@@ -250,6 +255,10 @@ async def delete_collection(
         raise HTTPException(status_code=404, detail="Collection not found")
     if not _can_write(collection, current_user):
         raise HTTPException(status_code=403, detail="Forbidden")
+    # Delete items first to avoid FK violation (SQLModel doesn't auto-cascade)
+    items = session.exec(select(CollectionItem).where(CollectionItem.collection_id == collection.id)).all()
+    for item in items:
+        session.delete(item)
     session.delete(collection)
     session.commit()
     return {"ok": True}
@@ -306,7 +315,9 @@ async def update_item(
     session = Depends(get_session),
 ):
     collection = session.exec(select(Collection).where(Collection.slug == slug)).first()
-    if not collection or not _can_write(collection, current_user):
+    if not collection:
+        raise HTTPException(status_code=404, detail="Collection not found")
+    if not _can_write(collection, current_user):
         raise HTTPException(status_code=403, detail="Forbidden")
     item = session.get(CollectionItem, item_id)
     if not item or item.collection_id != collection.id:

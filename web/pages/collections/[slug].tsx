@@ -95,7 +95,11 @@ export default function CollectionPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (slug) fetch(`${API_URL}/collections/${slug}`)
+    if (!slug) return;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('ar-token') : null;
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    fetch(`${API_URL}/collections/${slug}`, { headers })
       .then(r => r.ok ? r.json() : Promise.reject('Not found'))
       .then(setCollection)
       .catch(() => setError('Collection not found'))

@@ -74,10 +74,7 @@ Updated to use new admin authentication:
 - Added `AdminAuthProvider` wrapper
 
 ### 11. Admin Creation Script (`api/create_admin.py`)
-Script to create the default master admin user:
-- Email: `berkaysurmeli@icloud.com`
-- Password: `16384bEr32768!`
-- Properly hashes password using argon2
+Script to create the default master admin user. Set credentials via environment variables before running.
 
 ## Security Features
 
@@ -89,9 +86,7 @@ Script to create the default master admin user:
 
 ## Default Admin Credentials
 
-- **Email**: `berkaysurmeli@icloud.com`
-- **Password**: `16384bEr32768!`
-- **Role**: Master Admin
+Set via `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables before running `create_admin.py`. Do not commit credentials here.
 
 ## Deployment Steps
 

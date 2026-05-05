@@ -50,7 +50,6 @@ class CartItem(BaseModel):
 
 class CreateCheckoutRequest(BaseModel):
     items: List[CartItem]
-    email: EmailStr
     success_url: str
     cancel_url: str
 
@@ -63,6 +62,7 @@ class CheckoutResponse(BaseModel):
 @router.post("/create-checkout-session", response_model=CheckoutResponse)
 async def create_checkout_session(
     request: CreateCheckoutRequest,
+    current_user: User = Depends(get_current_user_from_token),
     session = Depends(get_session)
 ):
     """Create Stripe checkout session for cart items using real listings"""
@@ -123,10 +123,10 @@ async def create_checkout_session(
             mode='payment',
             success_url=request.success_url,
             cancel_url=request.cancel_url,
-            customer_email=request.email,
+            customer_email=current_user.email,
             metadata={
                 'listing_ids': ','.join(listing_ids),
-                'customer_email': request.email,
+                'customer_email': current_user.email,
                 'platform': 'agent-resources'
             }
         )
@@ -319,6 +319,13 @@ async def stripe_webhook(request: Request, background_tasks: BackgroundTasks):
     payload = await request.body()
     sig_header = request.headers.get('stripe-signature')
 
+    if not sig_header:
+        raise HTTPException(status_code=400, detail="Missing stripe-signature header")
+
+    if not STRIPE_WEBHOOK_SECRET:
+        print("[WEBHOOK ERROR] STRIPE_WEBHOOK_SECRET is not configured")
+        raise HTTPException(status_code=503, detail="Webhook not configured")
+
     try:
         event = stripe.Webhook.construct_event(
             payload, sig_header, STRIPE_WEBHOOK_SECRET
@@ -476,9 +483,9 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
                     background_tasks.add_task(send_bonus_notification, seller_email_b, seller_name, b_listing_name, 20.0)
 
     except Exception as e:
-        print(f"[WEBHOOK ERROR] {e}")
         import traceback
         traceback.print_exc()
+        raise  # Re-raise so FastAPI returns 500 and Stripe retries
 
 
 @router.get("/session/{session_id}")
@@ -580,6 +587,7 @@ async def get_my_sales(
     total_earnings = sum(
         t.Transaction.amount_cents - t.Transaction.platform_fee_cents
         for t in transactions
+        if t.Transaction.status == "completed"
     )
 
     return {
@@ -785,16 +793,17 @@ async def refresh_connect_link(
 @router.get("/connect/return")
 async def connect_return(
     account_id: str,
+    current_user: User = Depends(get_current_user_from_token),
     session = Depends(get_session)
 ):
     """Handle Stripe Connect onboarding return"""
 
-    # Find user by Stripe account ID
+    # Verify the account_id belongs to the authenticated user
     user = session.exec(
         select(User).where(User.stripe_connect_id == account_id)
     ).first()
 
-    if not user:
+    if not user or str(user.id) != str(current_user.id):
         raise HTTPException(status_code=404, detail="Account not found")
 
     try:

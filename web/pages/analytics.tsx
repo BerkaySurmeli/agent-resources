@@ -84,32 +84,23 @@ export default function AnalyticsPage() {
     if (!authLoading && !user) {
       router.replace('/login');
     }
-  }, [authLoading, user]);
+  }, [authLoading, user, router]);
 
   useEffect(() => {
-    if (user) fetchAnalytics();
+    if (!user) return;
+    const controller = new AbortController();
+    const token = typeof window !== 'undefined' ? localStorage.getItem('ar-token') : null;
+    if (!token) { setLoading(false); return; }
+    fetch(`${API_URL}/analytics/seller`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
+    })
+      .then(r => r.ok ? r.json() : Promise.reject('Failed to load analytics'))
+      .then(data => { setListings(data.listings); setTotals(data.totals); })
+      .catch(err => { if (err?.name !== 'AbortError') console.error('[Analytics] fetch failed:', err); })
+      .finally(() => setLoading(false));
+    return () => controller.abort();
   }, [user]);
-
-  const fetchAnalytics = async () => {
-    try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('ar-token') : null;
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-      const res = await fetch(`${API_URL}/analytics/seller`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error('Failed to load analytics');
-      const data = await res.json();
-      setListings(data.listings);
-      setTotals(data.totals);
-    } catch (err) {
-      console.error('[Analytics] fetch failed:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const sorted = [...listings].sort((a, b) => {
     const av = a[sortKey] as number;

@@ -104,12 +104,7 @@ def admin_login(
     session = Depends(get_session)
 ):
     """Login for admin users only - uses admin_users table"""
-    # First check if this email belongs to a regular user - they cannot use admin login
-    regular_user = session.exec(select(User).where(User.email == login_data.email)).first()
-    if regular_user:
-        raise HTTPException(status_code=400, detail="Regular users cannot access admin login. Please use the regular login page.")
-
-    # Find admin user
+    # Look up admin user only — single generic error prevents user enumeration
     admin = session.exec(
         select(AdminUser).where(AdminUser.email == login_data.email)
     ).first()
@@ -308,11 +303,26 @@ def delete_user(
     admin_check = session.exec(select(AdminUser).where(AdminUser.email == user.email)).first()
     if admin_check:
         raise HTTPException(status_code=403, detail="Cannot delete admin users from the users endpoint. Use the admin management endpoint.")
-    
-    # Delete the user
+
+    from models import Listing, Product, Review, ListingTranslation
+    # Cascade delete to avoid FK violations
+    reviews = session.exec(select(Review).where(Review.user_id == user.id)).all()
+    for r in reviews:
+        session.delete(r)
+
+    listings = session.exec(select(Listing).where(Listing.owner_id == user.id)).all()
+    for listing in listings:
+        for t in session.exec(select(ListingTranslation).where(ListingTranslation.listing_id == listing.id)).all():
+            session.delete(t)
+        session.delete(listing)
+
+    products = session.exec(select(Product).where(Product.owner_id == user.id)).all()
+    for p in products:
+        session.delete(p)
+
     session.delete(user)
     session.commit()
-    
+
     return {"message": "User deleted successfully"}
 
 
@@ -348,15 +358,15 @@ def cleanup_test_users(
         if admin_check:
             continue
         
+        user_id = user.id
+        user_email = user.email
+
         try:
-            user_id = user.id
-            user_email = user.email
-            
             # Delete user's reviews
             reviews = session.exec(select(Review).where(Review.user_id == user_id)).all()
             for review in reviews:
                 session.delete(review)
-            
+
             # Delete user's listings and their translations
             listings = session.exec(select(Listing).where(Listing.owner_id == user_id)).all()
             for listing in listings:
@@ -364,12 +374,12 @@ def cleanup_test_users(
                 for t in translations:
                     session.delete(t)
                 session.delete(listing)
-            
+
             # Delete user's products
             products = session.exec(select(Product).where(Product.owner_id == user_id)).all()
             for product in products:
                 session.delete(product)
-            
+
             # Anonymize transactions
             transactions = session.exec(
                 select(Transaction).where(
@@ -381,17 +391,17 @@ def cleanup_test_users(
                     t.buyer_id = None
                 if t.seller_id == user_id:
                     t.seller_id = None
-            
-            # Delete the user
+
+            # Delete the user and commit immediately — prevents dirty session on failure
             session.delete(user)
+            session.commit()
             deleted_count += 1
             deleted_users.append(user_email)
-            
+
         except Exception as e:
-            print(f"[CLEANUP ERROR] Failed to delete user {user.email}: {e}")
+            print(f"[CLEANUP ERROR] Failed to delete user {user_email}: {e}")
+            session.rollback()
             continue
-    
-    session.commit()
     
     return {
         "message": f"Deleted {deleted_count} test users",

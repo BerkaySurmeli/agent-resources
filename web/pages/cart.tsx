@@ -11,16 +11,9 @@ export default function Cart() {
   const { items, removeFromCart, total, clearCart, addToCart } = useCart();
   const { user } = useAuth();
   const { t } = useLanguage();
-  const [email, setEmail] = useState(user?.email || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [removingSlug, setRemovingSlug] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (user?.email && !email) {
-      setEmail(user.email);
-    }
-  }, [user?.email]);
 
   // Restore cart if user navigated back from payment page
   useEffect(() => {
@@ -43,12 +36,14 @@ export default function Cart() {
   }, []); // run once on mount only — addToCart is stable
 
   const handleCheckout = async () => {
-    if (!email || items.length === 0) return;
+    if (!user) { setError('Please log in to checkout.'); return; }
+    if (items.length === 0) return;
 
     setLoading(true);
     setError('');
 
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('ar-token') : null;
       const cartItems = items.map(item => ({
         listing_id: item.id,
         quantity: 1
@@ -59,10 +54,10 @@ export default function Cart() {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           items: cartItems,
-          email: email,
           success_url: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${window.location.origin}/cart`
         }),
@@ -175,16 +170,9 @@ export default function Cart() {
                 )}
 
                 <div className="space-y-3">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    className="input"
-                  />
                   <button
                     onClick={handleCheckout}
-                    disabled={!email || loading}
+                    disabled={!user || loading}
                     className="btn-primary w-full justify-center disabled:opacity-50"
                   >
                     {loading ? (

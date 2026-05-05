@@ -73,13 +73,17 @@ export default function Login() {
                 <button
                   className="underline font-medium"
                   onClick={async () => {
-                    await fetch(`${API_URL}/auth/resend-verification`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ email }),
-                    });
-                    setUnverified(false);
-                    setError('Verification email resent — check your inbox.');
+                    try {
+                      await fetch(`${API_URL}/auth/resend-verification`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email }),
+                      });
+                      setUnverified(false);
+                      setError('Verification email resent — check your inbox.');
+                    } catch {
+                      setError('Failed to resend. Please try again.');
+                    }
                   }}
                 >
                   resend it

@@ -128,10 +128,11 @@ export default function CollectionsSection() {
 
   const handleDelete = async (c: CollectionSummary) => {
     if (!confirm(`Delete "${c.name}"? This cannot be undone.`)) return;
-    await fetch(`${API_URL}/collections/${c.slug}`, {
+    const res = await fetch(`${API_URL}/collections/${c.slug}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token()}` },
     });
+    if (!res.ok) { alert('Failed to delete collection. Please try again.'); return; }
     setCollections(prev => prev.filter(x => x.id !== c.id));
     if (expandedSlug === c.slug) setExpandedSlug(null);
   };
@@ -166,10 +167,11 @@ export default function CollectionsSection() {
   };
 
   const handleRemoveItem = async (collSlug: string, itemId: string) => {
-    await fetch(`${API_URL}/collections/${collSlug}/items/${itemId}`, {
+    const res = await fetch(`${API_URL}/collections/${collSlug}/items/${itemId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token()}` },
     });
+    if (!res.ok) { alert('Failed to remove item. Please try again.'); return; }
     await Promise.all([fetchCollections(), fetchDetail(collSlug)]);
   };
 

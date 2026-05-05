@@ -292,9 +292,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         setUser(userData);
         setLocalStorage('ar-user', JSON.stringify(userData));
+      } else if (response.status === 401) {
+        logout();
       }
     } catch {
-      // user remains at current cached state
+      // Network failure — keep cached state, don't log out
     }
   };
 

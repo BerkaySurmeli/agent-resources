@@ -36,7 +36,7 @@ def compute_quality_score(
     if (version or "1.0.0") != "1.0.0":
         score += 10
 
-    if price_cents > 0:
+    if (price_cents or 0) > 0:
         score += 10
 
     if is_verified:

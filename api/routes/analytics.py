@@ -12,7 +12,7 @@ router = APIRouter(prefix="/analytics", tags=["Analytics"])
 @router.post("/listings/{slug}/view")
 async def record_view(slug: str, session = Depends(get_session)):
     """Increment view count for a listing (called client-side on page load)."""
-    session.exec(
+    session.execute(
         text("UPDATE products SET view_count = view_count + 1 WHERE slug = :slug"),
         {"slug": slug}
     )
