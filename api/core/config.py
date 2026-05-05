@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     CLOUDFLARE_API_TOKEN: str = ""
     CLOUDFLARE_ZONE_ID: str = ""
 
+    # Frontend origin — used to build return URLs for Stripe Connect
+    FRONTEND_URL: str = "https://www.shopagentresources.com"
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

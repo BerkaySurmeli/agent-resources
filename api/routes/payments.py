@@ -696,12 +696,12 @@ async def create_connect_account(
         current_user.stripe_status = 'pending'
         session.commit()
 
-        # Create onboarding link
-        base_url = str(request.base_url).rstrip('/')
+        # Create onboarding link — return_url points to frontend, not API
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
         account_link = stripe.AccountLink.create(
             account=account.id,
-            refresh_url=f'{base_url}/payments/connect/refresh',
-            return_url=f'{base_url}/payments/connect/return?account_id={account.id}',
+            refresh_url=f'{frontend_url}/settings?tab=payouts&refresh=1',
+            return_url=f'{frontend_url}/connect/return?account_id={account.id}',
             type='account_onboarding'
         )
 
@@ -776,11 +776,11 @@ async def refresh_connect_link(
         raise HTTPException(status_code=400, detail="No Stripe account found")
 
     try:
-        base_url = str(request.base_url).rstrip('/')
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
         account_link = stripe.AccountLink.create(
             account=current_user.stripe_connect_id,
-            refresh_url=f'{base_url}/payments/connect/refresh',
-            return_url=f'{base_url}/payments/connect/return?account_id={current_user.stripe_connect_id}',
+            refresh_url=f'{frontend_url}/settings?tab=payouts&refresh=1',
+            return_url=f'{frontend_url}/connect/return?account_id={current_user.stripe_connect_id}',
             type='account_onboarding'
         )
 

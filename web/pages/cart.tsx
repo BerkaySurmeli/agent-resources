@@ -169,6 +169,12 @@ export default function Cart() {
                   </div>
                 )}
 
+                {!user && (
+                  <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
+                    <Link href="/login" className="font-medium underline">Log in</Link> to complete your purchase.
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   <button
                     onClick={handleCheckout}

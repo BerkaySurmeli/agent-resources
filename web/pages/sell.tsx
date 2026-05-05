@@ -635,7 +635,7 @@ export default function Sell() {
                     </button>
                     <button
                       onClick={handleSubmit}
-                      disabled={formData.files.length === 0 || !formData.termsAccepted || !hasRequiredFile()}
+                      disabled={submitting || formData.files.length === 0 || !formData.termsAccepted || !hasRequiredFile()}
                       className="btn-primary flex-1 justify-center disabled:opacity-50"
                     >
                       Submit for Security Review

@@ -83,25 +83,22 @@ export default function VerifyEmail() {
       <div className="max-w-md w-full text-center">
         {status === 'loading' && (
           <>
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <h1 className="text-2xl font-semibold text-white mb-2">Verifying your email...</h1>
-            <p className="text-gray-400">Please wait while we verify your email address.</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-terra-500 mx-auto mb-4"></div>
+            <h1 className="text-2xl font-semibold text-ink-900 mb-2">Verifying your email...</h1>
+            <p className="text-ink-500">Please wait while we verify your email address.</p>
           </>
         )}
 
         {status === 'success' && (
           <>
-            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h1 className="text-2xl font-semibold text-white mb-2">Email Verified!</h1>
-            <p className="text-gray-400 mb-6">{message}</p>
-            <Link
-              href="/login"
-              className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            >
+            <h1 className="text-2xl font-semibold text-ink-900 mb-2">Email Verified!</h1>
+            <p className="text-ink-500 mb-6">{message}</p>
+            <Link href="/login" className="btn-primary inline-flex justify-center">
               Sign In
             </Link>
           </>
@@ -109,34 +106,31 @@ export default function VerifyEmail() {
 
         {status === 'error' && (
           <>
-            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <h1 className="text-2xl font-semibold text-white mb-2">Verification Failed</h1>
-            <p className="text-gray-400 mb-6">{message}</p>
+            <h1 className="text-2xl font-semibold text-ink-900 mb-2">Verification Failed</h1>
+            <p className="text-ink-500 mb-6">{message}</p>
             {isExpired && (
               <div className="mb-4">
                 {resendStatus === 'sent' ? (
-                  <p className="text-green-400 text-sm">A new verification email has been sent. Please check your inbox.</p>
+                  <p className="text-green-700 text-sm">A new verification email has been sent. Please check your inbox.</p>
                 ) : resendStatus === 'failed' ? (
-                  <p className="text-red-400 text-sm">Could not resend. Please <Link href="/login" className="underline">log in</Link> and request a new link from your account settings.</p>
+                  <p className="text-red-600 text-sm">Could not resend. Please <Link href="/login" className="underline">log in</Link> and request a new link from your account settings.</p>
                 ) : (
                   <button
                     onClick={handleResend}
                     disabled={resendStatus === 'sending'}
-                    className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 mb-3"
+                    className="btn-primary inline-flex justify-center disabled:opacity-50 mb-3"
                   >
                     {resendStatus === 'sending' ? 'Sending...' : 'Resend verification email'}
                   </button>
                 )}
               </div>
             )}
-            <Link
-              href="/"
-              className="inline-block bg-gray-800 text-gray-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-700 transition-colors border border-gray-700"
-            >
+            <Link href="/" className="btn-secondary inline-flex justify-center">
               Go Home
             </Link>
           </>
