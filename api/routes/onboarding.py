@@ -147,7 +147,8 @@ async def generate_complete_package(
             
             # Ensure README exists
             if not any('README.md' in name for name in zip_file.namelist() if name.startswith(skill_dir)):
-                zip_file.writestr(f"{skill_dir}README.md", f"# {listing.name}\n\n{listing.description or ''}")
+                readme_content = "# " + listing.name + "\n\n" + (listing.description or '')
+                zip_file.writestr(f"{skill_dir}README.md", readme_content)
         
         # 4. Add OpenClaw installer reference (if requested)
         if include_openclaw:
@@ -251,14 +252,14 @@ LATEST_VERSION=$(echo "$VERSION_INFO" | grep -o '"latest_version":"[^"]*"' | cut
 [ -z "$MIN_VERSION" ] && MIN_VERSION="0.1.0"
 [ -z "$LATEST_VERSION" ] && LATEST_VERSION="$MIN_VERSION"
 
-# Function to compare versions
-version_ge() {
-    [ "$(printf '%s\n' "$1" "$2" | sort -V | head -n1)" = "$2" ]
-}
+# Function to compare versions (using sort for version comparison)
+version_ge() (
+    test $(printf '%s' "$1" "$2" | sort -V | head -n1) = "$2"
+)
 
 # Check if OpenClaw is installed and get version
 if command -v openclaw &> /dev/null; then
-    CURRENT_VERSION=$(openclaw --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+    CURRENT_VERSION=$(openclaw --version 2>/dev/null | grep -oE '[0-9]+[.][0-9]+[.][0-9]+' | head -1)
     if [ -z "$CURRENT_VERSION" ]; then
         CURRENT_VERSION="0.0.0"
     fi
@@ -267,7 +268,7 @@ if command -v openclaw &> /dev/null; then
         echo "✅ OpenClaw v$CURRENT_VERSION is up to date (latest: v$LATEST_VERSION)"
     elif version_ge "$CURRENT_VERSION" "$MIN_VERSION"; then
         echo "⚠️  OpenClaw v$CURRENT_VERSION works but v$LATEST_VERSION is available"
-        echo "   Run 'openclaw update' to upgrade, or continue with current version"
+        echo "   Run openclaw update to upgrade, or continue with current version"
     else
         echo "📦 Updating OpenClaw from v$CURRENT_VERSION to v$LATEST_VERSION..."
         if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -359,7 +360,7 @@ $openclawPath = Get-Command openclaw -ErrorAction SilentlyContinue
 if ($openclawPath) {{
     try {{
         $versionOutput = openclaw --version 2>$null
-        $currentVersion = ($versionOutput | Select-String -Pattern '(\d+\.\d+\.\d+)' | Select-Object -First 1).Matches.Groups[1].Value
+        $currentVersion = ($versionOutput | Select-String -Pattern '([0-9]+[.][0-9]+[.][0-9]+)' | Select-Object -First 1).Matches.Groups[1].Value
         if (-not $currentVersion) {{ $currentVersion = "0.0.0" }}
     }} catch {{
         $currentVersion = "0.0.0"
@@ -383,7 +384,7 @@ if ($openclawPath) {{
     
     script += f'''
 # Create skills directory
-$skillsDir = "$env:USERPROFILE\.openclaw\skills"
+$skillsDir = "$env:USERPROFILE/.openclaw/skills"
 New-Item -ItemType Directory -Force -Path $skillsDir | Out-Null
 
 # Install skills
@@ -394,7 +395,7 @@ Write-Host "🤖 Installing {len(listings)} AI agents..." -ForegroundColor Cyan
         safe_name = _shell_safe_name(listing.name)
         script += f'''
 Write-Host "  Installing {safe_name}..." -ForegroundColor Gray
-Copy-Item -Path "skills\{listing.slug}" -Destination "$skillsDir\" -Recurse -Force
+Copy-Item -Path "skills/{listing.slug}" -Destination "$skillsDir/" -Recurse -Force
 '''
 
     script += '''
@@ -417,12 +418,12 @@ WHAT'S INCLUDED:
 '''
     
     if include_openclaw:
-        readme += "- OpenClaw CLI installer\n"
+        readme += "- OpenClaw CLI installer" + "\n"
     
-    readme += f"- {len(listings)} AI agents pre-configured:\n"
+    readme += "- " + str(len(listings)) + " AI agents pre-configured:" + "\n"
     
     for listing in listings:
-        readme += f"  • {listing.name} ({listing.category})\n"
+        readme += "  • " + listing.name + " (" + listing.category + ")" + "\n"
     
     readme += '''
 SETUP INSTRUCTIONS:
@@ -434,8 +435,8 @@ macOS / Linux:
 
 Windows:
 1. Open PowerShell
-2. Navigate to this folder: cd C:\path\to\this\folder
-3. Run: .\setup.ps1
+2. Navigate to this folder: cd C:/path/to/this/folder
+3. Run: ./setup.ps1
 
 AFTER SETUP:
 - OpenClaw will be installed (if not already)
