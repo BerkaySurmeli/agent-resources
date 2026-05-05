@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import Logo from '../components/Logo';
+import { API_URL } from '../lib/api';
 
 // Force dynamic rendering to ensure client-side JavaScript runs
 export const dynamic = 'force-dynamic';
@@ -15,6 +16,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [unverified, setUnverified] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
@@ -23,6 +25,7 @@ export default function Login() {
     e.stopPropagation();
 
     setError('');
+    setUnverified(false);
     setLoading(true);
 
     try {
@@ -30,7 +33,12 @@ export default function Login() {
       const redirect = typeof router.query.redirect === 'string' ? router.query.redirect : '/';
       await router.push(redirect);
     } catch (err: any) {
-      setError(err.message || t.login.invalidCredentials);
+      const msg: string = err.message || t.login.invalidCredentials;
+      if (msg.toLowerCase().includes('verify your email')) {
+        setUnverified(true);
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -58,6 +66,28 @@ export default function Login() {
             </div>
           )}
 
+          {unverified && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg mb-6 text-sm">
+              <p className="font-medium mb-1">Email not verified</p>
+              <p>Check your inbox for a verification link, or{' '}
+                <button
+                  className="underline font-medium"
+                  onClick={async () => {
+                    await fetch(`${API_URL}/auth/resend-verification`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email }),
+                    });
+                    setUnverified(false);
+                    setError('Verification email resent — check your inbox.');
+                  }}
+                >
+                  resend it
+                </button>.
+              </p>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-ink-700 mb-2">
@@ -74,9 +104,14 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-ink-700 mb-2">
-                {t.login.password}
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-ink-700">
+                  {t.login.password}
+                </label>
+                <Link href="/forgot-password" className="text-xs text-terra-600 hover:text-terra-700">
+                  {t.auth.forgotPassword}
+                </Link>
+              </div>
               <input
                 type="password"
                 required

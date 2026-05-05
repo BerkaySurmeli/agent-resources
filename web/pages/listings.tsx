@@ -76,6 +76,14 @@ interface Listing {
   is_verified?: boolean;
   virus_scan_status?: string;
   translation_status?: string;
+  quality_score?: number;
+}
+
+function qualityGrade(score: number): { grade: string; color: string; bg: string; border: string } {
+  if (score >= 80) return { grade: 'A', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' };
+  if (score >= 60) return { grade: 'B', color: 'text-blue-700',    bg: 'bg-blue-50',    border: 'border-blue-200'    };
+  if (score >= 40) return { grade: 'C', color: 'text-amber-700',   bg: 'bg-amber-50',   border: 'border-amber-200'   };
+  return             { grade: 'D', color: 'text-slate-500',   bg: 'bg-slate-50',   border: 'border-slate-200'   };
 }
 
 export default function Listings() {
@@ -257,12 +265,21 @@ export default function Listings() {
                           {listing.seller?.name?.charAt(0).toUpperCase() || '?'}
                         </div>
                       )}
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <h3 className="font-semibold text-ink-900 truncate group-hover:text-terra-600 transition-colors">
                           {listing.name}
                         </h3>
                         <p className="text-xs text-ink-400 truncate">{listing.seller?.name || 'Anonymous'}</p>
                       </div>
+                      {listing.quality_score !== undefined && listing.quality_score > 0 && (() => {
+                        const q = qualityGrade(listing.quality_score);
+                        return (
+                          <span className={`flex-shrink-0 text-xs font-bold px-2 py-0.5 rounded-full border ${q.bg} ${q.color} ${q.border}`}
+                            title={`Quality score: ${listing.quality_score}/100`}>
+                            {q.grade}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
 

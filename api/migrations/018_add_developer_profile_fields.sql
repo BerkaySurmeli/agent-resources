@@ -1,0 +1,10 @@
+-- Add developer profile fields to users table
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS profile_slug VARCHAR(60) DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS bio TEXT DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS website VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS twitter VARCHAR(100) DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS github VARCHAR(100) DEFAULT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_profile_slug ON users(profile_slug)
+    WHERE profile_slug IS NOT NULL;

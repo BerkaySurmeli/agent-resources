@@ -7,16 +7,25 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
+  avatarUrl?: string;
   initials: string;
   isDeveloper: boolean;
   isVerified?: boolean;
+  profileSlug?: string;
+  bio?: string;
+  website?: string;
+  twitter?: string;
+  github?: string;
+  isPro?: boolean;
+  commissionFree?: boolean;
+  commissionFreeUntil?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<User>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, inviteCode?: string) => Promise<void>;
   logout: () => void;
   updateProfile: (data: Partial<User>) => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -164,7 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return userData;
   };
 
-  const signup = async (email: string, password: string, name: string) => {
+  const signup = async (email: string, password: string, name: string, inviteCode?: string) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
@@ -172,7 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await fetch(`${API_URL}/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ email, password, name, ...(inviteCode ? { invite_code: inviteCode } : {}) }),
         signal: controller.signal,
       });
 
@@ -216,13 +225,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const updateProfile = async (data: Partial<User>) => {
-    if (user) {
-      const updated = { ...user, ...data };
-      if (data.name && !data.initials) {
-        updated.initials = getInitials(data.name);
-      }
-      setUser(updated);
+    const token = getLocalStorage('ar-token');
+    if (!token || !user) return;
+
+    const payload: Record<string, string | undefined> = {};
+    if (data.name !== undefined) payload.name = data.name;
+    if (data.bio !== undefined) payload.bio = data.bio;
+    if (data.website !== undefined) payload.website = data.website;
+    if (data.twitter !== undefined) payload.twitter = data.twitter;
+    if (data.github !== undefined) payload.github = data.github;
+    if (data.profileSlug !== undefined) payload.profile_slug = data.profileSlug;
+
+    const response = await fetch(`${API_URL}/auth/profile`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.detail || 'Failed to update profile');
     }
+
+    const saved = await response.json();
+    const updated: User = {
+      ...user,
+      name: saved.name ?? user.name,
+      initials: getInitials(saved.name ?? user.name),
+      bio: saved.bio ?? user.bio,
+      website: saved.website ?? user.website,
+      twitter: saved.twitter ?? user.twitter,
+      github: saved.github ?? user.github,
+      profileSlug: saved.profile_slug ?? user.profileSlug,
+      avatarUrl: saved.avatar_url ?? user.avatarUrl,
+    };
+    setUser(updated);
   };
 
   const refreshUser = async () => {
@@ -243,6 +280,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           initials: getInitials(data.name || data.email.split('@')[0]),
           isDeveloper: data.is_developer,
           isVerified: data.is_verified,
+          avatarUrl: data.avatar_url,
+          profileSlug: data.profile_slug,
+          bio: data.bio,
+          website: data.website,
+          twitter: data.twitter,
+          github: data.github,
+          isPro: data.is_pro,
+          commissionFree: data.commission_free,
+          commissionFreeUntil: data.commission_free_until,
         };
         setUser(userData);
         setLocalStorage('ar-user', JSON.stringify(userData));

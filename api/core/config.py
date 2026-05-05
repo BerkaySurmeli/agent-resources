@@ -8,9 +8,18 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: str = ""
     STRIPE_PUBLISHABLE_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_SUB_WEBHOOK_SECRET: str = ""   # separate webhook secret for subscription events
+    STRIPE_PRO_PRICE_ID: str = ""          # Stripe Price ID for $19/mo Pro plan
+
+    # Launch window: developers who sign up before this date get 6 months free of commission
+    # Format: YYYY-MM-DD  (set to "" to disable)
+    LAUNCH_CUTOFF_DATE: str = "2026-11-05"
 
     # Admin setup key — required to call privileged setup/seed endpoints
     ADMIN_SETUP_KEY: str = ""
+
+    # Shared secret for cron-triggered endpoints (set to a long random string)
+    CRON_SECRET: str = ""
 
     # Resend Email API Configuration
     RESEND_API_KEY: str = ""

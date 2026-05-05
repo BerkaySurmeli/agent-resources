@@ -14,6 +14,7 @@ export default function Cart() {
   const [email, setEmail] = useState(user?.email || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [removingSlug, setRemovingSlug] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.email && !email) {
@@ -24,21 +25,22 @@ export default function Cart() {
   // Restore cart if user navigated back from payment page
   useEffect(() => {
     const pendingCart = sessionStorage.getItem('ar-pending-cart');
-    if (pendingCart) {
-      try {
-        const parsedItems = JSON.parse(pendingCart);
-        parsedItems.forEach((item: any) => {
-          const exists = items.some(i => i.id === item.id || i.slug === item.slug);
-          if (!exists) {
-            addToCart(item);
-          }
-        });
-        sessionStorage.removeItem('ar-pending-cart');
-      } catch {
-        // silently skip malformed pending cart
-      }
+    if (!pendingCart) return;
+    try {
+      const parsedItems = JSON.parse(pendingCart);
+      // Build a Set for O(1) existence checks
+      const existingIds = new Set(items.flatMap(i => [i.id, i.slug].filter(Boolean)));
+      parsedItems.forEach((item: any) => {
+        if (!existingIds.has(item.id) && !existingIds.has(item.slug)) {
+          addToCart(item);
+        }
+      });
+      sessionStorage.removeItem('ar-pending-cart');
+    } catch {
+      // silently skip malformed pending cart
     }
-  }, [addToCart, items]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount only — addToCart is stable
 
   const handleCheckout = async () => {
     if (!email || items.length === 0) return;
@@ -126,10 +128,15 @@ export default function Cart() {
                     <div className="text-right flex-shrink-0">
                       <p className="font-semibold text-ink-900">${Number(item.price).toFixed(2)}</p>
                       <button
-                        onClick={() => removeFromCart(item.slug)}
-                        className="text-sm text-red-500 hover:text-red-600"
+                        onClick={() => {
+                          setRemovingSlug(item.slug);
+                          removeFromCart(item.slug);
+                          setRemovingSlug(null);
+                        }}
+                        disabled={removingSlug === item.slug}
+                        className="text-sm text-red-500 hover:text-red-600 disabled:opacity-50"
                       >
-                        Remove
+                        {removingSlug === item.slug ? 'Removing...' : 'Remove'}
                       </button>
                     </div>
                   </div>

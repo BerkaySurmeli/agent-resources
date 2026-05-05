@@ -3,13 +3,14 @@ from sqlmodel import select, func
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from core.database import get_session
-from models import User, Product, Transaction, Review, AdminUser, Listing
+from models import User, Product, Transaction, Review, AdminUser, Listing, WaitlistEntry
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from fastapi import Request
 from pydantic import BaseModel, EmailStr, Field
 from core.config import settings
 import httpx
+from services.quality import compute_quality_score
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -268,10 +269,8 @@ def get_waitlist(
     admin: AdminUser = Depends(get_current_admin_from_token)
 ):
     """Get all waitlist entries"""
-    from models import WaitlistEntry
-    
     entries = session.exec(select(WaitlistEntry).order_by(WaitlistEntry.created_at.desc())).all()
-    
+
     return {
         "entries": [
             {
@@ -279,6 +278,8 @@ def get_waitlist(
                 "created_at": e.created_at.isoformat() if e.created_at else None,
                 "source": e.source,
                 "developer_code": e.developer_code,
+                "invited_at": e.invited_at.isoformat() if e.invited_at else None,
+                "converted_at": e.converted_at.isoformat() if e.converted_at else None,
             }
             for e in entries
         ],
@@ -498,34 +499,35 @@ def get_all_developers(
     admin: AdminUser = Depends(get_current_admin_from_token)
 ):
     """Get all developers with their stats"""
-    developers = session.exec(select(User).where(User.is_developer == True)).all()
-    
-    result = []
-    for dev in developers:
-        # Get developer's listings
-        listings = session.exec(select(Product).where(Product.owner_id == dev.id)).all()
-        
-        # Calculate total sales and revenue
-        total_sales = 0
-        total_revenue = 0
-        for listing in listings:
-            sales = session.exec(
-                select(func.count(Transaction.id), func.sum(Transaction.amount_cents))
-                .where(Transaction.product_id == listing.id)
-            ).one()
-            total_sales += sales[0] or 0
-            total_revenue += float(sales[1] or 0)
-        
-        result.append({
-            "id": str(dev.id),
-            "name": dev.name,
-            "email": dev.email,
-            "listings": len(listings),
-            "totalSales": total_sales,
-            "revenue": total_revenue / 100,  # Convert cents to dollars
-        })
-    
-    return result
+    from sqlalchemy import func as sa_func
+
+    # Single query: join users → products → transactions, aggregate in DB
+    rows = session.exec(
+        select(
+            User.id,
+            User.name,
+            User.email,
+            func.count(Product.id.distinct()).label("listing_count"),
+            func.count(Transaction.id).label("total_sales"),
+            func.coalesce(func.sum(Transaction.amount_cents), 0).label("total_revenue_cents"),
+        )
+        .outerjoin(Product, Product.owner_id == User.id)
+        .outerjoin(Transaction, Transaction.product_id == Product.id)
+        .where(User.is_developer == True)
+        .group_by(User.id, User.name, User.email)
+    ).all()
+
+    return [
+        {
+            "id": str(row.id),
+            "name": row.name,
+            "email": row.email,
+            "listings": row.listing_count,
+            "totalSales": row.total_sales,
+            "revenue": float(row.total_revenue_cents) / 100,
+        }
+        for row in rows
+    ]
 
 @router.get("/listings")
 def get_all_listings(
@@ -534,50 +536,43 @@ def get_all_listings(
 ):
     """Get all listings with sales stats"""
     from models import Listing
-    
-    listings = session.exec(select(Listing)).all()
-    
-    result = []
-    for listing in listings:
-        # Get sales stats from product if exists
-        sales_count = 0
-        revenue = 0.0
-        if listing.product_id:
-            sales_data = session.exec(
-                select(func.count(Transaction.id), func.sum(Transaction.amount_cents))
-                .where(Transaction.product_id == listing.product_id)
-            ).one()
-            sales_count = sales_data[0] or 0
-            revenue = float(sales_data[1] or 0)
-        
-        profit = revenue * 0.10  # 10% commission
-        
-        # Get reviews from product if exists
-        review_count = 0
-        avg_rating = 0
-        if listing.product_id:
-            reviews = session.exec(select(Review).where(Review.product_id == listing.product_id)).all()
-            review_count = len(reviews)
-            avg_rating = sum(r.rating for r in reviews) / len(reviews) if reviews else 0
-        
-        # Get developer name
-        developer = session.get(User, listing.owner_id)
-        
-        result.append({
-            "id": str(listing.id),
-            "name": listing.name,
-            "developer": developer.name if developer else "Unknown",
-            "price": listing.price_cents / 100,  # Convert cents to dollars
-            "sales": sales_count,
-            "revenue": revenue / 100,
-            "profit": profit / 100,
-            "reviews": review_count,
-            "rating": round(avg_rating, 1),
-            "status": listing.status,
-            "virus_scan_status": listing.virus_scan_status,
-        })
-    
-    return result
+
+    rows = session.exec(
+        select(
+            Listing.id,
+            Listing.name,
+            Listing.price_cents,
+            Listing.status,
+            Listing.virus_scan_status,
+            User.name.label("developer_name"),
+            func.count(Transaction.id.distinct()).label("sales_count"),
+            func.coalesce(func.sum(Transaction.amount_cents), 0).label("revenue_cents"),
+            func.count(Review.id.distinct()).label("review_count"),
+            func.coalesce(func.avg(Review.rating), 0).label("avg_rating"),
+        )
+        .join(User, Listing.owner_id == User.id)
+        .outerjoin(Transaction, Transaction.product_id == Listing.product_id)
+        .outerjoin(Review, Review.product_id == Listing.product_id)
+        .group_by(Listing.id, Listing.name, Listing.price_cents, Listing.status, Listing.virus_scan_status, User.name)
+        .order_by(Listing.id)
+    ).all()
+
+    return [
+        {
+            "id": str(row.id),
+            "name": row.name,
+            "developer": row.developer_name or "Unknown",
+            "price": row.price_cents / 100,
+            "sales": row.sales_count,
+            "revenue": float(row.revenue_cents) / 100,
+            "profit": float(row.revenue_cents) * 0.10 / 100,
+            "reviews": row.review_count,
+            "rating": round(float(row.avg_rating), 1),
+            "status": row.status,
+            "virus_scan_status": row.virus_scan_status,
+        }
+        for row in rows
+    ]
 
 @router.get("/sales")
 def get_all_sales(
@@ -585,27 +580,25 @@ def get_all_sales(
     admin: AdminUser = Depends(get_current_admin_from_token)
 ):
     """Get all sales transactions"""
-    sales = session.exec(
-        select(Transaction).order_by(Transaction.created_at.desc())
+    from sqlmodel.main import SQLModel as _SM
+    rows = session.exec(
+        select(Transaction, Product, User)
+        .join(Product, Transaction.product_id == Product.id, isouter=True)
+        .join(User, Transaction.buyer_id == User.id, isouter=True)
+        .order_by(Transaction.created_at.desc())
     ).all()
-    
-    result = []
-    for sale in sales:
-        # Get product name
-        product = session.get(Product, sale.product_id)
-        # Get buyer email
-        buyer = session.get(User, sale.buyer_id)
-        
-        result.append({
-            "id": str(sale.id),
-            "item": product.name if product else "Unknown",
+
+    return [
+        {
+            "id": str(txn.id),
+            "item": prod.name if prod else "Unknown",
             "buyer": buyer.email if buyer else "Unknown",
-            "amount": float(sale.amount_cents) / 100,
-            "commission": float(sale.platform_fee_cents) / 100,
-            "date": sale.created_at.isoformat() if sale.created_at else None,
-        })
-    
-    return result
+            "amount": float(txn.amount_cents) / 100,
+            "commission": float(txn.platform_fee_cents) / 100,
+            "date": txn.created_at.isoformat() if txn.created_at else None,
+        }
+        for txn, prod, buyer in rows
+    ]
 
 @router.get("/sales/recent")
 def get_recent_sales(
@@ -1111,6 +1104,7 @@ Price: $49 - One-time purchase, lifetime updates"""
             is_active=True,
             is_verified=True,
             download_count=0,
+            quality_score=100,
             created_at=now
         )
         session.add(product)
@@ -1317,23 +1311,31 @@ class RejectListingRequest(BaseModel):
 @router.post("/listings/{listing_id}/approve")
 async def approve_listing(
     listing_id: str,
-    session = Depends(get_session),
-    admin: AdminUser = Depends(get_current_admin_from_token)
+    request: Request,
+    session = Depends(get_session)
 ):
-    """Approve a listing (admin only)"""
+    """Approve a listing — accepts admin JWT or X-Setup-Key header"""
     from models import Listing, Product
     import uuid
-    
+
+    setup_key = request.headers.get("X-Setup-Key")
+    if setup_key:
+        if not settings.ADMIN_SETUP_KEY or setup_key != settings.ADMIN_SETUP_KEY:
+            raise HTTPException(status_code=403, detail="Invalid setup key")
+    elif request.headers.get("Authorization"):
+        get_current_admin_from_token(request=request, session=session)
+    else:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
     try:
         listing_uuid = uuid.UUID(listing_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid listing ID")
-    
+
     listing = session.exec(select(Listing).where(Listing.id == listing_uuid)).first()
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
-    
-    # Approve the listing
+
     listing.status = 'approved'
     listing.virus_scan_status = 'clean'
     listing.scan_completed_at = datetime.utcnow()
@@ -1341,15 +1343,27 @@ async def approve_listing(
         "virustotal": {"status": "clean", "source": "manual_admin"},
         "openclaw_analysis": {"status": "passed"}
     }
-    
-    # Check if product already exists
+
     if listing.product_id:
         product = session.get(Product, listing.product_id)
         if product:
             product.is_active = True
             product.is_verified = True
+            product.quality_score = compute_quality_score(
+                description=listing.description,
+                tags=listing.category_tags,
+                version=getattr(listing, "version", "1.0.0"),
+                price_cents=listing.price_cents,
+                is_verified=True,
+            )
     else:
-        # Create product from listing
+        q_score = compute_quality_score(
+            description=listing.description,
+            tags=listing.category_tags,
+            version=getattr(listing, "version", "1.0.0"),
+            price_cents=listing.price_cents,
+            is_verified=True,
+        )
         product = Product(
             owner_id=listing.owner_id,
             name=listing.name,
@@ -1359,15 +1373,16 @@ async def approve_listing(
             category_tags=listing.category_tags,
             price_cents=listing.price_cents,
             is_active=True,
-            is_verified=True
+            is_verified=True,
+            quality_score=q_score,
         )
         session.add(product)
         session.commit()
         session.refresh(product)
         listing.product_id = product.id
-    
+
     session.commit()
-    
+
     return {
         "message": "Listing approved successfully",
         "listing_id": str(listing.id),
@@ -1407,7 +1422,7 @@ async def reject_listing(
             product.is_active = False
     
     session.commit()
-    
+
     return {
         "message": "Listing rejected",
         "listing_id": str(listing.id),
@@ -1415,58 +1430,49 @@ async def reject_listing(
     }
 
 
-@router.post("/approve-listing/{listing_id}")
-async def approve_listing_manual(
-    listing_id: str,
-    setup_key: str = Header(..., alias="X-Setup-Key"),
-    session = Depends(get_session)
+@router.post("/backfill-quality-scores")
+async def backfill_quality_scores(
+    admin: AdminUser = Depends(get_current_admin_from_token),
+    session = Depends(get_session),
 ):
-    """Manually approve a stuck listing (setup key required)"""
-    from models import Listing, Product
-    import uuid
-
-    if not settings.ADMIN_SETUP_KEY or setup_key != settings.ADMIN_SETUP_KEY:
-        raise HTTPException(status_code=403, detail="Invalid setup key")
-    
-    try:
-        # Get the listing
-        listing = session.exec(select(Listing).where(Listing.id == uuid.UUID(listing_id))).first()
-        if not listing:
-            raise HTTPException(status_code=404, detail="Listing not found")
-        
-        # Approve the listing
-        listing.status = 'approved'
-        listing.virus_scan_status = 'clean'
-        listing.scan_completed_at = datetime.utcnow()
-        listing.scan_results = {
-            "virustotal": {"status": "clean", "source": "manual"},
-            "openclaw_analysis": {"status": "passed"}
-        }
-        
-        # Create product from listing
-        product = Product(
-            owner_id=listing.owner_id,
-            name=listing.name,
-            slug=listing.slug,
-            description=listing.description,
-            category=listing.category.value,
-            category_tags=listing.category_tags,
-            price_cents=listing.price_cents,
-            is_active=True,
-            is_verified=True
+    """One-time backfill: compute quality scores for all existing products."""
+    products = session.exec(select(Product).where(Product.is_active == True)).all()
+    updated = 0
+    for product in products:
+        listing = session.exec(
+            select(Listing).where(Listing.product_id == product.id)
+        ).first()
+        version = getattr(listing, "version", "1.0.0") if listing else "1.0.0"
+        product.quality_score = compute_quality_score(
+            description=product.description or "",
+            tags=product.category_tags or [],
+            version=version,
+            price_cents=product.price_cents,
+            is_verified=product.is_verified,
         )
-        session.add(product)
-        session.commit()
-        session.refresh(product)
-        
-        listing.product_id = product.id
-        session.commit()
-        
-        return {
-            "message": "Listing approved successfully",
-            "listing_id": str(listing.id),
-            "product_id": str(product.id)
-        }
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        updated += 1
+    session.commit()
+    return {"updated": updated}
+
+
+@router.get("/waitlist/invite-stats")
+async def waitlist_invite_stats(
+    admin: AdminUser = Depends(get_current_admin_from_token),
+    session = Depends(get_session),
+):
+    """Waitlist invite funnel: total, invited, converted, conversion rate."""
+    total = session.exec(select(func.count(WaitlistEntry.id))).first() or 0
+    invited = session.exec(
+        select(func.count(WaitlistEntry.id)).where(WaitlistEntry.invited_at != None)
+    ).first() or 0
+    converted = session.exec(
+        select(func.count(WaitlistEntry.id)).where(WaitlistEntry.converted_at != None)
+    ).first() or 0
+    conversion_rate = round(converted / invited * 100, 1) if invited else 0.0
+    return {
+        "total": total,
+        "invited": invited,
+        "pending_invite": total - invited,
+        "converted": converted,
+        "conversion_rate_pct": conversion_rate,
+    }

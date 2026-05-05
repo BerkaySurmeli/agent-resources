@@ -636,3 +636,156 @@ The Agent Resources Team
     except Exception as e:
         print(f"[EMAIL ERROR] Failed to send sale notification: {e}")
         return {"error": str(e)}
+
+
+def send_bonus_notification(to_email: str, developer_name: str, listing_name: str, bonus_amount: float) -> dict:
+    """Notify a developer they earned a referral bonus on their first sale"""
+    if not settings.RESEND_API_KEY:
+        print(f"[EMAIL] Bonus notification (dry run): {to_email} earned ${bonus_amount:.2f} bonus for {listing_name}")
+        return {"id": "dry-run"}
+
+    safe_name = escape(developer_name)
+    safe_listing = escape(listing_name)
+
+    html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
+    {EMAIL_LOGO_HTML}
+
+    <div style="background: #fefce8; border-radius: 12px; padding: 30px; margin-bottom: 20px; border: 1px solid #fde68a;">
+        <h2 style="margin-top: 0; color: #0f172a;">You earned a $20 bonus! 🎉</h2>
+        <p>Hi {safe_name},</p>
+        <p>Your listing <strong>{safe_listing}</strong> just made its first sale — and because you submitted it with a developer code, you've earned a <strong>${bonus_amount:.2f} bonus</strong>.</p>
+
+        <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+            <span style="font-size: 36px; font-weight: bold; color: #16a34a;">${bonus_amount:.2f}</span>
+            <p style="margin: 4px 0 0; color: #64748b; font-size: 14px;">Bonus payout</p>
+        </div>
+
+        <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">
+            This will be included in your next weekly payout alongside your regular earnings.
+        </p>
+    </div>
+
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="https://shopagentresources.com/dashboard" style="display: inline-block; background: #2563eb; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 500;">
+            View Dashboard
+        </a>
+    </div>
+
+    <div style="text-align: center; font-size: 14px; color: #64748b;">
+        <p>Best regards,<br>The Agent Resources Team</p>
+        <p><a href="https://shopagentresources.com" style="color: #2563eb;">shopagentresources.com</a></p>
+    </div>
+</body>
+</html>
+"""
+
+    text_content = f"""
+You earned a $20 bonus!
+
+Hi {developer_name},
+
+Your listing "{listing_name}" just made its first sale — and because you submitted it with a developer code, you've earned a ${bonus_amount:.2f} bonus.
+
+This will be included in your next weekly payout alongside your regular earnings.
+
+View your dashboard: https://shopagentresources.com/dashboard
+
+Best regards,
+The Agent Resources Team
+"""
+
+    try:
+        response = resend.Emails.send({
+            "from": settings.FROM_EMAIL_INFO,
+            "to": [to_email],
+            "subject": f"🎉 You earned a ${bonus_amount:.2f} bonus on {listing_name}!",
+            "html": html_content,
+            "text": text_content,
+            "reply_to": settings.FROM_EMAIL_SUPPORT
+        })
+        print(f"[EMAIL] Bonus notification sent to {to_email}")
+        return response
+    except Exception as e:
+        print(f"[EMAIL ERROR] Failed to send bonus notification: {e}")
+        return {"error": str(e)}
+
+
+def send_waitlist_invite_email(to_email: str, invite_code: str) -> dict:
+    """Send waitlist invite email with unique signup link"""
+    if not settings.RESEND_API_KEY:
+        print(f"[EMAIL] Waitlist invite (dry run): {to_email} code={invite_code}")
+        return {"id": "dry-run"}
+
+    signup_url = f"https://shopagentresources.com/signup?invite={invite_code}"
+
+    html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You're invited to Agent Resources</title>
+</head>
+<body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
+    {EMAIL_LOGO_HTML}
+
+    <div style="background: #f8fafc; border-radius: 12px; padding: 30px; margin-bottom: 20px;">
+        <p style="margin-top: 0;">You're on the list — and your invite is ready.</p>
+        <p>Agent Resources is a marketplace for AI agent components: personas, skills, and MCP servers. You can publish your work and earn from every sale.</p>
+        <p>Use the button below to claim your spot. Your invite link is unique to you and expires after use.</p>
+
+        <div style="text-align: center; margin: 32px 0;">
+            <a href="{signup_url}"
+               style="display: inline-block; background: linear-gradient(135deg, #3549D4, #6470FA); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
+                Create your account →
+            </a>
+        </div>
+
+        <p style="color: #64748b; font-size: 14px;">Or copy this link into your browser:<br>
+           <a href="{signup_url}" style="color: #3549D4;">{signup_url}</a>
+        </p>
+    </div>
+
+    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+        <p style="margin: 0 0 8px; font-weight: 600; color: #1e40af;">Early-access bonus</p>
+        <p style="margin: 0; font-size: 14px; color: #1d4ed8;">Sign up now and keep 100% of every sale for 6 months — no platform commission while you build your catalogue.</p>
+    </div>
+
+    <p style="color: #94a3b8; font-size: 12px; text-align: center;">
+        Agent Resources · <a href="https://shopagentresources.com" style="color: #94a3b8;">shopagentresources.com</a>
+    </p>
+</body>
+</html>"""
+
+    text_content = f"""You're invited to Agent Resources
+
+Your invite link: {signup_url}
+
+Agent Resources is a marketplace for AI agent components — personas, skills, and MCP servers. Sign up now to publish your work and start earning.
+
+Early-access bonus: keep 100% of every sale for 6 months, no platform commission.
+
+Best regards,
+The Agent Resources Team
+"""
+
+    try:
+        response = resend.Emails.send({
+            "from": settings.FROM_EMAIL_INFO,
+            "to": [to_email],
+            "subject": "Your Agent Resources invite is ready",
+            "html": html_content,
+            "text": text_content,
+            "reply_to": settings.FROM_EMAIL_SUPPORT,
+        })
+        print(f"[EMAIL] Waitlist invite sent to {to_email}")
+        return response
+    except Exception as e:
+        print(f"[EMAIL ERROR] Failed to send waitlist invite: {e}")
+        return {"error": str(e)}

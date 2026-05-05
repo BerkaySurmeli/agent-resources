@@ -74,6 +74,7 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
+  const inviteCode = router.query.invite as string | undefined;
 
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
 
@@ -95,7 +96,7 @@ export default function Signup() {
     setError('');
 
     try {
-      await signup(email, password, name);
+      await signup(email, password, name, inviteCode);
       // Show verification message instead of redirecting immediately
       setShowVerificationMessage(true);
     } catch (err: any) {

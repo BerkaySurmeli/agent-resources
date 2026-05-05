@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import Response
 from core.config import settings
 from models import SQLModel
-from routes import waitlist, payments, auth, admin, listings, products, developers, search, contact, admin_metrics, downloads, onboarding
+from routes import waitlist, payments, auth, admin, listings, products, developers, search, contact, admin_metrics, downloads, onboarding, analytics, collections
 import re
 
 @asynccontextmanager
@@ -113,6 +113,8 @@ app.include_router(contact.router)
 app.include_router(admin_metrics.router)
 app.include_router(downloads.router)
 app.include_router(onboarding.router)
+app.include_router(analytics.router)
+app.include_router(collections.router)
 
 @app.get("/health")
 async def health():

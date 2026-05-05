@@ -11,9 +11,11 @@ import ReviewsSection from '../components/settings/ReviewsSection';
 import ListingsSection from '../components/settings/ListingsSection';
 import NotificationsSection from '../components/settings/NotificationsSection';
 import PayoutSection from '../components/settings/PayoutSection';
+import CollectionsSection from '../components/settings/CollectionsSection';
+import PlanSection from '../components/settings/PlanSection';
 import Navbar from '../components/Navbar';
 
-type SettingsTab = 'profile' | 'account' | 'purchases' | 'reviews' | 'listings' | 'notifications' | 'payouts';
+type SettingsTab = 'profile' | 'account' | 'purchases' | 'reviews' | 'listings' | 'notifications' | 'payouts' | 'collections' | 'plan';
 
 interface NavItem {
   id: SettingsTab;
@@ -32,7 +34,7 @@ export default function Settings() {
   useEffect(() => {
     if (router.isReady) {
       const { tab } = router.query;
-      if (tab && ['profile', 'account', 'purchases', 'reviews', 'listings', 'notifications', 'payouts'].includes(tab as string)) {
+      if (tab && ['profile', 'account', 'purchases', 'reviews', 'listings', 'notifications', 'payouts', 'collections', 'plan'].includes(tab as string)) {
         setActiveTab(tab as SettingsTab);
       }
     }
@@ -40,7 +42,7 @@ export default function Settings() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-cream-100 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -48,7 +50,7 @@ export default function Settings() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-cream-100 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-400 mb-4">{t.settings.pleaseSignIn}</p>
           <Link href="/login" className="text-blue-400 hover:text-blue-300">
@@ -124,6 +126,24 @@ export default function Settings() {
         </svg>
       )
     },
+    {
+      id: 'collections',
+      label: 'Collections',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      )
+    },
+    {
+      id: 'plan',
+      label: 'Plan',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+        </svg>
+      )
+    },
   ];
 
   const renderContent = () => {
@@ -142,13 +162,17 @@ export default function Settings() {
         return <NotificationsSection />;
       case 'payouts':
         return <PayoutSection />;
+      case 'collections':
+        return <CollectionsSection />;
+      case 'plan':
+        return <PlanSection />;
       default:
         return <ProfileSection />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen bg-cream-100">
       <Head>
         <title>{t.settings.title} | Agent Resources</title>
       </Head>

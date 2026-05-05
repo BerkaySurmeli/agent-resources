@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Request, UploadFile, File
 from pydantic import BaseModel, EmailStr, Field
 from sqlmodel import select
 from datetime import datetime, timedelta
@@ -6,6 +6,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from collections import defaultdict
 import time
+import os
 from core.database import get_session
 from core.config import settings
 from models import User, AdminUser
@@ -39,6 +40,7 @@ class UserSignup(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
     name: str = Field(min_length=1, max_length=100)
+    invite_code: str | None = None
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -134,14 +136,40 @@ def signup(request: Request, user_data: UserSignup, session = Depends(get_sessio
         import secrets
         verification_token = secrets.token_urlsafe(32)
 
-        # Check if email is in waitlist with developer code
+        # Check if email is in waitlist; optionally consume an invite code
         from models import WaitlistEntry
         waitlist_entry = session.exec(
             select(WaitlistEntry).where(WaitlistEntry.email == user_data.email)
         ).first()
+        # Also accept invite code that may belong to a different waitlist row (e.g. forwarded link)
+        if not waitlist_entry and user_data.invite_code:
+            waitlist_entry = session.exec(
+                select(WaitlistEntry).where(WaitlistEntry.invite_code == user_data.invite_code)
+            ).first()
         developer_code = waitlist_entry.developer_code if waitlist_entry else None
 
-        # Create new user (unverified)
+        # Grant 6-month commission-free window for early signups within launch period
+        commission_free_until = None
+        if settings.LAUNCH_CUTOFF_DATE:
+            try:
+                cutoff = datetime.strptime(settings.LAUNCH_CUTOFF_DATE, "%Y-%m-%d")
+                if datetime.utcnow() < cutoff:
+                    commission_free_until = datetime.utcnow() + timedelta(days=183)
+            except ValueError:
+                pass
+
+        # Send verification email BEFORE committing the user row.
+        # If the email fails we raise immediately and nothing is persisted.
+        try:
+            send_verification_email(user_data.email, user_data.name, verification_token)
+        except Exception as e:
+            print(f"[EMAIL ERROR] Failed to send verification email: {e}")
+            raise HTTPException(
+                status_code=503,
+                detail="Could not send verification email. Please try again or contact support."
+            )
+
+        # Email delivered — now persist everything in one transaction.
         user = User(
             email=user_data.email,
             password_hash=hashed,
@@ -150,24 +178,28 @@ def signup(request: Request, user_data: UserSignup, session = Depends(get_sessio
             is_verified=False,
             verification_token=verification_token,
             verification_sent_at=datetime.utcnow(),
-            developer_code=developer_code  # Copy from waitlist if exists
+            developer_code=developer_code,
+            commission_free_until=commission_free_until,
         )
         session.add(user)
+
+        # Mark waitlist entry as converted and invalidate its invite code
+        if waitlist_entry and waitlist_entry.converted_at is None:
+            waitlist_entry.converted_at = datetime.utcnow()
+            waitlist_entry.invite_code = None  # prevent reuse
+            session.add(waitlist_entry)
+
         session.commit()
         session.refresh(user)
-
-        # Send verification email via Resend
-        try:
-            send_verification_email(user_data.email, user_data.name, verification_token)
-        except Exception as e:
-            print(f"[EMAIL ERROR] Failed to send verification email: {e}")
-            # Don't fail signup if email fails, just log it
 
     except HTTPException:
         session.rollback()
         raise
     except Exception as e:
         session.rollback()
+        err_str = str(e)
+        if "developer_code" in err_str and "unique" in err_str.lower():
+            raise HTTPException(status_code=400, detail="Developer code conflict. Please try again.")
         raise HTTPException(status_code=500, detail="Server error. Please try again.")
 
     # Create token
@@ -198,6 +230,13 @@ def login(request: Request, user_data: UserLogin, session = Depends(get_session)
     # Verify password
     if not verify_password(user_data.password, user.password_hash):
         raise HTTPException(status_code=400, detail="Invalid email or password")
+
+    # Block unverified accounts
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=403,
+            detail="Please verify your email before signing in. Check your inbox for a verification link."
+        )
 
     # Create token
     access_token = create_access_token({"sub": str(user.id)})
@@ -240,13 +279,35 @@ def validate_token(
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
 
+        # Resolve plan status
+        from models import Subscription
+        sub = session.exec(
+            select(Subscription).where(
+                Subscription.user_id == user.id,
+                Subscription.status == "active",
+            )
+        ).first()
+        is_pro = sub is not None
+        commission_free = (
+            user.commission_free_until is not None
+            and user.commission_free_until > datetime.utcnow()
+        )
+
         return {
             "id": str(user.id),
             "email": user.email,
             "name": user.name,
             "is_developer": user.is_developer,
             "avatar_url": user.avatar_url,
-            "is_verified": user.is_verified
+            "is_verified": user.is_verified,
+            "profile_slug": user.profile_slug,
+            "bio": user.bio,
+            "website": user.website,
+            "twitter": user.twitter,
+            "github": user.github,
+            "is_pro": is_pro,
+            "commission_free": commission_free,
+            "commission_free_until": user.commission_free_until.isoformat() if user.commission_free_until else None,
         }
 
     except JWTError:
@@ -267,17 +328,27 @@ def become_developer(
     if current_user.is_developer:
         raise HTTPException(status_code=400, detail="User is already a developer")
 
-    # Generate unique developer code
+    # Generate unique developer code (36^8 ≈ 2.8 trillion combinations; collision is astronomically unlikely)
     code_prefix = "DEV-"
-    code_suffix = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
-    developer_code = f"{code_prefix}{code_suffix}"
-
-    # Check if code already exists (unlikely but possible)
-    existing = session.exec(select(User).where(User.developer_code == developer_code)).first()
-    while existing:
+    for _ in range(10):
         code_suffix = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
         developer_code = f"{code_prefix}{code_suffix}"
-        existing = session.exec(select(User).where(User.developer_code == developer_code)).first()
+        if not session.exec(select(User).where(User.developer_code == developer_code)).first():
+            break
+    else:
+        raise HTTPException(status_code=500, detail="Could not generate a unique developer code. Please try again.")
+
+    # Auto-generate profile_slug from name if not already set
+    if not current_user.profile_slug and current_user.name:
+        import re
+        base_slug = re.sub(r'[^\w\s-]', '', current_user.name.lower())
+        base_slug = re.sub(r'[-\s]+', '-', base_slug).strip('-')[:50]
+        slug = base_slug
+        counter = 1
+        while session.exec(select(User).where(User.profile_slug == slug)).first():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+        current_user.profile_slug = slug
 
     # Update user as developer
     current_user.is_developer = True
@@ -324,45 +395,55 @@ def verify_email(token: str, session = Depends(get_session)):
 
     return {"message": "Email verified successfully"}
 
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr | None = None
+
+
 @router.post("/resend-verification")
-def resend_verification(
+async def resend_verification(
     request: Request,
+    body: ResendVerificationRequest = ResendVerificationRequest(),
     session = Depends(get_session)
 ):
-    """Resend verification email"""
+    """Resend verification email. Accepts either a Bearer token or {email} in the body."""
     _check_rate_limit(request)
+
+    user = None
     auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    token = auth_header.split(" ")[1]
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("sub")
-        user = session.exec(select(User).where(User.id == user_id)).first()
-
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        if user.is_verified:
-            raise HTTPException(status_code=400, detail="Email already verified")
-
-        # Generate new token
-        import secrets
-        user.verification_token = secrets.token_urlsafe(32)
-        user.verification_sent_at = datetime.utcnow()
-        session.commit()
-
-        # Send email
+    if auth_header and auth_header.startswith("Bearer "):
+        token_str = auth_header.split(" ")[1]
         try:
-            send_verification_email(user.email, user.name, user.verification_token)
-            return {"message": "Verification email sent"}
-        except Exception as e:
-            print(f"[EMAIL ERROR] {e}")
-            raise HTTPException(status_code=500, detail="Failed to send verification email. Please try again later.")
+            payload = jwt.decode(token_str, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = payload.get("sub")
+            user = session.exec(select(User).where(User.id == user_id)).first()
+        except JWTError:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    elif body.email:
+        # Accept email in body — always return a generic 200 to avoid user enumeration
+        user = session.exec(select(User).where(User.email == body.email)).first()
+        if not user or user.is_verified:
+            return {"message": "If that address is registered and unverified, a new email has been sent."}
+    else:
+        raise HTTPException(status_code=400, detail="Provide a Bearer token or an email address")
 
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.is_verified:
+        raise HTTPException(status_code=400, detail="Email already verified")
+
+    import secrets
+    new_token = secrets.token_urlsafe(32)
+
+    try:
+        send_verification_email(user.email, user.name, new_token)
+    except Exception as e:
+        print(f"[EMAIL ERROR] {e}")
+        raise HTTPException(status_code=500, detail="Failed to send verification email. Please try again later.")
+
+    user.verification_token = new_token
+    user.verification_sent_at = datetime.utcnow()
+    session.commit()
+    return {"message": "Verification email sent"}
 
 
 @router.post("/change-password")
@@ -383,6 +464,165 @@ def change_password(
     return {"message": "Password updated successfully"}
 
 
+# ── Password reset ────────────────────────────────────────────────────────────
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+@router.post("/forgot-password")
+def forgot_password(request: Request, body: ForgotPasswordRequest, session = Depends(get_session)):
+    """Request a password-reset link. Always returns 200 to prevent user enumeration."""
+    _check_rate_limit(request)
+    user = session.exec(select(User).where(User.email == body.email)).first()
+    if not user:
+        return {"message": "If that address is registered, a reset link has been sent."}
+
+    import secrets
+    token = secrets.token_urlsafe(32)
+
+    from services.email import EmailService
+    try:
+        EmailService.send_password_reset_email(user.email, user.name or user.email.split("@")[0], token)
+    except Exception as e:
+        print(f"[EMAIL ERROR] Password reset email failed: {e}")
+        raise HTTPException(status_code=503, detail="Could not send reset email. Please try again.")
+
+    user.password_reset_token = token
+    user.password_reset_sent_at = datetime.utcnow()
+    session.commit()
+    return {"message": "If that address is registered, a reset link has been sent."}
+
+
+@router.post("/reset-password")
+def reset_password(body: ResetPasswordRequest, session = Depends(get_session)):
+    """Consume a password-reset token and set a new password."""
+    user = session.exec(
+        select(User).where(User.password_reset_token == body.token)
+    ).first()
+
+    if not user or not user.password_reset_sent_at:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset link")
+
+    if (datetime.utcnow() - user.password_reset_sent_at) > timedelta(hours=1):
+        raise HTTPException(status_code=400, detail="Reset link has expired. Please request a new one.")
+
+    user.password_hash = get_password_hash(body.new_password)
+    user.password_reset_token = None
+    user.password_reset_sent_at = None
+    session.commit()
+    return {"message": "Password updated successfully"}
+
+
+class UpdateProfileRequest(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    bio: Optional[str] = Field(default=None, max_length=500)
+    website: Optional[str] = Field(default=None, max_length=255)
+    twitter: Optional[str] = Field(default=None, max_length=100)
+    github: Optional[str] = Field(default=None, max_length=100)
+    profile_slug: Optional[str] = Field(default=None, min_length=2, max_length=60)
+
+
+@router.put("/profile")
+def update_profile(
+    data: UpdateProfileRequest,
+    session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Update user profile fields"""
+    import re
+
+    if data.name is not None:
+        current_user.name = data.name
+
+    if data.bio is not None:
+        current_user.bio = data.bio
+
+    if data.website is not None:
+        current_user.website = data.website or None
+
+    if data.twitter is not None:
+        current_user.twitter = data.twitter or None
+
+    if data.github is not None:
+        current_user.github = data.github or None
+
+    if data.profile_slug is not None:
+        # Sanitize and validate slug
+        slug = re.sub(r'[^\w-]', '-', data.profile_slug.lower()).strip('-')
+        if not slug:
+            raise HTTPException(status_code=400, detail="Invalid profile slug")
+        # Check uniqueness
+        existing = session.exec(
+            select(User).where(User.profile_slug == slug, User.id != current_user.id)
+        ).first()
+        if existing:
+            raise HTTPException(status_code=409, detail="Profile URL is already taken")
+        current_user.profile_slug = slug
+
+    session.commit()
+
+    return {
+        "message": "Profile updated successfully",
+        "profile_slug": current_user.profile_slug,
+        "name": current_user.name,
+        "bio": current_user.bio,
+        "website": current_user.website,
+        "twitter": current_user.twitter,
+        "github": current_user.github,
+        "avatar_url": current_user.avatar_url,
+    }
+
+
+@router.post("/profile/avatar")
+async def upload_avatar(
+    file: UploadFile = File(...),
+    session = Depends(get_session),
+    current_user: User = Depends(get_current_user_from_token)
+):
+    """Upload avatar image — stores to local disk, returns public URL"""
+    import uuid, imghdr
+
+    AVATAR_DIR = os.environ.get("AVATAR_DIR", "/tmp/avatars")
+    MAX_AVATAR_BYTES = 5 * 1024 * 1024  # 5 MB
+    ALLOWED_TYPES = {"jpeg", "png", "gif", "webp"}
+
+    os.makedirs(AVATAR_DIR, exist_ok=True)
+
+    content = await file.read()
+    if len(content) > MAX_AVATAR_BYTES:
+        raise HTTPException(status_code=400, detail="Avatar must be under 5 MB")
+
+    img_type = imghdr.what(None, h=content)
+    if img_type not in ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail=f"Unsupported image type. Use: {', '.join(ALLOWED_TYPES)}")
+
+    filename = f"{uuid.uuid4()}.{img_type}"
+    file_path = os.path.join(AVATAR_DIR, filename)
+
+    with open(file_path, "wb") as f:
+        f.write(content)
+
+    # Remove old avatar file if it was locally stored
+    if current_user.avatar_url and current_user.avatar_url.startswith("/avatars/"):
+        old_path = os.path.join(AVATAR_DIR, os.path.basename(current_user.avatar_url))
+        try:
+            os.remove(old_path)
+        except OSError:
+            pass
+
+    avatar_url = f"/avatars/{filename}"
+    current_user.avatar_url = avatar_url
+    session.commit()
+
+    return {"avatar_url": avatar_url}
+
+
 @router.delete("/account")
 def delete_account(
     session = Depends(get_session),
@@ -399,13 +639,17 @@ def delete_account(
         for review in reviews:
             session.delete(review)
 
-        # Delete user's listings and their translations
+        # Delete user's listings, their translations, and uploaded files
         listings = session.exec(select(Listing).where(Listing.owner_id == user_id)).all()
         for listing in listings:
-            # Delete translations first
             translations = session.exec(select(ListingTranslation).where(ListingTranslation.listing_id == listing.id)).all()
             for t in translations:
                 session.delete(t)
+            if listing.file_path:
+                try:
+                    os.remove(listing.file_path)
+                except OSError:
+                    pass
             session.delete(listing)
 
         # Delete user's products

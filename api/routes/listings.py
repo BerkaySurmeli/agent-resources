@@ -1,5 +1,5 @@
 # Build: 2026-04-16-1226 - Cache bust
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query, BackgroundTasks, Request, Header
 from pydantic import BaseModel
 from sqlmodel import select
 from typing import List, Optional
@@ -18,8 +18,16 @@ import httpx
 import asyncio
 from typing import Dict, Any
 from services.translation import translate_listing, detect_language, SUPPORTED_LANGUAGES
+from services.quality import compute_quality_score
 
 router = APIRouter(prefix="/listings", tags=["Listings"])
+
+def _require_cron_secret(x_cron_secret: str = Header(default="")):
+    """Dependency that validates the X-Cron-Secret header on cron endpoints."""
+    from core.config import settings
+    if not settings.CRON_SECRET or x_cron_secret != settings.CRON_SECRET:
+        raise HTTPException(status_code=401, detail="Invalid or missing cron secret")
+
 
 # Config
 LISTING_FEE_CENTS = 0  # Free for first 500 listings
@@ -40,20 +48,19 @@ class RateLimiter:
         self.lock = asyncio.Lock()
 
     async def acquire(self):
-        async with self.lock:
-            now = datetime.utcnow()
-            # Remove calls outside the period
-            self.calls = [c for c in self.calls if (now - c).total_seconds() < self.period]
-
-            if len(self.calls) >= self.max_calls:
-                # Wait until we can make another call
+        while True:
+            async with self.lock:
+                now = datetime.utcnow()
+                self.calls = [c for c in self.calls if (now - c).total_seconds() < self.period]
+                if len(self.calls) < self.max_calls:
+                    self.calls.append(now)
+                    return
                 oldest = self.calls[0]
                 wait_time = self.period - (now - oldest).total_seconds()
-                if wait_time > 0:
-                    await asyncio.sleep(wait_time)
-                    self.calls = self.calls[1:]
 
-            self.calls.append(now)
+            # Sleep outside the lock so other coroutines can check in
+            if wait_time > 0:
+                await asyncio.sleep(wait_time)
 
 # Global rate limiter: 4 calls per 60 seconds
 vt_rate_limiter = RateLimiter(VIRUSTOTAL_RATE_LIMIT, 60.0)
@@ -75,6 +82,7 @@ class ScanQueue:
             print(f"[SCAN QUEUE] Queue size: {len(self.queue)}, processing: {self.processing}")
             if not self.processing:
                 print(f"[SCAN QUEUE] Starting background processing task")
+                self.processing = True  # Set before spawning to prevent duplicate tasks
                 try:
                     task = asyncio.create_task(self._process_queue())
                     # Add error handling for the task
@@ -93,9 +101,6 @@ class ScanQueue:
 
     async def _process_queue(self):
         print(f"[SCAN QUEUE] _process_queue started")
-        async with self.lock:
-            self.processing = True
-
         try:
             print(f"[SCAN QUEUE] Entering processing loop")
             while True:
@@ -110,8 +115,16 @@ class ScanQueue:
                 await asyncio.sleep(15)  # 15 second delay between scans
         except Exception as e:
             print(f"[SCAN QUEUE] Error: {e}")
+            import traceback
+            traceback.print_exc()
             async with self.lock:
                 self.processing = False
+            # Re-schedule processing if items remain in the queue
+            async with self.lock:
+                has_items = bool(self.queue)
+            if has_items:
+                print(f"[SCAN QUEUE] Restarting processor after crash")
+                asyncio.create_task(self._process_queue())
 
     async def _process_scan(self, task: Dict):
         listing_id = task['listing_id']
@@ -128,7 +141,14 @@ class ScanQueue:
                     vt_result = await scan_with_virustotal(file_path)
                     analysis = analyze_virustotal_results(vt_result)
 
-                    if analysis["is_safe"]:
+                    if analysis["is_safe"] is None:
+                        # Scan timed out — reset to pending_scan so cron job can retry
+                        listing.status = 'pending_scan'
+                        listing.virus_scan_status = 'pending'
+                        listing.scan_results = {"virustotal": {"status": "timeout", "analysis_id": vt_result.get("analysis_id")}}
+                        session.commit()
+                        print(f"[SCAN QUEUE] Listing {listing_id} scan timed out — reset for retry")
+                    elif analysis["is_safe"]:
                         listing.status = 'approved'
                         listing.virus_scan_status = 'clean'
                         listing.scan_completed_at = datetime.utcnow()
@@ -241,8 +261,16 @@ class TranslationQueue:
                 await asyncio.sleep(2)  # 2 second delay between translations
         except Exception as e:
             print(f"[TRANSLATION QUEUE] Error: {e}")
+            import traceback
+            traceback.print_exc()
             async with self.lock:
                 self.processing = False
+            # Re-schedule if items remain
+            async with self.lock:
+                has_items = bool(self.queue)
+            if has_items:
+                print(f"[TRANSLATION QUEUE] Restarting processor after crash")
+                asyncio.create_task(self._process_queue())
 
     async def _process_translation(self, task: Dict):
         listing_id = task['listing_id']
@@ -251,15 +279,18 @@ class TranslationQueue:
         source_lang = task['source_lang']
 
         try:
+            # Mark as translating
             with DBSession(engine) as session:
                 listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
                 if listing:
                     listing.translation_status = 'translating'
                     session.commit()
 
-                print(f"[TRANSLATION] Starting translation for listing {listing_id}")
-                translations = await asyncio.to_thread(translate_listing, name, description, source_lang)
+            print(f"[TRANSLATION] Starting translation for listing {listing_id}")
+            translations = await asyncio.to_thread(translate_listing, name, description, source_lang)
 
+            # Write translations in a fresh session
+            with DBSession(engine) as session:
                 for lang, content in translations.items():
                     translation = ListingTranslation(
                         listing_id=listing_id,
@@ -269,6 +300,7 @@ class TranslationQueue:
                     )
                     session.add(translation)
 
+                listing = session.exec(select(Listing).where(Listing.id == listing_id)).first()
                 if listing:
                     listing.translation_status = 'completed'
                 session.commit()
@@ -297,9 +329,6 @@ async def scan_with_virustotal(file_path: str) -> Dict[str, Any]:
     """
     if not VIRUSTOTAL_API_KEY:
         raise HTTPException(status_code=500, detail="VirusTotal API key not configured")
-
-    # Wait for rate limit
-    await vt_rate_limiter.acquire()
 
     # Calculate file hash
     sha256_hash = hashlib.sha256()
@@ -377,7 +406,7 @@ async def scan_with_virustotal(file_path: str) -> Dict[str, Any]:
 
         # Timeout waiting for analysis
         return {
-            "status": "pending",
+            "status": "timeout",
             "source": "timeout",
             "analysis_id": analysis_id
         }
@@ -387,6 +416,12 @@ def analyze_virustotal_results(vt_result: Dict[str, Any]) -> Dict[str, Any]:
     """
     Analyze VirusTotal results and determine if file is safe.
     """
+    if vt_result.get("status") == "timeout":
+        return {
+            "is_safe": None,  # None = indeterminate, not a rejection
+            "reason": "scan_timeout",
+            "details": vt_result
+        }
     if vt_result.get("status") != "completed":
         return {
             "is_safe": False,
@@ -487,6 +522,7 @@ def generate_slug(name: str) -> str:
 
 def get_unique_slug(session, name: str) -> str:
     """Get unique slug by appending number if needed"""
+    import secrets
     base_slug = generate_slug(name)
     slug = base_slug
     counter = 1
@@ -495,6 +531,8 @@ def get_unique_slug(session, name: str) -> str:
         slug = f"{base_slug}-{counter}"
         counter += 1
 
+    # Append a short random suffix to prevent race conditions between concurrent submissions
+    slug = f"{slug}-{secrets.token_hex(3)}"
     return slug
 
 
@@ -518,20 +556,15 @@ async def create_listing(
     if not current_user.is_verified:
         raise HTTPException(status_code=403, detail="Please verify your email before creating a listing")
 
-    # Validate developer code if provided
-    developer_bonus_applied = False
+    # Validate developer code if provided — stored on the listing, not the user
+    validated_developer_code = None
     if developer_code:
-        # Check if code is valid and not already used by this user
-        from services.email import EmailService
         code_user = session.exec(select(User).where(User.developer_code == developer_code)).first()
         if not code_user:
             raise HTTPException(status_code=400, detail="Invalid developer code")
         if code_user.id == current_user.id:
             raise HTTPException(status_code=400, detail="Cannot use your own developer code")
-        # Store the code for later bonus application on first sale
-        current_user.developer_code_used = developer_code
-        developer_bonus_applied = True
-        session.commit()
+        validated_developer_code = developer_code
 
     ensure_upload_dir()
 
@@ -651,7 +684,9 @@ async def create_listing(
         status='pending_payment' if LISTING_FEE_CENTS > 0 else 'pending_scan',
         virus_scan_status='pending',
         scan_progress=0,
-        translation_progress=0
+        translation_progress=0,
+        developer_code=validated_developer_code,
+        bonus_paid=False,
     )
 
     session.add(listing)
@@ -662,7 +697,7 @@ async def create_listing(
     try:
         from services.email import send_listing_submission_notification
         preview_url = f"https://shopagentresources.com/listings/{listing.slug}"
-        await send_listing_submission_notification(
+        send_listing_submission_notification(
             listing_name=listing.name,
             developer_name=current_user.name or current_user.email.split('@')[0],
             developer_email=current_user.email,
@@ -829,9 +864,11 @@ async def get_public_listings(
             "seller": {
                 "id": str(user.id),
                 "name": user.name or "Anonymous",
-                "avatar_url": user.avatar_url
+                "avatar_url": user.avatar_url,
+                "profile_slug": user.profile_slug
             },
-            "is_verified": product.is_verified if product else False
+            "is_verified": product.is_verified if product else False,
+            "quality_score": product.quality_score if product else 0,
         }]
 
     if category:
@@ -845,12 +882,14 @@ async def get_public_listings(
 
     results = session.exec(query.order_by(Listing.created_at.desc())).all()
 
-    return [
-        {
+    def build_listing_item(l, u, p):
+        name, description = get_listing_content(l, lang)
+        desc_preview = description[:200] + "..." if len(description) > 200 else description
+        return {
             "id": str(l.id),
             "slug": l.slug,
-            "name": get_listing_content(l, lang)[0],
-            "description": get_listing_content(l, lang)[1][:200] + "..." if len(get_listing_content(l, lang)[1]) > 200 else get_listing_content(l, lang)[1],
+            "name": name,
+            "description": desc_preview,
             "category": l.category,
             "price_cents": l.price_cents,
             "tags": l.category_tags,
@@ -860,12 +899,14 @@ async def get_public_listings(
             "seller": {
                 "id": str(u.id),
                 "name": u.name or "Anonymous",
-                "avatar_url": u.avatar_url
+                "avatar_url": u.avatar_url,
+                "profile_slug": u.profile_slug
             },
-            "is_verified": p.is_verified if p else False
+            "is_verified": p.is_verified if p else False,
+            "quality_score": p.quality_score if p else 0,
         }
-        for l, u, p in results
-    ]
+
+    return [build_listing_item(l, u, p) for l, u, p in results]
 
 
 @router.get("/{slug}")
@@ -906,9 +947,11 @@ async def get_listing_detail(
         "seller": {
             "id": str(user.id),
             "name": user.name or "Anonymous",
-            "avatar_url": user.avatar_url
+            "avatar_url": user.avatar_url,
+            "profile_slug": user.profile_slug
         },
-        "is_verified": product.is_verified if product else False
+        "is_verified": product.is_verified if product else False,
+        "quality_score": product.quality_score if product else 0,
     }
 
 
@@ -947,7 +990,7 @@ async def get_listing_reviews(
 @router.post("/{slug}/reviews")
 async def create_listing_review(
     slug: str,
-    rating: int,
+    rating: int = Query(..., ge=1, le=5),
     comment: Optional[str] = None,
     session = Depends(get_session),
     current_user: User = Depends(get_current_user_from_token)
@@ -1027,7 +1070,8 @@ async def pay_listing_fee(
 
 @router.post("/cron/process-pending-scans")
 async def process_pending_scans(
-    session = Depends(get_session)
+    session = Depends(get_session),
+    _: None = Depends(_require_cron_secret),
 ):
     """
     Cron job endpoint to process listings stuck in 'scanning' status.
@@ -1059,7 +1103,13 @@ async def process_pending_scans(
             vt_result = await scan_with_virustotal(listing.file_path)
             analysis = analyze_virustotal_results(vt_result)
 
-            if analysis["is_safe"]:
+            if analysis["is_safe"] is None:
+                # Scan timed out — leave in pending_scan for next cron run
+                listing.status = 'pending_scan'
+                listing.virus_scan_status = 'pending'
+                session.commit()
+                results.append({"id": str(listing.id), "status": "pending_scan", "reason": "scan_timeout"})
+            elif analysis["is_safe"]:
                 # Approve listing
                 listing.status = 'approved'
                 listing.virus_scan_status = 'clean'
@@ -1076,16 +1126,25 @@ async def process_pending_scans(
                 listing.virustotal_report = vt_result.get("data")
 
                 # Create product from listing
+                q_score = compute_quality_score(
+                    description=listing.description,
+                    tags=listing.category_tags,
+                    version=listing.version,
+                    price_cents=listing.price_cents,
+                    is_verified=True,
+                )
+                cat_val = listing.category.value if hasattr(listing.category, 'value') else listing.category
                 product = Product(
                     owner_id=listing.owner_id,
                     name=listing.name,
                     slug=listing.slug,
                     description=listing.description,
-                    category=listing.category,
+                    category=cat_val,
                     category_tags=listing.category_tags,
                     price_cents=listing.price_cents,
                     is_active=True,
-                    is_verified=True
+                    is_verified=True,
+                    quality_score=q_score,
                 )
                 session.add(product)
                 session.commit()
@@ -1200,3 +1259,46 @@ async def toggle_listing_status(
             }
 
     return {"message": "No product associated with this listing"}
+
+
+@router.post("/cron/send-invites")
+async def send_invites(
+    batch: int = 20,
+    session = Depends(get_session),
+    _: None = Depends(_require_cron_secret),
+):
+    """
+    Cron job: pick uninvited waitlist entries, send invite emails, mark invited_at.
+    Call periodically (e.g. every hour) to drip-invite the queue.
+    """
+    import secrets
+    from datetime import datetime as dt
+    from models import WaitlistEntry
+    from services.email import send_waitlist_invite_email
+
+    pending = session.exec(
+        select(WaitlistEntry)
+        .where(WaitlistEntry.invited_at == None)
+        .order_by(WaitlistEntry.created_at)
+        .limit(batch)
+    ).all()
+
+    sent, failed = [], []
+    for entry in pending:
+        code = secrets.token_urlsafe(24)
+        result = send_waitlist_invite_email(entry.email, code)
+        if "error" not in result:
+            entry.invite_code = code
+            entry.invited_at = dt.utcnow()
+            session.add(entry)
+            try:
+                session.commit()  # Commit per-row so a failure doesn't re-send already-invited entries
+                sent.append(entry.email)
+            except Exception as commit_err:
+                session.rollback()
+                print(f"[INVITE] Failed to persist invite for {entry.email}: {commit_err}")
+                failed.append(entry.email)
+        else:
+            failed.append(entry.email)
+
+    return {"sent": len(sent), "failed": len(failed), "emails": sent}

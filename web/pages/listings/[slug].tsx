@@ -12,6 +12,7 @@ interface Seller {
   name: string;
   avatar_url?: string;
   bio?: string;
+  profile_slug?: string;
 }
 
 interface Listing {
@@ -33,6 +34,7 @@ interface Listing {
   seller: Seller;
   is_verified: boolean;
   download_count?: number;
+  quality_score?: number;
   version?: string;
   review_count?: number;
   average_rating?: number;
@@ -88,6 +90,13 @@ const getCategoryIcon = (category: string) => {
 
 const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
+function qualityGrade(score: number): { grade: string; color: string; bg: string; border: string; label: string } {
+  if (score >= 80) return { grade: 'A', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', label: 'High quality' };
+  if (score >= 60) return { grade: 'B', color: 'text-blue-700',    bg: 'bg-blue-50',    border: 'border-blue-200',    label: 'Good quality' };
+  if (score >= 40) return { grade: 'C', color: 'text-amber-700',   bg: 'bg-amber-50',   border: 'border-amber-200',   label: 'Fair quality' };
+  return             { grade: 'D', color: 'text-slate-500',   bg: 'bg-slate-50',   border: 'border-slate-200',   label: 'Basic listing' };
+}
+
 const formatFileSize = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -122,6 +131,7 @@ export default function ListingDetail() {
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [memberCollections, setMemberCollections] = useState<{ slug: string; name: string }[]>([]);
 
   useEffect(() => {
     if (slug) {
@@ -138,6 +148,17 @@ export default function ListingDetail() {
       }
       const data = await response.json();
       setListing(data);
+      if (typeof window !== 'undefined') {
+        const viewKey = `view_pinged_${slug}`;
+        if (!sessionStorage.getItem(viewKey)) {
+          sessionStorage.setItem(viewKey, '1');
+          fetch(`${API_URL}/analytics/listings/${slug}/view`, { method: 'POST' }).catch(() => {});
+        }
+      }
+      fetch(`${API_URL}/collections/by-product/${slug}`)
+        .then(r => r.ok ? r.json() : [])
+        .then(setMemberCollections)
+        .catch(() => {});
     } catch (err: any) {
       setError(err.message || 'Failed to load listing');
     } finally {
@@ -233,6 +254,14 @@ export default function ListingDetail() {
                           Verified
                         </span>
                       )}
+                      {listing.quality_score !== undefined && listing.quality_score > 0 && (() => {
+                        const q = qualityGrade(listing.quality_score);
+                        return (
+                          <span className={`badge border ${q.bg} ${q.color} ${q.border}`} title={`Quality score: ${listing.quality_score}/100`}>
+                            Grade {q.grade} · {q.label}
+                          </span>
+                        );
+                      })()}
                     </div>
                     <span className="text-ink-400 text-sm">Listed {formatDate(listing.created_at)}</span>
                   </div>
@@ -432,7 +461,7 @@ export default function ListingDetail() {
               <div className="card p-6">
                 <h3 className="text-xs font-medium text-ink-400 uppercase tracking-wider mb-4">Developer</h3>
                 <Link
-                  href={`/developers/${listing.seller?.id}`}
+                  href={`/developers/${listing.seller?.profile_slug ?? listing.seller?.id}`}
                   className="flex items-center gap-4 group"
                 >
                   {listing.seller?.avatar_url ? (
@@ -453,6 +482,27 @@ export default function ListingDetail() {
                   </div>
                 </Link>
               </div>
+
+              {/* Collections */}
+              {memberCollections.length > 0 && (
+                <div className="card p-6">
+                  <h3 className="text-xs font-medium text-ink-400 uppercase tracking-wider mb-4">Part of Collections</h3>
+                  <div className="space-y-2">
+                    {memberCollections.map(c => (
+                      <Link
+                        key={c.slug}
+                        href={`/collections/${c.slug}`}
+                        className="flex items-center gap-2 text-sm text-ink-700 hover:text-blue-600 transition-colors group"
+                      >
+                        <svg className="w-4 h-4 text-ink-300 group-hover:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        <span className="truncate">{c.name}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

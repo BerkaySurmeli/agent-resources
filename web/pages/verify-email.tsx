@@ -10,6 +10,8 @@ export default function VerifyEmail() {
   const { token } = router.query;
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
+  const [isExpired, setIsExpired] = useState(false);
+  const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
 
   useEffect(() => {
     if (token) {
@@ -25,7 +27,7 @@ export default function VerifyEmail() {
       if (res.ok) {
         setStatus('success');
         setMessage(data.message);
-        
+
         // Update localStorage to mark user as verified
         // This ensures the verification banner disappears immediately
         if (typeof window !== 'undefined') {
@@ -42,7 +44,11 @@ export default function VerifyEmail() {
         }
       } else {
         setStatus('error');
-        setMessage(data.detail || 'Verification failed');
+        const detail = data.detail || 'Verification failed';
+        setMessage(detail);
+        if (detail === 'Verification link expired') {
+          setIsExpired(true);
+        }
       }
     } catch (err) {
       setStatus('error');
@@ -50,8 +56,26 @@ export default function VerifyEmail() {
     }
   };
 
+  const handleResend = async () => {
+    const authToken = typeof window !== 'undefined' ? localStorage.getItem('ar-token') : null;
+    if (!authToken) {
+      setResendStatus('failed');
+      return;
+    }
+    setResendStatus('sending');
+    try {
+      const res = await fetch(`${API_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      setResendStatus(res.ok ? 'sent' : 'failed');
+    } catch {
+      setResendStatus('failed');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center px-6">
+    <div className="min-h-screen bg-cream-100 flex items-center justify-center px-6">
       <Head>
         <title>Verify Email | Agent Resources</title>
       </Head>
@@ -92,6 +116,23 @@ export default function VerifyEmail() {
             </div>
             <h1 className="text-2xl font-semibold text-white mb-2">Verification Failed</h1>
             <p className="text-gray-400 mb-6">{message}</p>
+            {isExpired && (
+              <div className="mb-4">
+                {resendStatus === 'sent' ? (
+                  <p className="text-green-400 text-sm">A new verification email has been sent. Please check your inbox.</p>
+                ) : resendStatus === 'failed' ? (
+                  <p className="text-red-400 text-sm">Could not resend. Please <Link href="/login" className="underline">log in</Link> and request a new link from your account settings.</p>
+                ) : (
+                  <button
+                    onClick={handleResend}
+                    disabled={resendStatus === 'sending'}
+                    className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 mb-3"
+                  >
+                    {resendStatus === 'sending' ? 'Sending...' : 'Resend verification email'}
+                  </button>
+                )}
+              </div>
+            )}
             <Link
               href="/"
               className="inline-block bg-gray-800 text-gray-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-700 transition-colors border border-gray-700"

@@ -26,20 +26,28 @@ class User(SQLModel, table=True):
     password_hash: Optional[str] = Field(default=None)
     name: Optional[str] = Field(default=None)
     avatar_url: Optional[str] = Field(default=None)
+    profile_slug: Optional[str] = Field(default=None, unique=True, index=True)
+    bio: Optional[str] = Field(default=None)
+    website: Optional[str] = Field(default=None)
+    twitter: Optional[str] = Field(default=None)
+    github: Optional[str] = Field(default=None)
     is_developer: bool = Field(default=False)
     # Email verification
     is_verified: bool = Field(default=False)
     verification_token: Optional[str] = Field(default=None, index=True)
     verification_sent_at: Optional[datetime] = Field(default=None)
+    # Password reset
+    password_reset_token: Optional[str] = Field(default=None, index=True)
+    password_reset_sent_at: Optional[datetime] = Field(default=None)
     # Developer fields
     developer_code: Optional[str] = Field(default=None, unique=True, index=True)
-    developer_code_used: Optional[str] = Field(default=None)  # Code used by this user for bonus
-    first_sale_bonus_paid: bool = Field(default=False)  # Track if $20 bonus was paid
     became_developer_at: Optional[datetime] = Field(default=None)
     stripe_connect_id: Optional[str] = Field(default=None, unique=True)
     stripe_status: str = Field(default="pending")
     stripe_charges_enabled: bool = Field(default=False)
     stripe_payouts_enabled: bool = Field(default=False)
+    # Launch incentive: commission-free until this date (set at signup for early devs)
+    commission_free_until: Optional[datetime] = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Relationships
@@ -78,8 +86,10 @@ class Product(SQLModel, table=True):
     is_active: bool = Field(default=True)
     is_verified: bool = Field(default=False)
     download_count: int = Field(default=0)
+    view_count: int = Field(default=0)
+    quality_score: int = Field(default=0)
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
     # Relationships
     owner: User = Relationship(back_populates="products")
     versions: List["Version"] = Relationship(back_populates="product")
@@ -162,15 +172,34 @@ class Review(SQLModel, table=True):
 # 7. WAITLIST
 class WaitlistEntry(SQLModel, table=True):
     __tablename__ = "waitlist"
-    
+
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     email: str = Field(unique=True, index=True)
     source: str = Field(default="website")  # where they signed up
     developer_code: Optional[str] = Field(default=None, unique=True)  # Developer incentive code
+    invite_code: Optional[str] = Field(default=None, unique=True)
+    invited_at: Optional[datetime] = Field(default=None)
+    converted_at: Optional[datetime] = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
-# 8. LISTING (for seller submissions with security scanning)
+# 8. SUBSCRIPTION (Pro plan — zero-commission)
+class Subscription(SQLModel, table=True):
+    __tablename__ = "subscriptions"
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    user_id: UUID = Field(foreign_key="users.id", unique=True)
+    stripe_subscription_id: str = Field(unique=True, index=True)
+    stripe_customer_id: Optional[str] = Field(default=None)
+    status: str = Field(default="active")   # active, canceled, past_due
+    current_period_end: Optional[datetime] = Field(default=None)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    user: User = Relationship()
+
+
+# 9b. LISTING (for seller submissions with security scanning)
 class ListingStatus(str, Enum):
     PENDING_PAYMENT = "pending_payment"  # Waiting for listing fee
     PENDING_SCAN = "pending_scan"        # Payment received, waiting for security scan
@@ -221,6 +250,10 @@ class Listing(SQLModel, table=True):
     payment_intent_id: Optional[str] = Field(default=None)
     payment_status: str = Field(default="pending")  # pending, succeeded, failed
     
+    # Developer incentive code (optional, attached at listing creation)
+    developer_code: Optional[str] = Field(default=None, index=True)
+    bonus_paid: bool = Field(default=False)
+
     # Published product (once approved)
     product_id: Optional[UUID] = Field(default=None, foreign_key="products.id")
     
@@ -233,7 +266,38 @@ class Listing(SQLModel, table=True):
     product: Optional[Product] = Relationship()
     translations: List["ListingTranslation"] = Relationship(back_populates="listing")
 
-# 9. LISTING TRANSLATION (for multilingual support)
+# 9. COLLECTION
+class Collection(SQLModel, table=True):
+    __tablename__ = "collections"
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    owner_id: UUID = Field(foreign_key="users.id")
+    name: str = Field(max_length=120)
+    slug: str = Field(unique=True, index=True, max_length=140)
+    description: Optional[str] = Field(default=None)
+    is_public: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    owner: User = Relationship()
+    items: List["CollectionItem"] = Relationship(back_populates="collection")
+
+
+class CollectionItem(SQLModel, table=True):
+    __tablename__ = "collection_items"
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    collection_id: UUID = Field(foreign_key="collections.id")
+    product_id: UUID = Field(foreign_key="products.id")
+    note: Optional[str] = Field(default=None, max_length=280)
+    position: int = Field(default=0)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    collection: Collection = Relationship(back_populates="items")
+    product: Product = Relationship()
+
+
+# 10. LISTING TRANSLATION (for multilingual support)
 class ListingTranslation(SQLModel, table=True):
     __tablename__ = "listing_translations"
     
