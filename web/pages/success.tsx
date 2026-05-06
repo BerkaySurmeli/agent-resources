@@ -6,6 +6,10 @@ import { useCart } from '../context/CartContext';
 
 import { API_URL } from '../lib/api';
 
+export async function getServerSideProps() {
+  return { props: {} };
+}
+
 export default function Success() {
   const router = useRouter();
   const { session_id } = router.query;
@@ -32,7 +36,10 @@ export default function Success() {
 
   const verifyPurchase = async (sid: string, attempt = 0) => {
     try {
-      const response = await fetch(`${API_URL}/payments/session/${sid}`);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('ar-token') : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const response = await fetch(`${API_URL}/payments/session/${sid}`, { headers });
       const data = await response.json();
 
       if (response.ok) {

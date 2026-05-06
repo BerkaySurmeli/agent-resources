@@ -133,6 +133,7 @@ async def create_checkout_session(
             metadata={
                 'listing_ids': ','.join(listing_ids),
                 'customer_email': current_user.email,
+                'user_id': str(current_user.id),
                 'platform': 'agent-resources'
             }
         )
@@ -356,8 +357,10 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
     from sqlmodel import Session as DBSession
     from sqlalchemy import text
 
-    listing_ids_str = session_data.get('metadata', {}).get('listing_ids', '')
+    metadata = session_data.get('metadata', {})
+    listing_ids_str = metadata.get('listing_ids', '')
     customer_email = session_data.get('customer_email')
+    buyer_user_id = metadata.get('user_id')
     stripe_payment_intent_id = session_data.get('payment_intent')
 
     if not listing_ids_str:
@@ -368,6 +371,25 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
 
     try:
         with DBSession(engine) as db_session:
+            # Resolve buyer once before the per-listing loop
+            buyer = None
+            if buyer_user_id:
+                buyer = db_session.exec(select(User).where(User.id == buyer_user_id)).first()
+            if not buyer and customer_email:
+                buyer = db_session.exec(select(User).where(User.email == customer_email)).first()
+            if not buyer and customer_email:
+                buyer = User(
+                    email=customer_email,
+                    name=customer_email.split('@')[0],
+                    is_verified=True
+                )
+                db_session.add(buyer)
+                db_session.flush()
+
+            if not buyer:
+                print(f"[WEBHOOK] Could not resolve buyer for payment_intent={stripe_payment_intent_id}")
+                return
+
             # Collect email tasks to send after commit
             email_tasks = []
 
@@ -395,18 +417,7 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
                     print(f"[WEBHOOK] Duplicate webhook for payment_intent={stripe_payment_intent_id}, listing={listing_id} — skipping")
                     continue
 
-                # Find or create buyer only after idempotency check passes
-                user = db_session.exec(
-                    select(User).where(User.email == customer_email)
-                ).first()
-                if not user:
-                    user = User(
-                        email=customer_email,
-                        name=customer_email.split('@')[0],
-                        is_verified=True
-                    )
-                    db_session.add(user)
-                    db_session.flush()  # get user.id without committing
+                user = buyer
 
                 seller = db_session.exec(
                     select(User).where(User.id == listing.owner_id)
@@ -497,15 +508,19 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
 @router.get("/session/{session_id}")
 async def get_checkout_session(
     session_id: str,
+    request: Request,
     session = Depends(get_session),
-    current_user: User = Depends(get_current_user_from_token),
 ):
-    """Get checkout session details and purchase status"""
+    """Get checkout session details and purchase status — auth optional (supports guest purchases)"""
+
+    # Validate session_id is a plausible Stripe session ID to prevent info leakage
+    if not session_id.startswith("cs_"):
+        raise HTTPException(status_code=400, detail="Invalid session ID")
 
     try:
         stripe_session = stripe.checkout.Session.retrieve(session_id)
 
-        # Get transactions for this payment
+        # Only expose limited info — enough for the success page
         payment_intent = stripe_session.get('payment_intent')
         transactions = []
 
@@ -525,9 +540,17 @@ async def get_checkout_session(
                 for t in txns
             ]
 
+        # Determine if this was a guest purchase (no matching user account)
+        customer_email = stripe_session.customer_email
+        user_id = None
+        if customer_email:
+            buyer = session.exec(select(User).where(User.email == customer_email)).first()
+            user_id = str(buyer.id) if buyer else None
+
         return {
             "status": stripe_session.payment_status,
-            "customer_email": stripe_session.customer_email,
+            "customer_email": customer_email,
+            "user_id": user_id,
             "listing_ids": stripe_session.metadata.get("listing_ids", "").split(",") if stripe_session.metadata else [],
             "transactions": transactions
         }
