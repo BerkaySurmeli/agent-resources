@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import Logo from '../components/Logo';
@@ -75,8 +75,15 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
   const inviteCode = router.query.invite as string | undefined;
+  const prefillEmail = router.query.email as string | undefined;
 
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
+
+  // Pre-fill email from query param (e.g. coming from guest purchase success page)
+  useEffect(() => {
+    if (prefillEmail && !email) setEmail(prefillEmail);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefillEmail]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import uuid
 import os
 import shutil
-from models import Listing, ListingStatus, ProductCategory, User, Product, ListingTranslation, Transaction
+from models import Listing, ListingStatus, ProductCategory, User, Product, ListingTranslation, Transaction, Review
 from core.database import get_session, engine
 from sqlmodel import Session as DBSession
 from routes.auth import get_current_user_from_token
@@ -936,8 +936,6 @@ async def get_listing_detail(
     session = Depends(get_session)
 ):
     """Get detailed information about a listing"""
-    from models import User, Product
-
     result = session.exec(
         select(Listing, User, Product).join(User, Listing.owner_id == User.id).outerjoin(Product, Listing.product_id == Product.id).where(Listing.slug == slug)
     ).first()
@@ -951,6 +949,31 @@ async def get_listing_detail(
     if listing.status != 'approved':
         raise HTTPException(status_code=404, detail="Listing not found")
 
+    # Aggregate review stats and fetch Claudia's review
+    review_count = 0
+    average_rating = None
+    claudia_review = None
+    if product:
+        reviews_with_users = session.exec(
+            select(Review, User)
+            .outerjoin(User, Review.user_id == User.id)
+            .where(Review.product_id == product.id)
+        ).all()
+        review_count = len(reviews_with_users)
+        if review_count > 0:
+            average_rating = round(sum(r.rating for r, _ in reviews_with_users) / review_count, 1)
+        claudia_entry = next(
+            ((r, u) for r, u in reviews_with_users if u and u.email == 'claudia@agentresources.com'),
+            None
+        )
+        if claudia_entry:
+            cr, _ = claudia_entry
+            claudia_review = {
+                "rating": cr.rating,
+                "comment": cr.comment,
+                "reviewed_at": cr.created_at.isoformat(),
+            }
+
     return {
         "id": str(listing.id),
         "slug": listing.slug,
@@ -963,16 +986,23 @@ async def get_listing_detail(
         "file_size_bytes": listing.file_size_bytes,
         "scan_results": listing.scan_results,
         "virus_scan_status": listing.virus_scan_status,
+        "status": listing.status,
         "translation_status": listing.translation_status,
+        "version": listing.version,
         "created_at": listing.created_at,
         "seller": {
             "id": str(user.id),
             "name": user.name or "Anonymous",
             "avatar_url": user.avatar_url,
+            "bio": user.bio,
             "profile_slug": user.profile_slug
         },
         "is_verified": product.is_verified if product else False,
         "quality_score": product.quality_score if product else 0,
+        "download_count": product.download_count if product else 0,
+        "review_count": review_count,
+        "average_rating": average_rating,
+        "claudia_review": claudia_review,
     }
 
 

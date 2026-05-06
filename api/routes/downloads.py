@@ -13,7 +13,7 @@ from urllib.parse import quote
 
 from core.config import settings
 from core.database import get_session
-from models import User, Product, Transaction, Listing
+from models import User, Product, Transaction, Listing, GuestDownloadToken
 from routes.auth import get_current_user_from_token
 
 router = APIRouter(prefix="/downloads", tags=["Downloads"])
@@ -250,3 +250,55 @@ def format_file_size(size_bytes: int) -> str:
             return f"{size_bytes:.1f} {unit}"
         size_bytes /= 1024.0
     return f"{size_bytes:.1f} TB"
+
+
+@router.get("/guest/{token}")
+async def download_guest_file(
+    token: str,
+    session = Depends(get_session)
+):
+    """Serve a file via permanent guest download token (no auth required)."""
+    if len(token) > 128:
+        raise HTTPException(status_code=400, detail="Invalid token")
+
+    dl_token = session.exec(
+        select(GuestDownloadToken).where(GuestDownloadToken.token == token)
+    ).first()
+
+    if not dl_token:
+        raise HTTPException(status_code=404, detail="Download link not found")
+
+    product = session.exec(select(Product).where(Product.id == dl_token.product_id)).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    listing = session.exec(select(Listing).where(Listing.product_id == product.id)).first()
+    if not listing or not listing.file_path:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    file_path = listing.file_path
+    if not file_path.startswith("/"):
+        file_path = os.path.join(UPLOAD_DIR, file_path)
+
+    real_upload_dir = os.path.realpath(UPLOAD_DIR)
+    real_file_path = os.path.realpath(file_path)
+    if not real_file_path.startswith(real_upload_dir + os.sep):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    if not os.path.exists(real_file_path):
+        raise HTTPException(status_code=404, detail="File not found on server")
+
+    # Record access time
+    dl_token.last_used_at = datetime.utcnow()
+    session.commit()
+
+    filename = os.path.basename(real_file_path)
+    encoded_filename = quote(filename)
+    mime_type = mimetypes.guess_type(real_file_path)[0] or "application/octet-stream"
+
+    return FileResponse(
+        path=real_file_path,
+        filename=filename,
+        media_type=mime_type,
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"}
+    )

@@ -8,9 +8,9 @@ import uuid
 
 from core.config import settings
 from core.database import get_session
-from models import User, Listing, Product, Transaction, ListingStatus, Subscription
+from models import User, Listing, Product, Transaction, ListingStatus, Subscription, GuestDownloadToken
 from routes.auth import get_current_user_from_token
-from services.email import send_purchase_confirmation, send_sale_notification, send_bonus_notification
+from services.email import send_purchase_confirmation, send_sale_notification, send_bonus_notification, send_guest_download_email
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
@@ -52,6 +52,8 @@ class CreateCheckoutRequest(BaseModel):
     items: List[CartItem]
     success_url: str
     cancel_url: str
+    customer_email: Optional[EmailStr] = None  # required when not logged in
+    bundle_discount_cents: Optional[int] = None  # applied by wizard for 3+ item bundles
 
 
 class CheckoutResponse(BaseModel):
@@ -59,50 +61,49 @@ class CheckoutResponse(BaseModel):
     url: str
 
 
+def _get_optional_user(request: Request, session = Depends(get_session)) -> Optional[User]:
+    """Return the authenticated user if a valid token is present, else None."""
+    try:
+        return get_current_user_from_token(request, session)
+    except HTTPException:
+        return None
+
+
 @router.post("/create-checkout-session", response_model=CheckoutResponse)
 async def create_checkout_session(
     request: CreateCheckoutRequest,
-    current_user: User = Depends(get_current_user_from_token),
+    http_request: Request,
     session = Depends(get_session)
 ):
-    """Create Stripe checkout session for cart items using real listings"""
+    """Create Stripe checkout session. Auth optional — guests supply customer_email."""
+
+    current_user: Optional[User] = _get_optional_user(http_request, session)
+
+    # Resolve the email to use for this session
+    buyer_email = current_user.email if current_user else request.customer_email
+    if not buyer_email:
+        raise HTTPException(status_code=400, detail="Email address is required to checkout")
 
     line_items = []
-    total_amount_cents = 0
     listing_ids = []
 
     for cart_item in request.items:
-        # Get listing from database
         listing = session.exec(
             select(Listing).where(Listing.id == cart_item.listing_id)
         ).first()
 
         if not listing:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Listing {cart_item.listing_id} not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Listing {cart_item.listing_id} not found")
 
-        # Check if listing is available for purchase
         if listing.virus_scan_status != 'clean':
-            raise HTTPException(
-                status_code=400,
-                detail=f"Listing '{listing.name}' is not available for purchase (security scan pending)"
-            )
+            raise HTTPException(status_code=400, detail=f"Listing '{listing.name}' is not available for purchase (security scan pending)")
 
         if listing.status != 'approved':
-            raise HTTPException(
-                status_code=400,
-                detail=f"Listing '{listing.name}' is not approved for sale"
-            )
+            raise HTTPException(status_code=400, detail=f"Listing '{listing.name}' is not approved for sale")
 
         if not listing.product_id:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Listing '{listing.name}' is not yet available for purchase"
-            )
+            raise HTTPException(status_code=400, detail=f"Listing '{listing.name}' is not yet available for purchase")
 
-        # Add to line items
         line_items.append({
             'price_data': {
                 'currency': 'usd',
@@ -115,33 +116,46 @@ async def create_checkout_session(
             'quantity': cart_item.quantity,
         })
 
-        total_amount_cents += listing.price_cents * cart_item.quantity
         listing_ids.append(str(listing.id))
 
     if not line_items:
         raise HTTPException(status_code=400, detail="No valid items in cart")
 
+    # Validate and apply bundle discount — cap at 15% of subtotal, require 3+ items,
+    # and ensure the Stripe session total stays above the $0.50 minimum charge
+    subtotal_cents = sum(li['price_data']['unit_amount'] * li['quantity'] for li in line_items)
+    discount_cents = 0
+    if request.bundle_discount_cents and len(line_items) >= 3:
+        max_discount = min(int(subtotal_cents * 0.15), subtotal_cents - 50)
+        discount_cents = min(int(request.bundle_discount_cents), max(0, max_discount))
+        if discount_cents > 0:
+            line_items.append({
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {'name': 'AI Team Bundle Discount (15%)'},
+                    'unit_amount': -discount_cents,
+                },
+                'quantity': 1,
+            })
+
     try:
-        # Create Stripe checkout session
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=line_items,
             mode='payment',
             success_url=request.success_url,
             cancel_url=request.cancel_url,
-            customer_email=current_user.email,
+            customer_email=buyer_email,
             metadata={
                 'listing_ids': ','.join(listing_ids),
-                'customer_email': current_user.email,
-                'user_id': str(current_user.id),
-                'platform': 'agent-resources'
+                'customer_email': buyer_email,
+                'user_id': str(current_user.id) if current_user else '',
+                'platform': 'agent-resources',
+                'bundle_discount_cents': str(discount_cents),
             }
         )
 
-        return {
-            "session_id": checkout_session.id,
-            "url": checkout_session.url
-        }
+        return {"session_id": checkout_session.id, "url": checkout_session.url}
 
     except stripe.error.StripeError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -359,7 +373,12 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
 
     metadata = session_data.get('metadata', {})
     listing_ids_str = metadata.get('listing_ids', '')
-    customer_email = session_data.get('customer_email')
+    # customer_email may live under customer_details (Stripe collects it at checkout)
+    customer_email = (
+        session_data.get('customer_email')
+        or (session_data.get('customer_details') or {}).get('email')
+        or metadata.get('customer_email')
+    )
     buyer_user_id = metadata.get('user_id')
     stripe_payment_intent_id = session_data.get('payment_intent')
 
@@ -381,7 +400,8 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
                 buyer = User(
                     email=customer_email,
                     name=customer_email.split('@')[0],
-                    is_verified=True
+                    is_verified=False,
+                    is_guest=True,
                 )
                 db_session.add(buyer)
                 db_session.flush()
@@ -390,8 +410,12 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
                 print(f"[WEBHOOK] Could not resolve buyer for payment_intent={stripe_payment_intent_id}")
                 return
 
+            is_guest = buyer.is_guest  # snapshot before any mutations in the loop
+
             # Collect email tasks to send after commit
             email_tasks = []
+            # (product_id, listing_name, amount_cents) for each purchased product — used for guest email
+            guest_purchases: list[tuple] = []
 
             for listing_id in listing_ids:
                 listing = db_session.exec(
@@ -478,6 +502,18 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
                         else:
                             print(f"[BONUS] Seller {listing.owner_id} has no active Stripe Connect — bonus will retry when they onboard")
 
+                # Mint a permanent guest download token for non-registered buyers
+                guest_token = None
+                if is_guest and customer_email:
+                    import secrets as _secrets
+                    raw_token = _secrets.token_urlsafe(48)
+                    db_session.add(GuestDownloadToken(
+                        token=raw_token,
+                        buyer_email=customer_email,
+                        product_id=listing.product_id,
+                    ))
+                    guest_token = raw_token
+
                 email_tasks.append((
                     customer_email,
                     seller.email if seller else None,
@@ -485,19 +521,28 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
                     total_amount_cents,
                     seller_amount_cents,
                     bonus_task,
+                    guest_token,
                 ))
+                if guest_token:
+                    guest_purchases.append((listing.product_id, listing.name, total_amount_cents, guest_token))
 
             db_session.commit()
             print(f"[WEBHOOK] Processed payment for {len(listing_ids)} items")
 
             # Schedule emails only after successful commit
-            for buyer_email, seller_email, listing_name, total_cents, seller_cents, bonus_task in email_tasks:
-                background_tasks.add_task(send_purchase_confirmation, buyer_email, listing_name, total_cents / 100)
+            for buyer_email, seller_email, listing_name, total_cents, seller_cents, bonus_task, guest_token in email_tasks:
+                if not guest_token:
+                    # Registered user: standard confirmation email
+                    background_tasks.add_task(send_purchase_confirmation, buyer_email, listing_name, total_cents / 100)
                 if seller_email:
                     background_tasks.add_task(send_sale_notification, seller_email, listing_name, seller_cents / 100)
                 if bonus_task:
                     seller_email_b, seller_name, b_listing_name = bonus_task
                     background_tasks.add_task(send_bonus_notification, seller_email_b, seller_name, b_listing_name, 20.0)
+
+            # Guest: send one consolidated email with all download links
+            if is_guest and customer_email and guest_purchases:
+                background_tasks.add_task(send_guest_download_email, customer_email, guest_purchases)
 
     except Exception as e:
         import traceback
@@ -541,7 +586,11 @@ async def get_checkout_session(
             ]
 
         # Determine if this was a guest purchase (no matching user account)
-        customer_email = stripe_session.customer_email
+        # customer_email may be in customer_details when collected at checkout
+        customer_email = (
+            stripe_session.customer_email
+            or (getattr(stripe_session, 'customer_details', None) or {}).get('email')
+        )
         user_id = None
         if customer_email:
             buyer = session.exec(select(User).where(User.email == customer_email)).first()

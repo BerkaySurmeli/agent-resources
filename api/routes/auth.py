@@ -124,9 +124,9 @@ def get_current_user_from_token(
 def signup(request: Request, user_data: UserSignup, session = Depends(get_session)):
     _check_rate_limit(request)
     try:
-        # Check if user exists
+        # Check if user exists — could be a guest row created by the webhook
         existing = session.exec(select(User).where(User.email == user_data.email)).first()
-        if existing:
+        if existing and not existing.is_guest:
             raise HTTPException(status_code=400, detail="Email already registered")
 
         # Hash password
@@ -169,19 +169,31 @@ def signup(request: Request, user_data: UserSignup, session = Depends(get_sessio
                 detail="Could not send verification email. Please try again or contact support."
             )
 
-        # Email delivered — now persist everything in one transaction.
-        user = User(
-            email=user_data.email,
-            password_hash=hashed,
-            name=user_data.name,
-            is_developer=False,
-            is_verified=False,
-            verification_token=verification_token,
-            verification_sent_at=datetime.utcnow(),
-            developer_code=developer_code,
-            commission_free_until=commission_free_until,
-        )
-        session.add(user)
+        if existing and existing.is_guest:
+            # Upgrade the guest row to a full account — purchase history is preserved
+            existing.password_hash = hashed
+            existing.name = user_data.name
+            existing.is_guest = False
+            existing.is_verified = False
+            existing.verification_token = verification_token
+            existing.verification_sent_at = datetime.utcnow()
+            existing.developer_code = existing.developer_code or developer_code
+            existing.commission_free_until = commission_free_until
+            user = existing
+        else:
+            # Email delivered — now persist everything in one transaction.
+            user = User(
+                email=user_data.email,
+                password_hash=hashed,
+                name=user_data.name,
+                is_developer=False,
+                is_verified=False,
+                verification_token=verification_token,
+                verification_sent_at=datetime.utcnow(),
+                developer_code=developer_code,
+                commission_free_until=commission_free_until,
+            )
+            session.add(user)
 
         # Mark waitlist entry as converted and invalidate its invite code
         if waitlist_entry and waitlist_entry.converted_at is None:
@@ -703,6 +715,7 @@ def get_user_purchases(
     return [
         {
             "id": str(t.id),
+            "product_id": str(p.id),
             "product_name": p.name,
             "product_slug": p.slug,
             "amount_cents": t.amount_cents,

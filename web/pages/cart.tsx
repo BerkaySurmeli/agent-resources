@@ -14,6 +14,20 @@ export default function Cart() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [removingSlug, setRemovingSlug] = useState<string | null>(null);
+  const [guestEmail, setGuestEmail] = useState('');
+  const [bundleDiscount, setBundleDiscount] = useState<{ discountCents: number; itemCount: number } | null>(null);
+
+  // Pick up bundle discount set by the wizard
+  useEffect(() => {
+    const raw = sessionStorage.getItem('ar-bundle-discount');
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      setBundleDiscount(parsed);
+    } catch {
+      // ignore malformed entry
+    }
+  }, []);
 
   // Restore cart if user navigated back from payment page
   useEffect(() => {
@@ -36,7 +50,10 @@ export default function Cart() {
   }, []); // run once on mount only — addToCart is stable
 
   const handleCheckout = async () => {
-    if (!user) { setError('Please log in to checkout.'); return; }
+    if (!user && !guestEmail.trim()) {
+      setError('Please enter your email address to continue.');
+      return;
+    }
     if (items.length === 0) return;
 
     setLoading(true);
@@ -59,7 +76,9 @@ export default function Cart() {
         body: JSON.stringify({
           items: cartItems,
           success_url: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${window.location.origin}/cart`
+          cancel_url: `${window.location.origin}/cart`,
+          ...(!user && { customer_email: guestEmail.trim() }),
+          ...(bundleDiscount ? { bundle_discount_cents: bundleDiscount.discountCents } : {}),
         }),
       });
 
@@ -71,6 +90,7 @@ export default function Cart() {
 
       if (data.url) {
         sessionStorage.setItem('ar-pending-cart', JSON.stringify(items));
+        sessionStorage.removeItem('ar-bundle-discount');
         window.location.href = data.url;
       } else {
         throw new Error('No checkout URL received');
@@ -154,13 +174,27 @@ export default function Cart() {
                     <span>Subtotal ({items.length} items)</span>
                     <span>${Number(total).toFixed(2)}</span>
                   </div>
+                  {bundleDiscount && (
+                    <div className="flex justify-between text-green-700 text-sm font-medium">
+                      <span>Bundle discount (15% off)</span>
+                      <span>−${(bundleDiscount.discountCents / 100).toFixed(2)}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="border-t border-cream-200 pt-4 mb-6">
                   <div className="flex justify-between font-semibold text-ink-900">
                     <span>Total</span>
-                    <span>${Number(total).toFixed(2)}</span>
+                    <span>
+                      {bundleDiscount
+                        ? `$${Math.max(0, total - bundleDiscount.discountCents / 100).toFixed(2)}`
+                        : `$${Number(total).toFixed(2)}`
+                      }
+                    </span>
                   </div>
+                  {bundleDiscount && (
+                    <p className="text-xs text-green-700 mt-1">AI team bundle — discount applied at checkout</p>
+                  )}
                 </div>
 
                 {error && (
@@ -170,15 +204,29 @@ export default function Cart() {
                 )}
 
                 {!user && (
-                  <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
-                    <Link href="/login" className="font-medium underline">Log in</Link> to complete your purchase.
+                  <div className="mb-4 space-y-2">
+                    <label htmlFor="guest-email" className="block text-sm font-medium text-ink-700">
+                      Your email
+                    </label>
+                    <input
+                      id="guest-email"
+                      type="email"
+                      placeholder="you@example.com"
+                      value={guestEmail}
+                      onChange={e => setGuestEmail(e.target.value)}
+                      className="input w-full"
+                      autoComplete="email"
+                    />
+                    <p className="text-xs text-ink-400">
+                      Download link sent here. <Link href="/login" className="underline hover:text-ink-600">Log in</Link> to use your account.
+                    </p>
                   </div>
                 )}
 
                 <div className="space-y-3">
                   <button
                     onClick={handleCheckout}
-                    disabled={!user || loading}
+                    disabled={loading}
                     className="btn-primary w-full justify-center disabled:opacity-50"
                   >
                     {loading ? (

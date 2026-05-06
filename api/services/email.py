@@ -717,6 +717,110 @@ The Agent Resources Team
         return {"error": str(e)}
 
 
+def send_guest_download_email(to_email: str, purchases: list) -> dict:
+    """
+    Send download links to a guest buyer.
+    purchases: list of (product_id, listing_name, amount_cents, token)
+    """
+    if not settings.RESEND_API_KEY:
+        print(f"[EMAIL] Guest download email (dry run): {to_email} — {len(purchases)} items")
+        return {"id": "dry-run"}
+
+    frontend_url = "https://shopagentresources.com"
+    api_url = "https://api.shopagentresources.com"
+    signup_url = f"{frontend_url}/signup?email={escape(to_email)}"
+
+    items_html = ""
+    items_text = ""
+    for _pid, name, amount_cents, token in purchases:
+        download_url = f"{api_url}/downloads/guest/{token}"
+        safe_name = escape(name)
+        amount = amount_cents / 100
+        items_html += f"""
+        <div style="background: white; border-radius: 8px; padding: 20px; margin-bottom: 12px; border: 1px solid #e2e8f0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <span style="font-weight: 600; color: #0f172a;">{safe_name}</span>
+                <span style="color: #64748b; font-size: 14px;">${amount:.2f}</span>
+            </div>
+            <a href="{download_url}"
+               style="display: inline-block; background: #2563eb; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 14px;">
+                ↓ Download {safe_name}
+            </a>
+        </div>"""
+        items_text += f"\n• {name} (${amount:.2f})\n  Download: {download_url}\n"
+
+    html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your downloads are ready</title>
+</head>
+<body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
+    {EMAIL_LOGO_HTML}
+
+    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; text-align: center;">
+        <p style="margin: 0; font-weight: 600; color: #166534; font-size: 16px;">Payment confirmed — your downloads are ready!</p>
+    </div>
+
+    <div style="margin-bottom: 28px;">
+        <p style="margin-top: 0;">Hi there,</p>
+        <p>Thank you for your purchase. Click the button below to download your item(s):</p>
+        {items_html}
+        <p style="font-size: 13px; color: #64748b; margin-top: 16px;">
+            These links are permanent and belong to you — bookmark this email to re-download anytime.
+        </p>
+    </div>
+
+    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 20px 24px; margin-bottom: 24px;">
+        <p style="margin: 0 0 8px; font-weight: 600; color: #1e40af;">Want to manage your purchases in one place?</p>
+        <p style="margin: 0 0 16px; font-size: 14px; color: #1d4ed8;">
+            Create a free account with this email address and all your purchases will appear automatically in your account — no need to hunt through your inbox.
+        </p>
+        <a href="{signup_url}"
+           style="display: inline-block; background: #2563eb; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 14px;">
+            Create account →
+        </a>
+    </div>
+
+    <div style="text-align: center; font-size: 13px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+        <p>Questions? Reply to this email and we'll help.<br>
+        <a href="{frontend_url}" style="color: #94a3b8;">shopagentresources.com</a></p>
+    </div>
+</body>
+</html>"""
+
+    text_content = f"""Your downloads are ready — Agent Resources
+
+Thank you for your purchase! Your download links are below.
+{items_text}
+These links are permanent — bookmark this email to re-download anytime.
+
+---
+Want to manage your purchases in one place?
+Create a free account with this email and all your purchases appear automatically:
+{signup_url}
+
+Questions? Reply to this email.
+shopagentresources.com
+"""
+
+    try:
+        response = resend.Emails.send({
+            "from": settings.FROM_EMAIL_INFO,
+            "to": [to_email],
+            "subject": "Your downloads are ready — Agent Resources",
+            "html": html_content,
+            "text": text_content,
+            "reply_to": settings.FROM_EMAIL_SUPPORT,
+        })
+        print(f"[EMAIL] Guest download email sent to {to_email} ({len(purchases)} items)")
+        return response
+    except Exception as e:
+        print(f"[EMAIL ERROR] Failed to send guest download email to {to_email}: {e}")
+        return {"error": str(e)}
+
+
 def send_waitlist_invite_email(to_email: str, invite_code: str) -> dict:
     """Send waitlist invite email with unique signup link"""
     if not settings.RESEND_API_KEY:

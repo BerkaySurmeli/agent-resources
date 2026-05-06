@@ -48,6 +48,7 @@ class User(SQLModel, table=True):
     stripe_payouts_enabled: bool = Field(default=False)
     # Launch incentive: commission-free until this date (set at signup for early devs)
     commission_free_until: Optional[datetime] = Field(default=None)
+    is_guest: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Relationships
@@ -181,6 +182,18 @@ class WaitlistEntry(SQLModel, table=True):
     invited_at: Optional[datetime] = Field(default=None)
     converted_at: Optional[datetime] = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# 7b. GUEST DOWNLOAD TOKEN (permanent, emailed after guest purchase)
+class GuestDownloadToken(SQLModel, table=True):
+    __tablename__ = "guest_download_tokens"
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    token: str = Field(unique=True, index=True)
+    buyer_email: str = Field(index=True)
+    product_id: UUID = Field(foreign_key="products.id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_used_at: Optional[datetime] = Field(default=None)
 
 
 # 8. SUBSCRIPTION (Pro plan — zero-commission)

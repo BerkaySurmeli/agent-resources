@@ -51,10 +51,11 @@ export default function Success() {
           setTimeout(() => {
             setRetryCount(attempt + 1);
             verifyPurchase(sid, attempt + 1);
-          }, 2000);
+          }, 2500);
           return;
         }
 
+        // Even if transactions are still processing, show success if Stripe says paid
         setPurchaseData(data);
         setLoading(false);
       } else {
@@ -137,7 +138,10 @@ export default function Success() {
 
               <h1 className="heading-serif text-3xl text-ink-900 mb-4">Payment Successful!</h1>
               <p className="text-ink-500 mb-8">
-                Thank you for your purchase. A confirmation email has been sent to {purchaseData?.customer_email}.
+                {isAnonymous
+                  ? <>Your download link has been sent to <strong>{purchaseData?.customer_email}</strong>. Check your inbox — the link works forever.</>
+                  : <>Thank you for your purchase. A confirmation email has been sent to {purchaseData?.customer_email}.</>
+                }
               </p>
 
               <div className="card p-6 mb-8 text-left">
@@ -147,10 +151,17 @@ export default function Success() {
                     <span>Status</span>
                     <span className="text-green-700 font-medium capitalize">{purchaseData?.status}</span>
                   </div>
-                  <div className="flex justify-between text-ink-500">
-                    <span>Items</span>
-                    <span className="text-ink-900">{purchaseData?.transactions?.length || 0}</span>
-                  </div>
+                  {(purchaseData?.transactions?.length ?? 0) > 0 ? (
+                    <div className="flex justify-between text-ink-500">
+                      <span>Items</span>
+                      <span className="text-ink-900">{purchaseData.transactions.length}</span>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between text-ink-500">
+                      <span>Download</span>
+                      <span className="text-amber-600 text-sm">Processing — check My Purchases in a moment</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -177,15 +188,16 @@ export default function Success() {
               </div>
 
               {isAnonymous && (
-                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-blue-700 text-sm">
-                    <strong>Guest Purchase:</strong> You purchased as a guest. Create an account with <strong>{purchaseData?.customer_email}</strong> to access your downloads anytime.
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-left">
+                  <p className="text-blue-800 text-sm font-medium mb-1">Want your purchases in one place?</p>
+                  <p className="text-blue-700 text-sm mb-3">
+                    Create a free account with <strong>{purchaseData?.customer_email}</strong> and all your purchases will appear automatically — no hunting through your inbox.
                   </p>
                   <Link
-                    href="/signup"
-                    className="text-terra-600 hover:text-terra-700 text-sm mt-2 inline-block font-medium"
+                    href={`/signup?email=${encodeURIComponent(purchaseData?.customer_email || '')}`}
+                    className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg inline-block transition-colors"
                   >
-                    Sign up now →
+                    Create free account →
                   </Link>
                 </div>
               )}

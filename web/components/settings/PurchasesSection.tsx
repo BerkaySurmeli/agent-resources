@@ -53,9 +53,9 @@ export default function PurchasesSection() {
           const fallbackData = await fallbackResponse.json();
           setPurchases(fallbackData.map((p: any) => ({
             transaction_id: p.id,
-            product_id: p.product?.id || '',
-            product_name: p.product_name,
-            product_slug: p.product_slug,
+            product_id: p.product?.id || p.product_id || '',
+            product_name: p.product?.name || p.product_name,
+            product_slug: p.product?.slug || p.product_slug,
             amount_paid_cents: p.amount_cents,
             purchased_at: p.created_at,
             download_available: false,
