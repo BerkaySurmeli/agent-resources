@@ -1307,6 +1307,28 @@ async def run_db_migrations(
             print(f"[MIGRATION] Could not convert virustotal_report to JSONB: {e}")
             results.append(f"virustotal_report conversion skipped: {e}")
         
+        # Guest checkout support (migration 025)
+        session.exec(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_guest BOOLEAN NOT NULL DEFAULT FALSE"))
+        results.append("users.is_guest column added")
+        
+        session.exec(text("""
+            CREATE TABLE IF NOT EXISTS guest_download_tokens (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                token VARCHAR(128) UNIQUE NOT NULL,
+                buyer_email VARCHAR(255) NOT NULL,
+                product_id UUID NOT NULL REFERENCES products(id),
+                created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+                last_used_at TIMESTAMP WITHOUT TIME ZONE
+            )
+        """))
+        results.append("guest_download_tokens table created")
+        
+        session.exec(text("CREATE INDEX IF NOT EXISTS idx_guest_download_tokens_token ON guest_download_tokens(token)"))
+        results.append("idx_guest_download_tokens_token index created")
+        
+        session.exec(text("CREATE INDEX IF NOT EXISTS idx_guest_download_tokens_email ON guest_download_tokens(buyer_email)"))
+        results.append("idx_guest_download_tokens_email index created")
+        
         session.commit()
         return {"message": "Migration completed successfully", "changes": results}
     except Exception as e:
