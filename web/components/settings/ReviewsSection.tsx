@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import Link from 'next/link';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+import { API_URL } from '../../lib/api';
 
 interface Review {
   id: string;
@@ -85,7 +84,7 @@ export default function ReviewsSection() {
         {[1, 2, 3, 4, 5].map((star) => (
           <svg
             key={star}
-            className={`w-4 h-4 ${star <= rating ? 'text-yellow-400' : 'text-gray-600'}`}
+            className={`w-4 h-4 ${star <= rating ? 'text-amber-400' : 'text-cream-300'}`}
             fill="currentColor"
             viewBox="0 0 20 20"
           >
@@ -99,33 +98,30 @@ export default function ReviewsSection() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold text-white mb-2">{t.settings.myReviews}</h2>
-        <p className="text-gray-400">{t.settings.reviewsSubtitle}</p>
+        <h2 className="heading-serif text-2xl text-ink-900 mb-2">{t.settings.myReviews}</h2>
+        <p className="text-ink-500">{t.settings.reviewsSubtitle}</p>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-terra-500"></div>
         </div>
       ) : error ? (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-center">
-          <p className="text-red-400">{error}</p>
+        <div className="bg-red-100 border border-red-200 rounded-lg p-4 text-center">
+          <p className="text-red-700">{error}</p>
         </div>
       ) : reviews.length === 0 ? (
-        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-12 text-center">
-          <div className="w-16 h-16 bg-gray-700/50 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="card p-12 text-center">
+          <div className="w-16 h-16 bg-cream-200 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-white mb-2">{t.settings.noReviews}</h3>
-          <p className="text-gray-400 mb-6 max-w-md mx-auto">
+          <h3 className="text-xl font-semibold text-ink-900 mb-2">{t.settings.noReviews}</h3>
+          <p className="text-ink-500 mb-6 max-w-md mx-auto">
             {t.settings.reviewsSubtitle}
           </p>
-          <Link
-            href="/listings"
-            className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
-          >
+          <Link href="/listings" className="btn-primary inline-flex items-center gap-2">
             {t.settings.browseListings}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -135,26 +131,26 @@ export default function ReviewsSection() {
       ) : (
         <div className="space-y-4">
           {reviews.map((review) => (
-            <div key={review.id} className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6">
+            <div key={review.id} className="card p-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <Link
-                      href={`/products/${review.product_slug}`}
-                      className="font-semibold text-white hover:text-blue-400 transition-colors"
+                      href={`/listings/${review.product_slug}`}
+                      className="font-semibold text-ink-900 hover:text-terra-600 transition-colors"
                     >
                       {review.product_name}
                     </Link>
                     {renderStars(review.rating)}
                   </div>
-                  <p className="text-sm text-gray-400 mb-2">{formatDate(review.created_at)}</p>
+                  <p className="text-sm text-ink-400 mb-2">{formatDate(review.created_at)}</p>
                   {review.comment && (
-                    <p className="text-gray-300">{review.comment}</p>
+                    <p className="text-ink-600">{review.comment}</p>
                   )}
                 </div>
                 <button
                   onClick={() => handleDeleteReview(review.id)}
-                  className="text-red-400 hover:text-red-300 p-2 transition-colors"
+                  className="text-red-500 hover:text-red-600 p-2 transition-colors"
                   title={t.settings.delete}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

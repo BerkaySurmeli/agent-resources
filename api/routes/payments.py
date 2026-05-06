@@ -96,6 +96,12 @@ async def create_checkout_session(
                 detail=f"Listing '{listing.name}' is not approved for sale"
             )
 
+        if not listing.product_id:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Listing '{listing.name}' is not yet available for purchase"
+            )
+
         # Add to line items
         line_items.append({
             'price_data': {

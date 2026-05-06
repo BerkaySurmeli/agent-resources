@@ -9,10 +9,10 @@ import { API_URL } from '../lib/api';
 
 const getCategoryColor = (category: string) => {
   switch (category) {
-    case 'persona': return 'bg-blue-500/20 text-blue-400';
-    case 'skill': return 'bg-purple-500/20 text-purple-400';
-    case 'mcp_server': return 'bg-green-500/20 text-green-400';
-    default: return 'bg-gray-700 text-gray-300';
+    case 'persona': return 'bg-blue-50 text-blue-700 border border-blue-200';
+    case 'skill': return 'bg-purple-50 text-purple-700 border border-purple-200';
+    case 'mcp_server': return 'bg-green-50 text-green-700 border border-green-200';
+    default: return 'bg-cream-200 text-ink-600';
   }
 };
 
@@ -47,12 +47,12 @@ const getCategoryName = (category: string, categories: {id: string, name: string
 
 const getScanStatusColor = (status?: string) => {
   switch (status) {
-    case 'clean': return 'bg-green-500/20 text-green-400';
-    case 'scanning': return 'bg-yellow-500/20 text-yellow-400';
-    case 'pending': return 'bg-gray-500/20 text-gray-400';
-    case 'infected': return 'bg-red-500/20 text-red-400';
-    case 'failed': return 'bg-red-500/20 text-red-400';
-    default: return 'bg-gray-500/20 text-gray-400';
+    case 'clean': return 'bg-green-50 text-green-700 border border-green-200';
+    case 'scanning': return 'bg-yellow-50 text-yellow-700 border border-yellow-200';
+    case 'pending': return 'bg-cream-200 text-ink-500';
+    case 'infected': return 'bg-red-50 text-red-700 border border-red-200';
+    case 'failed': return 'bg-red-50 text-red-700 border border-red-200';
+    default: return 'bg-cream-200 text-ink-500';
   }
 };
 
@@ -83,7 +83,7 @@ function qualityGrade(score: number): { grade: string; color: string; bg: string
   if (score >= 80) return { grade: 'A', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' };
   if (score >= 60) return { grade: 'B', color: 'text-blue-700',    bg: 'bg-blue-50',    border: 'border-blue-200'    };
   if (score >= 40) return { grade: 'C', color: 'text-amber-700',   bg: 'bg-amber-50',   border: 'border-amber-200'   };
-  return             { grade: 'D', color: 'text-slate-500',   bg: 'bg-slate-50',   border: 'border-slate-200'   };
+  return             { grade: 'D', color: 'text-ink-500',    bg: 'bg-cream-100',  border: 'border-cream-200'   };
 }
 
 export default function Listings() {

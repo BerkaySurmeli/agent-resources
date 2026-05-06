@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.shopagentresources.com';
+import { API_URL } from '../../lib/api';
 
 interface NotificationPrefs {
   email_marketing: boolean;
@@ -53,7 +52,7 @@ export default function NotificationsSection() {
   const handleToggle = async (key: keyof NotificationPrefs) => {
     const newPrefs = { ...prefs, [key]: !prefs[key] };
     setPrefs(newPrefs);
-    
+
     setSaving(true);
     setMessage('');
 
@@ -73,7 +72,6 @@ export default function NotificationsSection() {
         setTimeout(() => setMessage(''), 2000);
       } else {
         setMessage(t.common.error);
-        // Revert on error
         setPrefs(prefs);
       }
     } catch (err) {
@@ -142,40 +140,40 @@ export default function NotificationsSection() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold text-white mb-2">{t.settings.notificationPrefs}</h2>
-        <p className="text-gray-400">{t.settings.notificationsSubtitle}</p>
+        <h2 className="heading-serif text-2xl text-ink-900 mb-2">{t.settings.notificationPrefs}</h2>
+        <p className="text-ink-500">{t.settings.notificationsSubtitle}</p>
       </div>
 
       {message && (
-        <div className={`p-4 rounded-lg ${message === t.common.save ? 'bg-green-500/10 border border-green-500/20 text-green-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
+        <div className={`p-4 rounded-lg text-sm ${message === t.common.save ? 'bg-green-100 border border-green-200 text-green-700' : 'bg-red-100 border border-red-200 text-red-700'}`}>
           {message}
         </div>
       )}
 
-      <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden">
+      <div className="card overflow-hidden">
         {notificationOptions.map((option, index) => (
           <div
             key={option.key}
-            className={`flex items-center justify-between p-6 ${index !== notificationOptions.length - 1 ? 'border-b border-gray-700/50' : ''}`}
+            className={`flex items-center justify-between p-6 ${index !== notificationOptions.length - 1 ? 'border-b border-cream-200' : ''}`}
           >
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-gray-700/50 rounded-lg flex items-center justify-center text-gray-400">
+              <div className="w-10 h-10 bg-cream-200 rounded-lg flex items-center justify-center text-ink-500">
                 {option.icon}
               </div>
               <div>
-                <h3 className="font-medium text-white">{option.title}</h3>
-                <p className="text-sm text-gray-400">{option.description}</p>
+                <h3 className="font-medium text-ink-900">{option.title}</h3>
+                <p className="text-sm text-ink-500">{option.description}</p>
               </div>
             </div>
             <button
               onClick={() => handleToggle(option.key)}
               disabled={saving}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 ${
-                prefs[option.key] ? 'bg-blue-600' : 'bg-gray-700'
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-terra-500 focus:ring-offset-2 focus:ring-offset-white ${
+                prefs[option.key] ? 'bg-terra-500' : 'bg-cream-300'
               }`}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow ${
                   prefs[option.key] ? 'translate-x-6' : 'translate-x-1'
                 }`}
               />
@@ -184,17 +182,17 @@ export default function NotificationsSection() {
         ))}
       </div>
 
-      <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-6">
+      <div className="bg-terra-50 border border-terra-200 rounded-2xl p-6">
         <div className="flex items-start gap-4">
-          <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center text-blue-400 flex-shrink-0">
+          <div className="w-10 h-10 bg-terra-100 rounded-lg flex items-center justify-center text-terra-600 flex-shrink-0">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <div>
-            <h3 className="font-medium text-white mb-1">{t.settings.emailNotifications}</h3>
-            <p className="text-sm text-gray-400">
-              {t.settings.emailNotificationsDesc} <strong className="text-white">{user.email}</strong>. 
+            <h3 className="font-medium text-ink-900 mb-1">{t.settings.emailNotifications}</h3>
+            <p className="text-sm text-ink-500">
+              {t.settings.emailNotificationsDesc} <strong className="text-ink-900">{user.email}</strong>.
               {t.settings.important}
             </p>
           </div>

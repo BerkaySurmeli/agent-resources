@@ -94,7 +94,7 @@ function qualityGrade(score: number): { grade: string; color: string; bg: string
   if (score >= 80) return { grade: 'A', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', label: 'High quality' };
   if (score >= 60) return { grade: 'B', color: 'text-blue-700',    bg: 'bg-blue-50',    border: 'border-blue-200',    label: 'Good quality' };
   if (score >= 40) return { grade: 'C', color: 'text-amber-700',   bg: 'bg-amber-50',   border: 'border-amber-200',   label: 'Fair quality' };
-  return             { grade: 'D', color: 'text-slate-500',   bg: 'bg-slate-50',   border: 'border-slate-200',   label: 'Basic listing' };
+  return             { grade: 'D', color: 'text-ink-500',    bg: 'bg-cream-100',  border: 'border-cream-200',   label: 'Basic listing' };
 }
 
 const formatFileSize = (bytes: number) => {

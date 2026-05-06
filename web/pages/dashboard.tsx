@@ -163,7 +163,7 @@ export default function Dashboard() {
     const token = localStorage.getItem('ar-token');
     if (!token) return;
     try {
-      const res = await fetch(`${API_URL}/listings/${listingId}/pay-fee`, {
+      const res = await fetch(`${API_URL}/listings/${listingId}/pay`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -404,7 +404,7 @@ export default function Dashboard() {
                               {t.dashboard.view}
                             </Link>
                             <Link
-                              href={`/dashboard/products/${listing.slug}`}
+                              href={`/listings/${listing.slug}`}
                               className="text-ink-400 hover:text-ink-900 text-sm font-medium"
                             >
                               Manage

@@ -43,7 +43,7 @@ export default function Settings() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-cream-100 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-terra-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -52,8 +52,8 @@ export default function Settings() {
     return (
       <div className="min-h-screen bg-cream-100 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-400 mb-4">{t.settings.pleaseSignIn}</p>
-          <Link href="/login" className="text-blue-400 hover:text-blue-300">
+          <p className="text-ink-500 mb-4">{t.settings.pleaseSignIn}</p>
+          <Link href="/login" className="text-terra-600 hover:text-terra-700">
             {t.settings.signIn} →
           </Link>
         </div>
@@ -183,8 +183,8 @@ export default function Settings() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-semibold text-white">{t.settings.title}</h1>
-            <p className="text-gray-400">{t.settings.subtitle}</p>
+            <h1 className="heading-serif text-3xl text-ink-900">{t.settings.title}</h1>
+            <p className="text-ink-500">{t.settings.subtitle}</p>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-8">
@@ -192,16 +192,16 @@ export default function Settings() {
             <div className="lg:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="w-full bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-4 flex items-center justify-between"
+                className="w-full card p-4 flex items-center justify-between"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 text-ink-600">
                   {navItems.find(item => item.id === activeTab)?.icon}
-                  <span className="font-medium text-white">
+                  <span className="font-medium text-ink-900">
                     {navItems.find(item => item.id === activeTab)?.label}
                   </span>
                 </div>
                 <svg
-                  className={`w-5 h-5 text-gray-400 transition-transform ${isMobileMenuOpen ? 'rotate-180' : ''}`}
+                  className={`w-5 h-5 text-ink-400 transition-transform ${isMobileMenuOpen ? 'rotate-180' : ''}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -212,7 +212,7 @@ export default function Settings() {
 
               {/* Mobile Menu Dropdown */}
               {isMobileMenuOpen && (
-                <div className="mt-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
+                <div className="mt-2 card overflow-hidden">
                   {navItems.map((item) => (
                     <button
                       key={item.id}
@@ -222,8 +222,8 @@ export default function Settings() {
                       }}
                       className={`w-full flex items-center gap-3 px-4 py-3 transition-colors ${
                         activeTab === item.id
-                          ? 'bg-blue-600/20 text-blue-400'
-                          : 'text-gray-300 hover:bg-gray-700/50'
+                          ? 'bg-terra-50 text-terra-600'
+                          : 'text-ink-600 hover:bg-cream-200'
                       }`}
                     >
                       {item.icon}
@@ -236,7 +236,7 @@ export default function Settings() {
 
             {/* Sidebar - Desktop */}
             <aside className="hidden lg:block w-64 flex-shrink-0">
-              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden sticky top-24">
+              <div className="card overflow-hidden sticky top-24">
                 <nav className="p-2">
                   {navItems.map((item) => (
                     <button
@@ -244,8 +244,8 @@ export default function Settings() {
                       onClick={() => setActiveTab(item.id)}
                       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                         activeTab === item.id
-                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                          : 'text-gray-300 hover:bg-gray-700/50 hover:text-white'
+                          ? 'bg-terra-500 text-white shadow-sm'
+                          : 'text-ink-600 hover:bg-cream-200 hover:text-ink-900'
                       }`}
                     >
                       {item.icon}
@@ -255,10 +255,10 @@ export default function Settings() {
                 </nav>
 
                 {/* Quick Actions */}
-                <div className="border-t border-gray-700/50 p-4">
+                <div className="border-t border-cream-200 p-4">
                   <Link
                     href="/dashboard"
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:bg-gray-700/50 hover:text-white transition-all duration-200"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-ink-600 hover:bg-cream-200 hover:text-ink-900 transition-all duration-200"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />

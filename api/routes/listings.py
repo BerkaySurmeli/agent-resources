@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import uuid
 import os
 import shutil
-from models import Listing, ListingStatus, ProductCategory, User, Product, ListingTranslation
+from models import Listing, ListingStatus, ProductCategory, User, Product, ListingTranslation, Transaction
 from core.database import get_session, engine
 from sqlmodel import Session as DBSession
 from routes.auth import get_current_user_from_token
@@ -197,6 +197,16 @@ class ScanQueue:
                             session.commit()
                         except Exception as product_error:
                             print(f"[SCAN QUEUE] Product creation failed for listing {listing_id}: {product_error}")
+                            import traceback
+                            traceback.print_exc()
+                            # Roll back the approved status — listing scan passed but is unbuyable without a product
+                            try:
+                                listing.status = 'pending_scan'
+                                listing.virus_scan_status = 'pending'
+                                session.commit()
+                            except Exception:
+                                pass
+                            return
 
                         await translation_queue.add(listing.id, listing.name, listing.description, listing.original_language)
                         print(f"[SCAN QUEUE] Listing {listing_id} approved")
