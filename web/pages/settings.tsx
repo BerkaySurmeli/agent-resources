@@ -49,14 +49,12 @@ export default function Settings() {
   }
 
   if (!user) {
+    if (typeof window !== 'undefined') {
+      router.replace(`/login?redirect=${encodeURIComponent(router.asPath)}`);
+    }
     return (
       <div className="min-h-screen bg-cream-100 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-ink-500 mb-4">{t.settings.pleaseSignIn}</p>
-          <Link href="/login" className="text-terra-600 hover:text-terra-700">
-            {t.settings.signIn} →
-          </Link>
-        </div>
+        <div className="w-8 h-8 border-2 border-terra-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }

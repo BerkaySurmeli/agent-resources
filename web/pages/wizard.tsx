@@ -13,7 +13,6 @@ const steps = [
   { id: 'orchestrator', title: 'Choose Your Orchestrator', description: 'Pick a project manager to coordinate your AI team' },
   { id: 'team',         title: 'Add Specialists',          description: 'Bring in personas to handle specific domains' },
   { id: 'skills',       title: 'Equip with Skills',        description: 'Add reusable capabilities your agents can call on' },
-  { id: 'mcp',          title: 'Connect MCP Servers',      description: 'Wire up tools: databases, APIs, web search, and more' },
   { id: 'review',       title: 'Review & Checkout',        description: 'Your complete AI team, ready to deploy' },
 ];
 
@@ -130,7 +129,6 @@ export default function Wizard() {
   const [selectedOrchestrator, setSelectedOrchestrator] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam]   = useState<string[]>([]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [selectedMCPs, setSelectedMCPs]   = useState<string[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState('');
@@ -166,11 +164,6 @@ export default function Wizard() {
     l.virus_scan_status === 'clean'
   ), [listings]);
 
-  const mcpServers = useMemo(() => listings.filter(l =>
-    l.category === 'mcp_server' &&
-    l.virus_scan_status === 'clean'
-  ), [listings]);
-
   const toggle = (id: string, list: string[], setter: (v: string[]) => void) => {
     setter(list.includes(id) ? list.filter(x => x !== id) : [...list, id]);
   };
@@ -180,8 +173,7 @@ export default function Wizard() {
     ...orchestrators.filter(o => o.id === selectedOrchestrator),
     ...teamMembers.filter(t => selectedTeam.includes(t.id)),
     ...skills.filter(s => selectedSkills.includes(s.id)),
-    ...mcpServers.filter(m => selectedMCPs.includes(m.id)),
-  ], [selectedOrchestrator, selectedTeam, selectedSkills, selectedMCPs, orchestrators, teamMembers, skills, mcpServers]);
+  ], [selectedOrchestrator, selectedTeam, selectedSkills, orchestrators, teamMembers, skills]);
 
   const subtotalCents = selectedItems.reduce((s, i) => s + i.price_cents, 0);
   const discountCents = selectedItems.length >= BUNDLE_MIN_ITEMS
@@ -340,29 +332,8 @@ export default function Wizard() {
                     )
                 )}
 
-                {/* Step 3 — MCP */}
+                {/* Step 3 — Review */}
                 {currentStep === 3 && (
-                  mcpServers.length === 0
-                    ? <EmptyStep label="MCP servers" />
-                    : (
-                      <>
-                        <div className="grid sm:grid-cols-2 gap-3">
-                          {mcpServers.map(m => (
-                            <ListingCard
-                              key={m.id}
-                              listing={m}
-                              selected={selectedMCPs.includes(m.id)}
-                              onToggle={() => toggle(m.id, selectedMCPs, setSelectedMCPs)}
-                            />
-                          ))}
-                        </div>
-                        <p className="text-xs text-ink-400 mt-4 text-center">Optional — you can skip this step</p>
-                      </>
-                    )
-                )}
-
-                {/* Step 4 — Review */}
-                {currentStep === 4 && (
                   <div className="space-y-5">
                     {selectedItems.length === 0 ? (
                       <div className="text-center py-10 text-ink-400">
@@ -378,7 +349,6 @@ export default function Wizard() {
                           { label: 'Orchestrator', items: orchestrators.filter(o => o.id === selectedOrchestrator) },
                           { label: 'Specialists',  items: teamMembers.filter(t => selectedTeam.includes(t.id)) },
                           { label: 'Skills',       items: skills.filter(s => selectedSkills.includes(s.id)) },
-                          { label: 'MCP Servers',  items: mcpServers.filter(m => selectedMCPs.includes(m.id)) },
                         ].filter(g => g.items.length > 0).map(group => (
                           <div key={group.label}>
                             <p className="text-xs font-medium text-ink-400 uppercase tracking-wider mb-2">{group.label}</p>

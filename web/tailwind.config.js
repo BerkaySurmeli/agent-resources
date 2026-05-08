@@ -57,6 +57,8 @@ module.exports = {
           800: '#92400E',
           900: '#78350F',
         },
+        // Primary brand blue — shorthand alias for terra-500
+        brand: '#4B60EE',
         // Cool secondary muted tones
         warm: {
           50:  '#F7F8FE',
