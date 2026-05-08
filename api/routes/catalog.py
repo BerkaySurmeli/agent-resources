@@ -19,10 +19,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from services.security import scan_manifest
+from services.trust import compute_trust_score, trust_score_dict
 from sqlmodel import func, select
 
 from core.database import get_session
-from models import OAuthClient, Product, Transaction, User
+from models import OAuthClient, Product, Review, Transaction, User
 from routes.oauth import get_current_agent
 
 router = APIRouter(prefix="/v1/catalog", tags=["Catalog"])
@@ -141,6 +142,9 @@ class CatalogListing(BaseModel):
     tags: List[str]
     download_count: int
     quality_score: int
+    trust_score: int
+    trust_grade: str
+    trust_risk: str
     owner_slug: Optional[str]
     created_at: str
 
@@ -151,7 +155,33 @@ class CatalogPage(BaseModel):
     meta: Dict[str, Any]
 
 
-def _listing_response(product: Product, owner_slug: Optional[str]) -> CatalogListing:
+def _fetch_trust_inputs(product: Product, session) -> tuple:
+    """Returns (completed_tx_count, ratings_list) for trust scoring."""
+    tx_count = session.execute(
+        select(func.count(Transaction.id)).where(
+            Transaction.product_id == product.id,
+            Transaction.status == "completed",
+        )
+    ).scalar() or 0
+
+    ratings = session.execute(
+        select(Review.rating).where(Review.product_id == product.id)
+    ).scalars().all()
+
+    return tx_count, list(ratings)
+
+
+def _listing_response(product: Product, owner_slug: Optional[str], session) -> CatalogListing:
+    tx_count, ratings = _fetch_trust_inputs(product, session)
+    ts = compute_trust_score(
+        is_verified=product.is_verified,
+        quality_score=product.quality_score,
+        download_count=product.download_count,
+        created_at=product.created_at,
+        virus_scan_status="",
+        completed_transaction_count=tx_count,
+        ratings=ratings,
+    )
     return CatalogListing(
         qualified_name=_qualified_name(owner_slug, product.slug),
         slug=product.slug,
@@ -163,6 +193,9 @@ def _listing_response(product: Product, owner_slug: Optional[str]) -> CatalogLis
         tags=product.category_tags or [],
         download_count=product.download_count,
         quality_score=product.quality_score,
+        trust_score=ts.score,
+        trust_grade=ts.grade,
+        trust_risk=ts.risk_label,
         owner_slug=owner_slug,
         created_at=product.created_at.isoformat(),
     )
@@ -204,6 +237,7 @@ async def list_catalog(
     q:          Optional[str] = Query(None, description="Free-text search"),
     category:   Optional[str] = Query(None, description="mcp_server | persona | skill"),
     max_price:  Optional[int] = Query(None, description="Max price in cents"),
+    min_trust:  Optional[int] = Query(None, description="Minimum trust score (0-100)"),
     sort:       str           = Query("popular", description="popular | newest | price_asc | price_desc"),
     limit:      int           = Query(20, ge=1, le=50),
     cursor:     Optional[str] = Query(None, description="Opaque pagination cursor"),
@@ -270,7 +304,10 @@ async def list_catalog(
         last_product = items[-1][0]
         next_cursor = _encode_cursor(last_product.created_at, last_product.id)
 
-    data = [_listing_response(p, u.profile_slug if u else None) for p, u in items]
+    data = [_listing_response(p, u.profile_slug if u else None, session) for p, u in items]
+
+    if min_trust is not None:
+        data = [d for d in data if d.trust_score >= min_trust]
 
     total_stmt = (
         select(func.count(Product.id))
@@ -290,7 +327,7 @@ async def list_catalog(
         },
         "meta": {
             "sort":    sort,
-            "filters": {k: v for k, v in {"q": q, "category": category, "max_price": max_price}.items() if v is not None},
+            "filters": {k: v for k, v in {"q": q, "category": category, "max_price": max_price, "min_trust": min_trust}.items() if v is not None},
         },
     })
     return _add_rl_headers(resp, remaining, reset_ts)
@@ -332,18 +369,32 @@ async def scan_listing(
         "command":     manifest.get("command", ""),
         "args":        manifest.get("args", []),
     }
-    result = scan_manifest(scan_target)
+    injection_result = scan_manifest(scan_target)
+
+    tx_count, ratings = _fetch_trust_inputs(product, session)
+    ts = compute_trust_score(
+        is_verified=product.is_verified,
+        quality_score=product.quality_score,
+        download_count=product.download_count,
+        created_at=product.created_at,
+        virus_scan_status="",
+        completed_transaction_count=tx_count,
+        ratings=ratings,
+    )
 
     resp = JSONResponse({
         "slug":       product.slug,
         "name":       product.name,
-        "safe":       result["safe"],
-        "risk_level": result["risk_level"],
-        "findings":   result["findings"],
+        "injection": {
+            "safe":       injection_result["safe"],
+            "risk_level": injection_result["risk_level"],
+            "findings":   injection_result["findings"],
+        },
+        "trust": trust_score_dict(ts),
         "recommendation": (
             "safe to install"
-            if result["safe"]
-            else f"review {len(result['findings'])} finding(s) before installing"
+            if injection_result["safe"] and ts.risk_label in ("low", "medium")
+            else f"review findings before installing"
         ),
     })
     return _add_rl_headers(resp, remaining, reset_ts)
@@ -385,7 +436,7 @@ async def get_catalog_item(
         return resp
 
     product, owner = row
-    data = _listing_response(product, owner.profile_slug if owner else None)
+    data = _listing_response(product, owner.profile_slug if owner else None, session)
 
     manifest_preview = None
     if product.one_click_json:
