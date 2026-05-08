@@ -43,7 +43,9 @@ export default function Success() {
       const data = await response.json();
 
       if (response.ok) {
-        if (data.customer_email && !data.user_id) {
+        // Only mark anonymous if no user_id returned AND the browser has no auth token
+        const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('ar-token');
+        if (data.customer_email && !data.user_id && !hasToken) {
           setIsAnonymous(true);
         }
 
@@ -66,8 +68,9 @@ export default function Success() {
           }, 2000);
           return;
         }
-        setPurchaseData({ status: 'paid', customer_email: 'your email', transactions: [] });
-        setError('');
+        const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('ar-token');
+        if (!hasToken) setIsAnonymous(true);
+        setPurchaseData({ status: 'paid', customer_email: '', transactions: [] });
         setLoading(false);
       }
     } catch (err) {
@@ -78,8 +81,9 @@ export default function Success() {
         }, 2000);
         return;
       }
-      setPurchaseData({ status: 'paid', customer_email: 'your email', transactions: [] });
-      setError('');
+      const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('ar-token');
+      if (!hasToken) setIsAnonymous(true);
+      setPurchaseData({ status: 'paid', customer_email: '', transactions: [] });
       setLoading(false);
     }
   };
