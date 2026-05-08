@@ -598,7 +598,8 @@ async def get_checkout_session(
         stripe_session = stripe.checkout.Session.retrieve(session_id)
 
         # Only expose limited info — enough for the success page
-        payment_intent = stripe_session.get('payment_intent')
+        # stripe_session is a StripeObject — use attribute access, not .get()
+        payment_intent = stripe_session.payment_intent
         transactions = []
 
         if payment_intent:
@@ -619,9 +620,10 @@ async def get_checkout_session(
 
         # Determine if this was a guest purchase (no matching user account)
         # customer_email may be in customer_details when collected at checkout
+        customer_details = getattr(stripe_session, 'customer_details', None)
         customer_email = (
-            stripe_session.customer_email
-            or (getattr(stripe_session, 'customer_details', None) or {}).get('email')
+            getattr(stripe_session, 'customer_email', None)
+            or (customer_details.email if customer_details else None)
         )
         user_id = None
         if customer_email:
@@ -630,11 +632,14 @@ async def get_checkout_session(
             ).scalars().first()
             user_id = str(buyer.id) if (buyer and not buyer.is_guest) else None
 
+        metadata = getattr(stripe_session, 'metadata', None) or {}
+        listing_ids_str = metadata.get('listing_ids', '') if hasattr(metadata, 'get') else getattr(metadata, 'listing_ids', '')
+
         return {
             "status": stripe_session.payment_status,
             "customer_email": customer_email,
             "user_id": user_id,
-            "listing_ids": stripe_session.metadata.get("listing_ids", "").split(",") if stripe_session.metadata else [],
+            "listing_ids": listing_ids_str.split(",") if listing_ids_str else [],
             "transactions": transactions
         }
     except stripe.error.StripeError as e:
