@@ -463,7 +463,8 @@ def change_password(
     current_user: User = Depends(get_current_user_from_token)
 ):
     """Change user password - requires current password verification"""
-    # Verify current password
+    if not current_user.password_hash:
+        raise HTTPException(status_code=400, detail="No password set on this account")
     if not verify_password(request.current_password, current_user.password_hash):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
 
@@ -598,10 +599,30 @@ async def upload_avatar(
     current_user: User = Depends(get_current_user_from_token)
 ):
     """Upload avatar image — stores to local disk, returns public URL"""
-    import uuid, imghdr
+    import uuid
 
     AVATAR_DIR = os.environ.get("AVATAR_DIR", "/tmp/avatars")
     MAX_AVATAR_BYTES = 5 * 1024 * 1024  # 5 MB
+    # Magic-byte signatures for allowed image types
+    _MAGIC: dict[bytes, str] = {
+        b"\xff\xd8\xff": "jpeg",
+        b"\x89PNG\r\n\x1a\n": "png",
+        b"GIF87a": "gif",
+        b"GIF89a": "gif",
+        b"RIFF": "webp",  # checked further below
+    }
+
+    def _detect_image_type(data: bytes) -> Optional[str]:
+        if data[:3] == b"\xff\xd8\xff":
+            return "jpeg"
+        if data[:8] == b"\x89PNG\r\n\x1a\n":
+            return "png"
+        if data[:6] in (b"GIF87a", b"GIF89a"):
+            return "gif"
+        if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+            return "webp"
+        return None
+
     ALLOWED_TYPES = {"jpeg", "png", "gif", "webp"}
 
     os.makedirs(AVATAR_DIR, exist_ok=True)
@@ -610,7 +631,7 @@ async def upload_avatar(
     if len(content) > MAX_AVATAR_BYTES:
         raise HTTPException(status_code=400, detail="Avatar must be under 5 MB")
 
-    img_type = imghdr.what(None, h=content)
+    img_type = _detect_image_type(content)
     if img_type not in ALLOWED_TYPES:
         raise HTTPException(status_code=400, detail=f"Unsupported image type. Use: {', '.join(ALLOWED_TYPES)}")
 
@@ -641,7 +662,7 @@ def delete_account(
     current_user: User = Depends(get_current_user_from_token)
 ):
     """Delete user account and all associated data"""
-    from models import Listing, Product, Transaction, Review, ListingTranslation
+    from models import Listing, Product, Transaction, Review, ListingTranslation, Collection, CollectionItem
 
     try:
         user_id = current_user.id
@@ -650,6 +671,12 @@ def delete_account(
         reviews = session.exec(select(Review).where(Review.user_id == user_id)).all()
         for review in reviews:
             session.delete(review)
+
+        # Delete user's collections and their items to avoid FK violations
+        for coll in session.exec(select(Collection).where(Collection.owner_id == user_id)).all():
+            for ci in session.exec(select(CollectionItem).where(CollectionItem.collection_id == coll.id)).all():
+                session.delete(ci)
+            session.delete(coll)
 
         # Delete user's listings, their translations, and uploaded files
         listings = session.exec(select(Listing).where(Listing.owner_id == user_id)).all()

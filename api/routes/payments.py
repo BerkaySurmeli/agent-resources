@@ -65,7 +65,9 @@ def _get_optional_user(request: Request, session = Depends(get_session)) -> Opti
     """Return the authenticated user if a valid token is present, else None."""
     try:
         return get_current_user_from_token(request, session)
-    except HTTPException:
+    except HTTPException as exc:
+        if exc.status_code == 429:
+            raise  # propagate rate-limit errors
         return None
 
 
@@ -594,7 +596,7 @@ async def get_checkout_session(
         user_id = None
         if customer_email:
             buyer = session.exec(select(User).where(User.email == customer_email)).first()
-            user_id = str(buyer.id) if buyer else None
+            user_id = str(buyer.id) if (buyer and not buyer.is_guest) else None
 
         return {
             "status": stripe_session.payment_status,
@@ -910,6 +912,7 @@ async def connect_return(
                 )
             ).all()
 
+            from sqlalchemy import text as _text
             for listing in pending_bonus_listings:
                 # Only pay if this listing actually had a sale
                 had_sale = session.exec(
@@ -920,6 +923,14 @@ async def connect_return(
                 ).first()
                 if not had_sale:
                     continue
+                # Atomically claim the bonus to prevent double-payment on concurrent calls
+                claimed = session.exec(
+                    _text("UPDATE listings SET bonus_paid = TRUE WHERE id = :lid AND bonus_paid = FALSE RETURNING id"),
+                    {"lid": str(listing.id)},
+                ).first()
+                if not claimed:
+                    continue
+                session.commit()
                 try:
                     stripe.Transfer.create(
                         amount=2000,
@@ -931,7 +942,6 @@ async def connect_return(
                             "developer_code": listing.developer_code,
                         }
                     )
-                    listing.bonus_paid = True
                     bonuses_paid += 1
                     print(f"[BONUS] Deferred $20 transfer for listing {listing.id}")
                 except stripe.error.StripeError as bonus_err:

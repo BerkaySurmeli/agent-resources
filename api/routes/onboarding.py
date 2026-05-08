@@ -95,7 +95,10 @@ async def generate_complete_package(
         
         if not listing:
             raise HTTPException(status_code=404, detail=f"Listing {slug} not found")
-        
+
+        if not listing.product_id:
+            raise HTTPException(status_code=400, detail=f"Listing {slug} is not yet available")
+
         # Check purchase
         has_purchased = session.exec(
             select(Transaction).where(

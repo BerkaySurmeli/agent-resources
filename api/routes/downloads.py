@@ -21,7 +21,7 @@ router = APIRouter(prefix="/downloads", tags=["Downloads"])
 # Upload directory from environment or default
 # Note: In production, this should be a persistent volume mount
 # For Railway, add a volume mounted at /app/uploads
-UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "/tmp/uploads")
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "/tmp/listings")
 
 
 def get_file_metadata(file_path: str):
@@ -165,9 +165,15 @@ async def get_download_info(
     file_path = listing.file_path
     if not file_path.startswith("/"):
         file_path = os.path.join(UPLOAD_DIR, file_path)
-    
+
+    real_upload_dir = os.path.realpath(UPLOAD_DIR)
+    real_file_path = os.path.realpath(file_path)
+    if not real_file_path.startswith(real_upload_dir + os.sep):
+        raise HTTPException(status_code=403, detail="Access denied")
+
     # Check if file exists
-    file_exists = os.path.exists(file_path)
+    file_exists = os.path.exists(real_file_path)
+    file_path = real_file_path
     
     metadata = None
     if file_exists:

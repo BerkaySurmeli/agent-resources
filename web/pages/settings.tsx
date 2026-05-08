@@ -40,18 +40,14 @@ export default function Settings() {
     }
   }, [router.isReady, router.query]);
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-cream-100 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-terra-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    if (typeof window !== 'undefined') {
+  // Redirect unauthenticated users after auth state is resolved
+  useEffect(() => {
+    if (!authLoading && !user) {
       router.replace(`/login?redirect=${encodeURIComponent(router.asPath)}`);
     }
+  }, [authLoading, user, router]);
+
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-cream-100 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-terra-500 border-t-transparent rounded-full animate-spin" />

@@ -125,6 +125,8 @@ async def get_collection(slug: str, request: Request, session = Depends(get_sess
             raise HTTPException(status_code=404, detail="Collection not found")
 
     owner = session.get(User, collection.owner_id)
+    if not owner:
+        raise HTTPException(status_code=404, detail="Collection not found")
     items = session.exec(
         select(CollectionItem, Product)
         .join(Product, CollectionItem.product_id == Product.id)
@@ -338,7 +340,9 @@ async def remove_item(
     session = Depends(get_session),
 ):
     collection = session.exec(select(Collection).where(Collection.slug == slug)).first()
-    if not collection or not _can_write(collection, current_user):
+    if not collection:
+        raise HTTPException(status_code=404, detail="Collection not found")
+    if not _can_write(collection, current_user):
         raise HTTPException(status_code=403, detail="Forbidden")
     item = session.get(CollectionItem, item_id)
     if not item or item.collection_id != collection.id:

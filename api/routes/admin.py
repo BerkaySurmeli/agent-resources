@@ -304,11 +304,16 @@ def delete_user(
     if admin_check:
         raise HTTPException(status_code=403, detail="Cannot delete admin users from the users endpoint. Use the admin management endpoint.")
 
-    from models import Listing, Product, Review, ListingTranslation
+    from models import Listing, Product, Review, ListingTranslation, Collection, CollectionItem
     # Cascade delete to avoid FK violations
     reviews = session.exec(select(Review).where(Review.user_id == user.id)).all()
     for r in reviews:
         session.delete(r)
+
+    for coll in session.exec(select(Collection).where(Collection.owner_id == user.id)).all():
+        for ci in session.exec(select(CollectionItem).where(CollectionItem.collection_id == coll.id)).all():
+            session.delete(ci)
+        session.delete(coll)
 
     listings = session.exec(select(Listing).where(Listing.owner_id == user.id)).all()
     for listing in listings:
@@ -366,6 +371,13 @@ def cleanup_test_users(
             reviews = session.exec(select(Review).where(Review.user_id == user_id)).all()
             for review in reviews:
                 session.delete(review)
+
+            # Delete collections and items to avoid FK violations
+            from models import Collection, CollectionItem
+            for coll in session.exec(select(Collection).where(Collection.owner_id == user_id)).all():
+                for ci in session.exec(select(CollectionItem).where(CollectionItem.collection_id == coll.id)).all():
+                    session.delete(ci)
+                session.delete(coll)
 
             # Delete user's listings and their translations
             listings = session.exec(select(Listing).where(Listing.owner_id == user_id)).all()

@@ -13,7 +13,6 @@ export default function Cart() {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [removingSlug, setRemovingSlug] = useState<string | null>(null);
   const [guestEmail, setGuestEmail] = useState('');
   const [bundleDiscount, setBundleDiscount] = useState<{ discountCents: number; itemCount: number } | null>(null);
 
@@ -143,15 +142,10 @@ export default function Cart() {
                     <div className="text-right flex-shrink-0">
                       <p className="font-semibold text-ink-900">${Number(item.price).toFixed(2)}</p>
                       <button
-                        onClick={() => {
-                          setRemovingSlug(item.slug);
-                          removeFromCart(item.slug);
-                          setRemovingSlug(null);
-                        }}
-                        disabled={removingSlug === item.slug}
-                        className="text-sm text-red-500 hover:text-red-600 disabled:opacity-50"
+                        onClick={() => removeFromCart(item.slug)}
+                        className="text-sm text-red-500 hover:text-red-600"
                       >
-                        {removingSlug === item.slug ? 'Removing...' : 'Remove'}
+                        Remove
                       </button>
                     </div>
                   </div>

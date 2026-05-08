@@ -37,6 +37,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 function getInitials(name: string): string {
   return name
     .split(' ')
+    .filter(n => n.length > 0)
     .map(n => n[0])
     .join('')
     .toUpperCase()

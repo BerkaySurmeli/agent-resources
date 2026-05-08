@@ -728,7 +728,8 @@ def send_guest_download_email(to_email: str, purchases: list) -> dict:
 
     frontend_url = "https://shopagentresources.com"
     api_url = "https://api.shopagentresources.com"
-    signup_url = f"{frontend_url}/signup?email={escape(to_email)}"
+    from urllib.parse import quote_plus
+    signup_url = f"{frontend_url}/signup?email={quote_plus(to_email)}"
 
     items_html = ""
     items_text = ""

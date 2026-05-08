@@ -30,6 +30,7 @@ export default function NotificationsSection() {
   }, []);
 
   const fetchPreferences = async () => {
+    setLoading(true);
     try {
       const token = localStorage.getItem('ar-token');
       if (!token) return;

@@ -121,9 +121,21 @@ export default function PurchasesSection() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="heading-serif text-2xl text-ink-900 mb-2">{t.settings.purchaseHistory}</h2>
-        <p className="text-ink-500">{t.settings.purchaseSubtitle}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="heading-serif text-2xl text-ink-900 mb-2">{t.settings.purchaseHistory}</h2>
+          <p className="text-ink-500">{t.settings.purchaseSubtitle}</p>
+        </div>
+        <button
+          onClick={() => { setLoading(true); setError(''); fetchPurchases(); }}
+          disabled={loading}
+          className="flex-shrink-0 text-sm text-terra-600 hover:text-terra-700 disabled:opacity-40 mt-1"
+          title="Refresh purchases"
+        >
+          <svg className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
       </div>
 
       {error && (
@@ -178,12 +190,14 @@ export default function PurchasesSection() {
                   <tr key={purchase.transaction_id} className="hover:bg-cream-200/40 transition-colors">
                     <td className="px-6 py-4">
                       <p className="font-medium text-ink-900">{purchase.product_name}</p>
-                      <Link
-                        href={`/listings/${purchase.product_slug}`}
-                        className="text-sm text-terra-600 hover:text-terra-700"
-                      >
-                        View details →
-                      </Link>
+                      {purchase.product_slug && (
+                        <Link
+                          href={`/listings/${purchase.product_slug}`}
+                          className="text-sm text-terra-600 hover:text-terra-700"
+                        >
+                          View details →
+                        </Link>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-ink-600">
                       {formatDate(purchase.purchased_at)}

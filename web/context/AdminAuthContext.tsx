@@ -124,6 +124,8 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    removeLocalStorage('ar-admin');
+    removeLocalStorage('ar-admin-token');
     setAdmin(null);
   };
 

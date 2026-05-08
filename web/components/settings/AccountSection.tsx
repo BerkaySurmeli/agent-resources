@@ -28,7 +28,7 @@ export default function AccountSection() {
     setPasswordError('');
     setPasswordMessage('');
 
-    if (newPassword.length < 6) {
+    if (newPassword.length < 8) {
       setPasswordError(t.auth.passwordMinLength);
       return;
     }
@@ -176,7 +176,7 @@ export default function AccountSection() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               className="w-full px-4 py-3 rounded-lg bg-white border border-cream-300 text-ink-900 placeholder-ink-400 focus:outline-none focus:border-terra-500 focus:ring-2 focus:ring-terra-500/20"
               placeholder={t.auth.passwordMinLength}
             />

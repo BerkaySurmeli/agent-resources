@@ -19,7 +19,7 @@ export default function Success() {
   const [purchaseData, setPurchaseData] = useState<any>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isAnonymous, setIsAnonymous] = useState(false);
-  const MAX_RETRIES = 5;
+  const MAX_RETRIES = 8;
 
   useEffect(() => {
     if (session_id && typeof session_id === 'string') {
@@ -193,12 +193,14 @@ export default function Success() {
                   <p className="text-blue-700 text-sm mb-3">
                     Create a free account with <strong>{purchaseData?.customer_email}</strong> and all your purchases will appear automatically — no hunting through your inbox.
                   </p>
-                  <Link
-                    href={`/signup?email=${encodeURIComponent(purchaseData?.customer_email || '')}`}
-                    className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg inline-block transition-colors"
-                  >
-                    Create free account →
-                  </Link>
+                  {purchaseData?.customer_email?.includes('@') && (
+                    <Link
+                      href={`/signup?email=${encodeURIComponent(purchaseData.customer_email)}`}
+                      className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg inline-block transition-colors"
+                    >
+                      Create free account →
+                    </Link>
+                  )}
                 </div>
               )}
             </>
