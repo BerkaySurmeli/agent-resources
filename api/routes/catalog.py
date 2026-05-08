@@ -18,6 +18,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from services.security import scan_manifest
 from sqlmodel import func, select
 
 from core.database import get_session
@@ -290,6 +291,59 @@ async def list_catalog(
             "sort":    sort,
             "filters": {k: v for k, v in {"q": q, "category": category, "max_price": max_price}.items() if v is not None},
         },
+    })
+    return _add_rl_headers(resp, remaining, reset_ts)
+
+
+@router.get("/scan/{slug}")
+async def scan_listing(
+    slug: str,
+    request: Request,
+    session=Depends(get_session),
+):
+    """
+    Pre-purchase security scan for a listing.
+    Returns injection findings so agents can make an informed decision before buying.
+    No authentication required.
+    """
+    rl_key = _rate_limit_key(request)
+    remaining, reset_ts = _check_rate_limit(rl_key)
+
+    product = session.execute(
+        select(Product).where(Product.slug == slug, Product.is_active == True)
+    ).scalars().first()
+
+    if not product:
+        resp = problem_response(
+            "https://shopagentresources.com/errors/not-found",
+            "Listing Not Found",
+            404,
+            f"No listing found for slug '{slug}'",
+            instance=str(request.url),
+        )
+        _add_rl_headers(resp, remaining, reset_ts)
+        return resp
+
+    manifest = product.one_click_json or {}
+    scan_target = {
+        "description": product.description or "",
+        "name":        product.name,
+        "command":     manifest.get("command", ""),
+        "args":        manifest.get("args", []),
+    }
+    result = scan_manifest(scan_target)
+
+    resp = JSONResponse({
+        "slug":       product.slug,
+        "name":       product.name,
+        "safe":       result["safe"],
+        "risk_level": result["risk_level"],
+        "findings":   result["findings"],
+        "recommendation": (
+            "safe to install"
+            if result["safe"]
+            else f"review {len(result['findings'])} finding(s) before installing"
+        ),
     })
     return _add_rl_headers(resp, remaining, reset_ts)
 

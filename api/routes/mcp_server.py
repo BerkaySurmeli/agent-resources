@@ -24,6 +24,7 @@ from core.config import settings
 from core.database import get_session
 from models import OAuthClient, Product, Transaction, User
 from routes.oauth import get_current_agent, require_scope
+from services.security import scan_manifest, sign_manifest
 
 router = APIRouter(tags=["MCP"])
 
@@ -392,19 +393,30 @@ def _tool_get_install_manifest(args: Dict, session, owner: User) -> Dict:
 
     manifest = product.one_click_json or {}
 
+    manifest_body = {
+        "type":              product.category,
+        "command":           manifest.get("command"),
+        "args":              manifest.get("args", []),
+        "env_vars_required": manifest.get("env_vars_required", []),
+        "env_vars_optional": manifest.get("env_vars_optional", []),
+        "config_schema":     manifest.get("config_schema", {}),
+        "homepage":          f"https://shopagentresources.com/listing/{product.slug}",
+        "description":       product.description or "",
+    }
+
+    scan = scan_manifest(manifest_body)
+    signed = sign_manifest(manifest_body, settings.OAUTH_PRIVATE_KEY) if settings.OAUTH_PRIVATE_KEY else manifest_body
+
     return {
         "slug":     product.slug,
         "name":     product.name,
         "category": product.category,
         "version":  "1.0.0",
-        "manifest": {
-            "type":              product.category,
-            "command":           manifest.get("command"),
-            "args":              manifest.get("args", []),
-            "env_vars_required": manifest.get("env_vars_required", []),
-            "env_vars_optional": manifest.get("env_vars_optional", []),
-            "config_schema":     manifest.get("config_schema", {}),
-            "homepage":          f"https://shopagentresources.com/listing/{product.slug}",
+        "manifest": signed,
+        "security": {
+            "safe":       scan["safe"],
+            "risk_level": scan["risk_level"],
+            "findings":   scan["findings"],
         },
         "install_instructions": (
             f"1. Set required env vars: {', '.join(manifest.get('env_vars_required', [])) or 'none'}\n"
