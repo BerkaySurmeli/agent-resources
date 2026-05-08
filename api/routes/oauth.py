@@ -132,7 +132,7 @@ async def token_endpoint(request: Request, session=Depends(get_session)):
     grant_type    = str(form.get("grant_type", ""))
     client_id     = str(form.get("client_id", ""))
     client_secret = str(form.get("client_secret", ""))
-    scope_str     = str(form.get("scope", "catalog:read"))
+    scope_str     = str(form.get("scope", ""))
 
     if grant_type != "client_credentials":
         raise HTTPException(
@@ -149,8 +149,9 @@ async def token_endpoint(request: Request, session=Depends(get_session)):
     if not pwd_context.verify(client_secret, client.client_secret_hash):
         raise HTTPException(status_code=401, detail={"error": "invalid_client"})
 
-    requested = set(scope_str.split())
-    allowed   = set(client.scopes_allowed or [])
+    allowed = set(client.scopes_allowed or [])
+    # RFC 6749 §4.4: if no scope requested, grant all scopes the client is authorized for
+    requested = set(scope_str.split()) if scope_str.strip() else allowed
     granted   = requested & allowed
 
     if not granted:
