@@ -33,6 +33,13 @@ class Settings(BaseSettings):
     # Frontend origin — used to build return URLs for Stripe Connect
     FRONTEND_URL: str = "https://www.shopagentresources.com"
 
+    # OAuth 2.1 — ES256 EC key pair for agent token signing
+    # Generate: openssl ecparam -genkey -name prime256v1 -noout -out ec_private.pem
+    #           openssl ec -in ec_private.pem -pubout -out ec_public.pem
+    OAUTH_PRIVATE_KEY: str = ""
+    OAUTH_PUBLIC_KEY: str = ""
+    OAUTH_TOKEN_EXPIRE_MINUTES: int = 30
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
@@ -54,5 +61,8 @@ class Settings(BaseSettings):
 
         if not self.ADMIN_SETUP_KEY:
             print("[CONFIG] WARNING: ADMIN_SETUP_KEY is not set — privileged setup endpoints are disabled")
+
+        if not self.OAUTH_PRIVATE_KEY or not self.OAUTH_PUBLIC_KEY:
+            print("[OAUTH CONFIG] WARNING: EC key pair not set — OAuth endpoints will return 503")
 
 settings = Settings()

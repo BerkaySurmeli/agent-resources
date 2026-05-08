@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import Response
 from core.config import settings
 from models import SQLModel
-from routes import waitlist, payments, auth, admin, listings, products, developers, search, contact, admin_metrics, downloads, onboarding, analytics, collections
+from routes import waitlist, payments, auth, admin, listings, products, developers, search, contact, admin_metrics, downloads, onboarding, analytics, collections, oauth, wellknown
 import re
 
 @asynccontextmanager
@@ -116,6 +116,8 @@ app.include_router(downloads.router)
 app.include_router(onboarding.router)
 app.include_router(analytics.router)
 app.include_router(collections.router)
+app.include_router(oauth.router)
+app.include_router(wellknown.router)
 
 @app.get("/health")
 async def health():
@@ -123,7 +125,7 @@ async def health():
     from sqlmodel import Session, text
     try:
         with Session(engine) as session:
-            session.exec(text("SELECT 1"))
+            session.execute(text("SELECT 1"))
         db_ready = True
     except Exception:
         db_ready = False

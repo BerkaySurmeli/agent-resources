@@ -310,6 +310,26 @@ class CollectionItem(SQLModel, table=True):
     product: Product = Relationship()
 
 
+# 11. OAUTH CLIENT (for agent API access — Phase 1 headless)
+class OAuthClient(SQLModel, table=True):
+    __tablename__ = "oauth_clients"
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    user_id: UUID = Field(foreign_key="users.id")
+    client_id: str = Field(unique=True, index=True)
+    client_secret_hash: str
+    name: str
+    grant_types: List[str] = Field(sa_column=Column(ARRAY(TEXT), default=["client_credentials"]))
+    scopes_allowed: List[str] = Field(sa_column=Column(ARRAY(TEXT), default=["catalog:read"]))
+    spending_limit_cents: int = Field(default=0)
+    spent_cents: int = Field(default=0)
+    is_active: bool = Field(default=True)
+    last_used_at: Optional[datetime] = Field(default=None)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    owner: User = Relationship()
+
+
 # 10. LISTING TRANSLATION (for multilingual support)
 class ListingTranslation(SQLModel, table=True):
     __tablename__ = "listing_translations"
