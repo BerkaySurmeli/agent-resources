@@ -373,16 +373,17 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
     from sqlmodel import Session as DBSession
     from sqlalchemy import text
 
-    metadata = session_data.get('metadata', {})
-    listing_ids_str = metadata.get('listing_ids', '')
-    # customer_email may live under customer_details (Stripe collects it at checkout)
+    # session_data is a StripeObject — use getattr, not .get()
+    metadata = getattr(session_data, 'metadata', None) or {}
+    listing_ids_str = metadata.get('listing_ids', '') if hasattr(metadata, 'get') else getattr(metadata, 'listing_ids', '')
+    customer_details = getattr(session_data, 'customer_details', None)
     customer_email = (
-        session_data.get('customer_email')
-        or (session_data.get('customer_details') or {}).get('email')
-        or metadata.get('customer_email')
+        getattr(session_data, 'customer_email', None)
+        or (getattr(customer_details, 'email', None) if customer_details else None)
+        or (metadata.get('customer_email') if hasattr(metadata, 'get') else getattr(metadata, 'customer_email', None))
     )
-    buyer_user_id = metadata.get('user_id')
-    stripe_payment_intent_id = session_data.get('payment_intent')
+    buyer_user_id = metadata.get('user_id') if hasattr(metadata, 'get') else getattr(metadata, 'user_id', None)
+    stripe_payment_intent_id = getattr(session_data, 'payment_intent', None)
 
     if not listing_ids_str:
         print("[WEBHOOK] No listing IDs in session metadata")
