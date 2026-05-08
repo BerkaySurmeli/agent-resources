@@ -360,6 +360,40 @@ class WalletTopup(SQLModel, table=True):
     wallet: AgentWallet = Relationship()
 
 
+# 14. WEBHOOK SUBSCRIPTION — agent registers a URL to receive CloudEvents
+class WebhookSubscription(SQLModel, table=True):
+    __tablename__ = "webhook_subscriptions"
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    user_id: UUID = Field(foreign_key="users.id", index=True)
+    url: str
+    secret_hash: str                  # HMAC signing secret, stored hashed
+    event_types: List[str] = Field(sa_column=Column(ARRAY(TEXT), default=[]))
+    is_active: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    owner: User = Relationship()
+
+
+# 15. WEBHOOK DELIVERY — per-event delivery record with retry tracking
+class WebhookDelivery(SQLModel, table=True):
+    __tablename__ = "webhook_deliveries"
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    subscription_id: UUID = Field(foreign_key="webhook_subscriptions.id", index=True)
+    event_type: str = Field(index=True)
+    event_id: str = Field(index=True)        # CloudEvents `id`
+    payload: Dict = Field(sa_column=Column(JSON))
+    status: str = Field(default="pending")   # pending | delivered | failed
+    attempt_count: int = Field(default=0)
+    last_attempt_at: Optional[datetime] = Field(default=None)
+    next_retry_at: Optional[datetime] = Field(default=None)
+    response_status: Optional[int] = Field(default=None)
+    error_message: Optional[str] = Field(default=None)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 # 10. LISTING TRANSLATION (for multilingual support)
 class ListingTranslation(SQLModel, table=True):
     __tablename__ = "listing_translations"

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Header, UploadFile, File
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends, Header, UploadFile, File
 from sqlmodel import select, func
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
@@ -1412,6 +1412,47 @@ async def run_db_migrations(
         session.exec(text("CREATE INDEX IF NOT EXISTS idx_wallet_topups_wallet_id ON wallet_topups(wallet_id)"))
         results.append("wallet indexes created")
 
+        # Phase 9: webhook subscriptions and delivery tracking
+        session.exec(text("""
+            CREATE TABLE IF NOT EXISTS webhook_subscriptions (
+                id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                url          TEXT NOT NULL,
+                secret_hash  TEXT NOT NULL,
+                event_types  TEXT[] DEFAULT '{}',
+                is_active    BOOLEAN NOT NULL DEFAULT TRUE,
+                created_at   TIMESTAMPTZ DEFAULT NOW(),
+                updated_at   TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        results.append("webhook_subscriptions table created")
+
+        session.exec(text("CREATE INDEX IF NOT EXISTS idx_webhook_subscriptions_user_id ON webhook_subscriptions(user_id)"))
+        results.append("webhook_subscriptions index created")
+
+        session.exec(text("""
+            CREATE TABLE IF NOT EXISTS webhook_deliveries (
+                id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                subscription_id UUID NOT NULL REFERENCES webhook_subscriptions(id) ON DELETE CASCADE,
+                event_type      TEXT NOT NULL,
+                event_id        TEXT NOT NULL,
+                payload         JSONB NOT NULL,
+                status          TEXT NOT NULL DEFAULT 'pending',
+                attempt_count   INTEGER NOT NULL DEFAULT 0,
+                last_attempt_at TIMESTAMPTZ,
+                next_retry_at   TIMESTAMPTZ,
+                response_status INTEGER,
+                error_message   TEXT,
+                created_at      TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        results.append("webhook_deliveries table created")
+
+        session.exec(text("CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_subscription_id ON webhook_deliveries(subscription_id)"))
+        session.exec(text("CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_event_type ON webhook_deliveries(event_type)"))
+        session.exec(text("CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_event_id ON webhook_deliveries(event_id)"))
+        results.append("webhook_deliveries indexes created")
+
         session.commit()
         return {"message": "Migration completed successfully", "changes": results}
     except Exception as e:
@@ -1427,6 +1468,7 @@ class RejectListingRequest(BaseModel):
 async def approve_listing(
     listing_id: str,
     request: Request,
+    background_tasks: BackgroundTasks,
     session = Depends(get_session)
 ):
     """Approve a listing — accepts admin JWT or X-Setup-Key header"""
@@ -1497,6 +1539,18 @@ async def approve_listing(
         listing.product_id = product.id
 
     session.commit()
+
+    # Notify the listing owner via webhook that their listing is live
+    if listing.product_id:
+        from routes.webhooks import emit_listing_approved
+        final_product = session.get(Product, listing.product_id)
+        if final_product:
+            await emit_listing_approved(
+                product=final_product,
+                user_id=listing.owner_id,
+                background_tasks=background_tasks,
+                session=session,
+            )
 
     return {
         "message": "Listing approved successfully",

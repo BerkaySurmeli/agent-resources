@@ -15,7 +15,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlmodel import select
 
@@ -24,6 +24,7 @@ from core.database import get_session
 from models import MCPDetail, OAuthClient, Product, Transaction, User
 from routes.oauth import get_current_agent, require_scope
 from routes.wallet import wallet_deduct
+from routes.webhooks import emit_purchase_completed, emit_wallet_low_balance
 from services.manifest import build_manifest
 from services.security import scan_manifest, sign_manifest
 
@@ -240,7 +241,7 @@ def _tool_get_listing(args: Dict, session, owner: User) -> Dict:
     }
 
 
-def _tool_purchase_listing(args: Dict, session, client: OAuthClient, owner: User) -> Dict:
+def _tool_purchase_listing(args: Dict, session, client: OAuthClient, owner: User) -> tuple[Dict, Optional[Dict]]:
     slug            = str(args.get("slug", "")).strip()
     idempotency_key = str(args.get("idempotency_key", "")).strip()
 
@@ -258,7 +259,7 @@ def _tool_purchase_listing(args: Dict, session, client: OAuthClient, owner: User
     if not product:
         raise ValueError(f"Listing '{slug}' not found")
 
-    # Already owned — return immediately
+    # Already owned — return immediately (no new emit)
     existing = session.execute(
         select(Transaction).where(
             Transaction.buyer_id == owner.id,
@@ -267,9 +268,12 @@ def _tool_purchase_listing(args: Dict, session, client: OAuthClient, owner: User
         )
     ).scalars().first()
     if existing:
-        return {"status": "already_owned", "product_slug": slug, "transaction_id": str(existing.id)}
+        return (
+            {"status": "already_owned", "product_slug": slug, "transaction_id": str(existing.id)},
+            None,
+        )
 
-    # Idempotency check — same key = cached result
+    # Idempotency check — same key = cached result (no new emit)
     idem_prefix = "wallet_free_" if product.price_cents == 0 else "wallet_"
     idempotent_tx = session.execute(
         select(Transaction).where(
@@ -277,12 +281,15 @@ def _tool_purchase_listing(args: Dict, session, client: OAuthClient, owner: User
         )
     ).scalars().first()
     if idempotent_tx:
-        return {
-            "status":           idempotent_tx.status,
-            "product_slug":     slug,
-            "transaction_id":   str(idempotent_tx.id),
-            "idempotent_replay": True,
-        }
+        return (
+            {
+                "status":           idempotent_tx.status,
+                "product_slug":     slug,
+                "transaction_id":   str(idempotent_tx.id),
+                "idempotent_replay": True,
+            },
+            None,
+        )
 
     # Spending limit guard
     if client.spending_limit_cents > 0:
@@ -308,7 +315,15 @@ def _tool_purchase_listing(args: Dict, session, client: OAuthClient, owner: User
     session.add(product)
     session.commit()
 
-    return {**result, "product_slug": slug}
+    # Signal to the async route handler to fire purchase + low-balance webhooks
+    emit_hint = {
+        "product":   product,
+        "user_id":   owner.id,
+        "wallet_balance_cents": result.get("wallet_balance_remaining"),
+        "tx_id":     result.get("transaction_id"),
+    }
+
+    return ({**result, "product_slug": slug}, emit_hint)
 
 
 def _tool_get_install_manifest(args: Dict, session, owner: User) -> Dict:
@@ -405,17 +420,18 @@ def _rpc_ok(result: Any, rpc_id=None) -> Dict:
     return {"jsonrpc": "2.0", "id": rpc_id, "result": result}
 
 
-def _dispatch(method: str, params: Dict, rpc_id, client: OAuthClient, owner: User, session) -> Dict:
+def _dispatch(method: str, params: Dict, rpc_id, client: OAuthClient, owner: User, session) -> tuple[Dict, Optional[Dict]]:
+    emit_hint: Optional[Dict] = None
     try:
         if method == "initialize":
-            return _rpc_ok({
+            return (_rpc_ok({
                 "protocolVersion": PROTOCOL_VERSION,
                 "serverInfo":      SERVER_INFO,
                 "capabilities":    {"tools": {"listChanged": False}},
-            }, rpc_id)
+            }, rpc_id), None)
 
         if method == "tools/list":
-            return _rpc_ok({"tools": TOOLS}, rpc_id)
+            return (_rpc_ok({"tools": TOOLS}, rpc_id), None)
 
         if method == "tools/call":
             tool_name = params.get("name", "")
@@ -426,39 +442,62 @@ def _dispatch(method: str, params: Dict, rpc_id, client: OAuthClient, owner: Use
             elif tool_name == "get_listing":
                 result = _tool_get_listing(tool_args, session, owner)
             elif tool_name == "purchase_listing":
-                result = _tool_purchase_listing(tool_args, session, client, owner)
+                result, emit_hint = _tool_purchase_listing(tool_args, session, client, owner)
             elif tool_name == "get_install_manifest":
                 result = _tool_get_install_manifest(tool_args, session, owner)
             elif tool_name == "get_wallet_balance":
                 result = _tool_get_wallet_balance(client, owner)
             else:
-                return _rpc_error(-32601, f"Unknown tool: {tool_name}", rpc_id)
+                return (_rpc_error(-32601, f"Unknown tool: {tool_name}", rpc_id), None)
 
-            return _rpc_ok(
-                {"content": [{"type": "text", "text": json.dumps(result, default=str)}]},
-                rpc_id,
+            return (
+                _rpc_ok(
+                    {"content": [{"type": "text", "text": json.dumps(result, default=str)}]},
+                    rpc_id,
+                ),
+                emit_hint,
             )
 
         if method == "ping":
-            return _rpc_ok({}, rpc_id)
+            return (_rpc_ok({}, rpc_id), None)
 
-        return _rpc_error(-32601, f"Method not found: {method}", rpc_id)
+        return (_rpc_error(-32601, f"Method not found: {method}", rpc_id), None)
 
     except (ValueError, KeyError) as e:
-        return _rpc_error(-32602, f"Invalid params: {e}", rpc_id)
+        return (_rpc_error(-32602, f"Invalid params: {e}", rpc_id), None)
     except PermissionError as e:
-        return _rpc_error(-32603, f"Forbidden: {e}", rpc_id)
+        return (_rpc_error(-32603, f"Forbidden: {e}", rpc_id), None)
     except RuntimeError as e:
-        return _rpc_error(-32603, f"Internal error: {e}", rpc_id)
+        return (_rpc_error(-32603, f"Internal error: {e}", rpc_id), None)
 
 
 # ---------------------------------------------------------------------------
 # HTTP endpoint
 # ---------------------------------------------------------------------------
 
+async def _fire_purchase_webhooks(emit_hint: Dict, background_tasks: BackgroundTasks, session) -> None:
+    """Schedule purchase + low-balance webhook emissions after a successful purchase."""
+    from models import Transaction
+    tx_id = emit_hint.get("tx_id")
+    product = emit_hint.get("product")
+    user_id = emit_hint.get("user_id")
+    balance = emit_hint.get("wallet_balance_cents")
+
+    if tx_id and product and user_id:
+        tx = session.execute(
+            select(Transaction).where(Transaction.id == tx_id)
+        ).scalars().first()
+        if tx:
+            await emit_purchase_completed(tx, product, user_id, background_tasks, session)
+
+    if balance is not None and user_id:
+        await emit_wallet_low_balance(balance, user_id, background_tasks, session)
+
+
 @router.post("/mcp")
 async def mcp_endpoint(
     request: Request,
+    background_tasks: BackgroundTasks,
     session=Depends(get_session),
     agent=Depends(get_current_agent),
 ):
@@ -478,8 +517,11 @@ async def mcp_endpoint(
         )
 
     if isinstance(body, list):
-        responses = [
-            _dispatch(
+        responses = []
+        for item in body:
+            if not isinstance(item, dict):
+                continue
+            rpc_resp, emit_hint = _dispatch(
                 item.get("method", ""),
                 item.get("params", {}),
                 item.get("id"),
@@ -487,15 +529,15 @@ async def mcp_endpoint(
                 owner,
                 session,
             )
-            for item in body
-            if isinstance(item, dict)
-        ]
+            if emit_hint:
+                await _fire_purchase_webhooks(emit_hint, background_tasks, session)
+            responses.append(rpc_resp)
         return JSONResponse(responses)
 
     if not isinstance(body, dict):
         return JSONResponse(_rpc_error(-32600, "Invalid Request"), status_code=400)
 
-    response = _dispatch(
+    response, emit_hint = _dispatch(
         body.get("method", ""),
         body.get("params", {}),
         body.get("id"),
@@ -503,6 +545,8 @@ async def mcp_endpoint(
         owner,
         session,
     )
+    if emit_hint:
+        await _fire_purchase_webhooks(emit_hint, background_tasks, session)
     return JSONResponse(response)
 
 
