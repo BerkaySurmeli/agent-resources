@@ -1340,7 +1340,47 @@ async def run_db_migrations(
         
         session.exec(text("CREATE INDEX IF NOT EXISTS idx_guest_download_tokens_email ON guest_download_tokens(buyer_email)"))
         results.append("idx_guest_download_tokens_email index created")
-        
+
+        # Phase 1 headless: OAuth 2.1 client table (migration 026)
+        session.exec(text("""
+            CREATE TABLE IF NOT EXISTS oauth_clients (
+                id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id              UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                client_id            TEXT UNIQUE NOT NULL,
+                client_secret_hash   TEXT NOT NULL,
+                name                 TEXT NOT NULL,
+                grant_types          TEXT[] DEFAULT '{"client_credentials"}',
+                scopes_allowed       TEXT[] DEFAULT '{"catalog:read"}',
+                spending_limit_cents INTEGER DEFAULT 0,
+                spent_cents          INTEGER DEFAULT 0,
+                is_active            BOOLEAN DEFAULT TRUE,
+                last_used_at         TIMESTAMPTZ,
+                created_at           TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        results.append("oauth_clients table created")
+
+        session.exec(text("CREATE INDEX IF NOT EXISTS idx_oauth_clients_user_id ON oauth_clients(user_id)"))
+        session.exec(text("CREATE UNIQUE INDEX IF NOT EXISTS idx_oauth_clients_client_id ON oauth_clients(client_id)"))
+        results.append("oauth_clients indexes created")
+
+        session.exec(text("""
+            CREATE TABLE IF NOT EXISTS idempotency_records (
+                id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                idempotency_key TEXT NOT NULL,
+                client_id       TEXT NOT NULL,
+                request_hash    TEXT NOT NULL,
+                response_status INTEGER NOT NULL,
+                response_body   JSONB NOT NULL,
+                expires_at      TIMESTAMPTZ NOT NULL,
+                created_at      TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        results.append("idempotency_records table created")
+
+        session.exec(text("CREATE UNIQUE INDEX IF NOT EXISTS idx_idempotency_key_client ON idempotency_records(idempotency_key, client_id)"))
+        results.append("idempotency_records index created")
+
         session.commit()
         return {"message": "Migration completed successfully", "changes": results}
     except Exception as e:
