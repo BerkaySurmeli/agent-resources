@@ -164,11 +164,12 @@ def _fetch_trust_inputs(product: Product, session) -> tuple:
         )
     ).scalar() or 0
 
-    ratings = session.execute(
-        select(Review.rating).where(Review.product_id == product.id)
+    reviews = session.execute(
+        select(Review).where(Review.product_id == product.id)
     ).scalars().all()
+    ratings = [r.rating for r in reviews]
 
-    return tx_count, list(ratings)
+    return tx_count, ratings
 
 
 def _listing_response(product: Product, owner_slug: Optional[str], session) -> CatalogListing:
