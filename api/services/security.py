@@ -92,8 +92,9 @@ def scan_for_injection(text: str) -> List[Dict]:
 
 def scan_shell(value: str) -> List[Dict]:
     """Scan a command or arg string for shell injection patterns."""
-    if not text := value:
+    if not value:
         return []
+    text = value
     findings = []
     for severity, label, pattern in _SHELL_PATTERNS:
         for match in pattern.finditer(text):
