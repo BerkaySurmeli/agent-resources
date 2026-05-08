@@ -102,7 +102,9 @@ def compute_trust_score(
         warnings.append("no reviews yet")
 
     # --- Listing age (10 pts) ---
-    age_days = (datetime.utcnow() - created_at).days
+    now = datetime.utcnow()
+    created_naive = created_at.replace(tzinfo=None) if created_at.tzinfo else created_at
+    age_days = (now - created_naive).days
     if age_days >= 90:
         breakdown["age"] = 10
         signals.append(f"established listing ({age_days} days old)")
