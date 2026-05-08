@@ -330,6 +330,36 @@ class OAuthClient(SQLModel, table=True):
     owner: User = Relationship()
 
 
+# 12. AGENT WALLET — per-user credit balance for agent purchases
+class AgentWallet(SQLModel, table=True):
+    __tablename__ = "agent_wallets"
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    user_id: UUID = Field(foreign_key="users.id", unique=True, index=True)
+    balance_cents: int = Field(default=0)
+    lifetime_topup_cents: int = Field(default=0)
+    lifetime_spent_cents: int = Field(default=0)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    owner: User = Relationship()
+
+
+# 13. WALLET TOPUP — ledger of each Stripe top-up for auditability
+class WalletTopup(SQLModel, table=True):
+    __tablename__ = "wallet_topups"
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    wallet_id: UUID = Field(foreign_key="agent_wallets.id", index=True)
+    user_id: UUID = Field(foreign_key="users.id", index=True)
+    amount_cents: int
+    stripe_payment_intent_id: str = Field(unique=True, index=True)
+    status: str = Field(default="pending")  # pending | completed | failed
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    wallet: AgentWallet = Relationship()
+
+
 # 10. LISTING TRANSLATION (for multilingual support)
 class ListingTranslation(SQLModel, table=True):
     __tablename__ = "listing_translations"

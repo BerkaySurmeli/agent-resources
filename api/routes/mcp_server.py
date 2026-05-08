@@ -15,7 +15,6 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-import stripe
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlmodel import select
@@ -24,11 +23,10 @@ from core.config import settings
 from core.database import get_session
 from models import OAuthClient, Product, Transaction, User
 from routes.oauth import get_current_agent, require_scope
+from routes.wallet import wallet_deduct
 from services.security import scan_manifest, sign_manifest
 
 router = APIRouter(tags=["MCP"])
-
-stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # ---------------------------------------------------------------------------
 # Protocol constants
@@ -242,8 +240,8 @@ def _tool_get_listing(args: Dict, session, owner: User) -> Dict:
 
 
 def _tool_purchase_listing(args: Dict, session, client: OAuthClient, owner: User) -> Dict:
-    slug             = str(args.get("slug", "")).strip()
-    idempotency_key  = str(args.get("idempotency_key", "")).strip()
+    slug            = str(args.get("slug", "")).strip()
+    idempotency_key = str(args.get("idempotency_key", "")).strip()
 
     if not slug:
         raise ValueError("slug is required")
@@ -259,7 +257,7 @@ def _tool_purchase_listing(args: Dict, session, client: OAuthClient, owner: User
     if not product:
         raise ValueError(f"Listing '{slug}' not found")
 
-    # Check already owned
+    # Already owned — return immediately
     existing = session.execute(
         select(Transaction).where(
             Transaction.buyer_id == owner.id,
@@ -267,103 +265,49 @@ def _tool_purchase_listing(args: Dict, session, client: OAuthClient, owner: User
             Transaction.status == "completed",
         )
     ).scalars().first()
-
     if existing:
         return {"status": "already_owned", "product_slug": slug, "transaction_id": str(existing.id)}
 
-    # Idempotency check — same key from same agent = return cached result
+    # Idempotency check — same key = cached result
+    idem_prefix = "wallet_free_" if product.price_cents == 0 else "wallet_"
     idempotent_tx = session.execute(
         select(Transaction).where(
-            Transaction.stripe_payment_intent_id == f"agent_idem_{idempotency_key}",
+            Transaction.stripe_payment_intent_id == f"{idem_prefix}{idempotency_key}",
         )
     ).scalars().first()
-
     if idempotent_tx:
         return {
-            "status":       idempotent_tx.status,
-            "product_slug": slug,
-            "transaction_id": str(idempotent_tx.id),
+            "status":           idempotent_tx.status,
+            "product_slug":     slug,
+            "transaction_id":   str(idempotent_tx.id),
             "idempotent_replay": True,
         }
 
-    # Check spending limit
+    # Spending limit guard
     if client.spending_limit_cents > 0:
-        if client.spent_cents + product.price_cents > client.spending_limit_cents:
+        if (client.spent_cents or 0) + product.price_cents > client.spending_limit_cents:
             raise PermissionError(
                 f"Purchase of ${product.price_cents/100:.2f} would exceed spending limit "
-                f"(${client.spending_limit_cents/100:.2f}). Current spend: ${client.spent_cents/100:.2f}"
+                f"(${client.spending_limit_cents/100:.2f}). "
+                f"Current spend: ${(client.spent_cents or 0)/100:.2f}"
             )
 
-    # Free listing — no Stripe charge needed
-    if product.price_cents == 0:
-        tx = Transaction(
-            buyer_id=owner.id,
-            seller_id=product.owner_id,
-            product_id=product.id,
-            amount_cents=0,
-            platform_fee_cents=0,
-            stripe_payment_intent_id=f"agent_idem_{idempotency_key}",
-            status="completed",
-        )
-        session.add(tx)
-        product.download_count = (product.download_count or 0) + 1
-        session.add(product)
-        session.commit()
-        session.refresh(tx)
-        return {"status": "completed", "product_slug": slug, "transaction_id": str(tx.id), "amount_cents": 0}
-
-    # Paid listing — require a saved Stripe customer + default payment method
-    stripe_customer_id = getattr(owner, "stripe_customer_id", None)
-    if not stripe_customer_id:
-        raise PermissionError(
-            "Owner has no saved payment method. "
-            "Please visit shopagentresources.com/settings/billing to add a card."
-        )
-
-    try:
-        intent = stripe.PaymentIntent.create(
-            amount=product.price_cents,
-            currency="usd",
-            customer=stripe_customer_id,
-            confirm=True,
-            off_session=True,
-            idempotency_key=f"mcp_{idempotency_key}",
-            metadata={"product_slug": slug, "agent_client_id": client.client_id},
-        )
-    except stripe.error.CardError as e:
-        raise PermissionError(f"Payment failed: {e.user_message}")
-    except stripe.error.StripeError as e:
-        raise RuntimeError(f"Stripe error: {str(e)}")
-
-    platform_fee = int(product.price_cents * 0.10)
-    tx = Transaction(
-        buyer_id=owner.id,
-        seller_id=product.owner_id,
-        product_id=product.id,
+    result = wallet_deduct(
+        user_id=owner.id,
         amount_cents=product.price_cents,
-        platform_fee_cents=platform_fee,
-        stripe_payment_intent_id=intent.id,
-        status="completed" if intent.status == "succeeded" else "pending",
+        product_slug=slug,
+        product_id=product.id,
+        seller_id=product.owner_id,
+        idempotency_key=idempotency_key,
+        client=client,
+        session=session,
     )
-    session.add(tx)
-
-    # Update agent spending counter
-    client.spent_cents = (client.spent_cents or 0) + product.price_cents
-    session.add(client)
 
     product.download_count = (product.download_count or 0) + 1
     session.add(product)
-
     session.commit()
-    session.refresh(tx)
 
-    return {
-        "status":         tx.status,
-        "product_slug":   slug,
-        "transaction_id": str(tx.id),
-        "amount_cents":   product.price_cents,
-        "payment_intent": intent.id,
-    }
+    return {**result, "product_slug": slug}
 
 
 def _tool_get_install_manifest(args: Dict, session, owner: User) -> Dict:

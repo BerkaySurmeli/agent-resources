@@ -1381,6 +1381,37 @@ async def run_db_migrations(
         session.exec(text("CREATE UNIQUE INDEX IF NOT EXISTS idx_idempotency_key_client ON idempotency_records(idempotency_key, client_id)"))
         results.append("idempotency_records index created")
 
+        session.exec(text("""
+            CREATE TABLE IF NOT EXISTS agent_wallets (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                balance_cents INTEGER NOT NULL DEFAULT 0,
+                lifetime_topup_cents INTEGER NOT NULL DEFAULT 0,
+                lifetime_spent_cents INTEGER NOT NULL DEFAULT 0,
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                updated_at TIMESTAMPTZ DEFAULT NOW(),
+                CONSTRAINT agent_wallets_user_id_unique UNIQUE (user_id)
+            )
+        """))
+        results.append("agent_wallets table created")
+
+        session.exec(text("""
+            CREATE TABLE IF NOT EXISTS wallet_topups (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                wallet_id UUID NOT NULL REFERENCES agent_wallets(id) ON DELETE CASCADE,
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                amount_cents INTEGER NOT NULL,
+                stripe_payment_intent_id TEXT UNIQUE NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending',
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        results.append("wallet_topups table created")
+
+        session.exec(text("CREATE INDEX IF NOT EXISTS idx_wallet_topups_user_id ON wallet_topups(user_id)"))
+        session.exec(text("CREATE INDEX IF NOT EXISTS idx_wallet_topups_wallet_id ON wallet_topups(wallet_id)"))
+        results.append("wallet indexes created")
+
         session.commit()
         return {"message": "Migration completed successfully", "changes": results}
     except Exception as e:
