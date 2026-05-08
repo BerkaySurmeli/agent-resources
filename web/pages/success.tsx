@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useCart } from '../context/CartContext';
+import Navbar from '../components/Navbar';
 
 import { API_URL } from '../lib/api';
 
@@ -15,7 +16,6 @@ export default function Success() {
   const { session_id } = router.query;
   const { clearCart } = useCart();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [purchaseData, setPurchaseData] = useState<any>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -43,7 +43,6 @@ export default function Success() {
       const data = await response.json();
 
       if (response.ok) {
-        // Only mark anonymous if no user_id returned AND the browser has no auth token
         const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('ar-token');
         if (data.customer_email && !data.user_id && !hasToken) {
           setIsAnonymous(true);
@@ -57,7 +56,6 @@ export default function Success() {
           return;
         }
 
-        // Even if transactions are still processing, show success if Stripe says paid
         setPurchaseData(data);
         setLoading(false);
       } else {
@@ -88,11 +86,17 @@ export default function Success() {
     }
   };
 
+  const signupHref = purchaseData?.customer_email
+    ? `/signup?email=${encodeURIComponent(purchaseData.customer_email)}`
+    : '/signup';
+
   return (
     <div className="min-h-screen bg-cream-100">
       <Head>
         <title>Payment Successful | Agent Resources</title>
       </Head>
+
+      <Navbar />
 
       <main className="pt-24 pb-12 px-6">
         <div className="max-w-2xl mx-auto text-center">
@@ -104,32 +108,6 @@ export default function Success() {
                 <p className="text-ink-400 text-sm mt-2">
                   Still processing{'.'.repeat(retryCount % 4)}
                 </p>
-              )}
-            </div>
-          ) : error ? (
-            <div className="py-12">
-              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h1 className="heading-serif text-2xl text-ink-900 mb-2">Payment Successful!</h1>
-              <p className="text-ink-500 mb-6">{error}</p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/settings?tab=purchases&justPurchased=1" className="btn-primary">
-                  View My Purchases
-                </Link>
-                <Link href="/listings" className="text-terra-600 hover:text-terra-700 font-medium">
-                  Browse more listings →
-                </Link>
-              </div>
-
-              {isAnonymous && (
-                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-blue-700 text-sm">
-                    <strong>Guest Purchase:</strong> Create an account with the same email to access your purchases anytime.
-                  </p>
-                </div>
               )}
             </div>
           ) : (
@@ -172,8 +150,8 @@ export default function Success() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {isAnonymous ? (
                   <>
-                    <Link href="/signup" className="btn-primary">
-                      Create Account to Access Purchases
+                    <Link href={signupHref} className="btn-primary">
+                      Create account to view purchases
                     </Link>
                     <Link href="/listings" className="btn-secondary">
                       Browse More
@@ -191,21 +169,10 @@ export default function Success() {
                 )}
               </div>
 
-              {isAnonymous && (
-                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-left">
-                  <p className="text-blue-800 text-sm font-medium mb-1">Want your purchases in one place?</p>
-                  <p className="text-blue-700 text-sm mb-3">
-                    Create a free account with <strong>{purchaseData?.customer_email}</strong> and all your purchases will appear automatically — no hunting through your inbox.
-                  </p>
-                  {purchaseData?.customer_email?.includes('@') && (
-                    <Link
-                      href={`/signup?email=${encodeURIComponent(purchaseData.customer_email)}`}
-                      className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg inline-block transition-colors"
-                    >
-                      Create free account →
-                    </Link>
-                  )}
-                </div>
+              {isAnonymous && purchaseData?.customer_email?.includes('@') && (
+                <p className="mt-6 text-sm text-ink-400">
+                  Sign up with <strong>{purchaseData.customer_email}</strong> and all your purchases will appear automatically.
+                </p>
               )}
             </>
           )}
