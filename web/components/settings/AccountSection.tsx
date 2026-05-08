@@ -129,9 +129,16 @@ export default function AccountSection() {
           </div>
           <div className="flex justify-between items-center py-3">
             <div>
-              <label className="text-sm text-ink-400">{t.dashboard.becomeDeveloper}</label>
-              <p className="font-medium text-ink-900">{user.isDeveloper ? t.settings.developer : t.settings.becomeDeveloper}</p>
+              <label className="text-sm text-ink-400">API access</label>
+              <p className="font-medium text-ink-900">
+                {user.isVerified ? 'Enabled — create API keys to let agents authenticate' : 'Verify your email to unlock API keys'}
+              </p>
             </div>
+            {user.isVerified && (
+              <a href="/dashboard/api-keys" className="text-sm text-brand hover:text-brand/80 font-medium whitespace-nowrap">
+                Manage keys →
+              </a>
+            )}
           </div>
         </div>
       </div>

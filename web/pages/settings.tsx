@@ -16,6 +16,7 @@ import PlanSection from '../components/settings/PlanSection';
 import Navbar from '../components/Navbar';
 
 type SettingsTab = 'profile' | 'account' | 'purchases' | 'reviews' | 'listings' | 'notifications' | 'payouts' | 'collections' | 'plan';
+const SELLER_TABS: SettingsTab[] = ['listings', 'payouts', 'plan'];
 
 interface NavItem {
   id: SettingsTab;
@@ -55,6 +56,7 @@ export default function Settings() {
     );
   }
 
+  const isDeveloper = user.isDeveloper;
   const navItems: NavItem[] = [
     {
       id: 'profile',
@@ -207,7 +209,7 @@ export default function Settings() {
               {/* Mobile Menu Dropdown */}
               {isMobileMenuOpen && (
                 <div className="mt-2 card overflow-hidden">
-                  {navItems.map((item) => (
+                  {navItems.filter(item => isDeveloper || !SELLER_TABS.includes(item.id)).map((item) => (
                     <button
                       key={item.id}
                       onClick={() => {
@@ -232,7 +234,7 @@ export default function Settings() {
             <aside className="hidden lg:block w-64 flex-shrink-0">
               <div className="card overflow-hidden sticky top-24">
                 <nav className="p-2">
-                  {navItems.map((item) => (
+                  {navItems.filter(item => isDeveloper || !SELLER_TABS.includes(item.id)).map((item) => (
                     <button
                       key={item.id}
                       onClick={() => setActiveTab(item.id)}
@@ -248,8 +250,16 @@ export default function Settings() {
                   ))}
                 </nav>
 
-                {/* Quick Actions */}
-                <div className="border-t border-cream-200 p-4">
+                <div className="border-t border-cream-200 p-4 space-y-1">
+                  <Link
+                    href="/dashboard/api-keys"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-brand hover:bg-brand/5 transition-all duration-200"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    </svg>
+                    <span className="font-medium">API Keys</span>
+                  </Link>
                   <Link
                     href="/dashboard"
                     className="flex items-center gap-3 px-4 py-3 rounded-xl text-ink-600 hover:bg-cream-200 hover:text-ink-900 transition-all duration-200"
@@ -257,7 +267,7 @@ export default function Settings() {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                     </svg>
-                    <span className="font-medium">{t.nav.dashboard}</span>
+                    <span className="font-medium">Dashboard</span>
                   </Link>
                 </div>
               </div>
