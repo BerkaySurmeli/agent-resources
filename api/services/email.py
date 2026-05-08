@@ -31,7 +31,7 @@ class EmailService:
         name = escape(name)
         verification_url = f"https://shopagentresources.com/verify-email?token={token}"
 
-        dashboard_url = "https://shopagentresources.com/dashboard"
+        dashboard_url = "https://shopagentresources.com/dashboard/api-keys"
 
         html_content = f"""
 <!DOCTYPE html>
