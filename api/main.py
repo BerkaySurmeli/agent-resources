@@ -86,6 +86,7 @@ class DynamicCORSMiddleware:
 # CORS patterns - supports exact URLs and regex patterns
 allow_origins_patterns = [
     r"^https://shopagentresources\.com$",
+    r"^https://www\.shopagentresources\.com$",
     r"^http://localhost:3000$",
     r"^https://web-.*-agent-resources\.vercel\.app$",  # All Vercel preview deployments
     r"^https://agent-resources.*\.vercel\.app$",  # Git-based Vercel URLs

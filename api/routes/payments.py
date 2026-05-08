@@ -392,13 +392,31 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
 
     try:
         with DBSession(engine) as db_session:
-            # Resolve buyer once before the per-listing loop
+            from uuid import UUID as _UUID
+
+            # Resolve buyer once before the per-listing loop.
+            # buyer_user_id is set for registered users; empty string for guests.
             buyer = None
             if buyer_user_id:
-                buyer = db_session.exec(select(User).where(User.id == buyer_user_id)).first()
+                try:
+                    buyer = db_session.exec(select(User).where(User.id == _UUID(buyer_user_id))).first()
+                    if buyer and buyer.is_guest:
+                        # Metadata contained a UUID but it resolved to a guest row — treat as guest.
+                        buyer = None
+                except (ValueError, AttributeError):
+                    print(f"[WEBHOOK] Invalid buyer_user_id format: {buyer_user_id!r}")
+            # For guests (no user_id in metadata), look up by email.
+            # Also use email lookup as fallback when ID lookup failed.
             if not buyer and customer_email:
-                buyer = db_session.exec(select(User).where(User.email == customer_email)).first()
+                email_user = db_session.exec(select(User).where(User.email == customer_email)).first()
+                if email_user and not email_user.is_guest:
+                    # Registered user found by email — use them (covers the ID-lookup fallback case)
+                    buyer = email_user
+                elif not buyer_user_id:
+                    # No user_id in metadata → this is a genuine guest purchase; use existing guest row
+                    buyer = email_user
             if not buyer and customer_email:
+                # Create a guest user row so the purchase is not lost
                 buyer = User(
                     email=customer_email,
                     name=customer_email.split('@')[0],
@@ -420,8 +438,13 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
             guest_purchases: list[tuple] = []
 
             for listing_id in listing_ids:
+                try:
+                    listing_uuid = _UUID(listing_id)
+                except (ValueError, AttributeError):
+                    print(f"[WEBHOOK] Invalid listing_id format: {listing_id!r} — skipping")
+                    continue
                 listing = db_session.exec(
-                    select(Listing).where(Listing.id == listing_id)
+                    select(Listing).where(Listing.id == listing_uuid)
                 ).first()
 
                 if not listing:

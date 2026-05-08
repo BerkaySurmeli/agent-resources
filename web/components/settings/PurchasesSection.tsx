@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import Link from 'next/link';
 import { API_URL } from '../../lib/api';
@@ -17,24 +16,31 @@ interface Purchase {
   download_url: string | null;
 }
 
+const POLL_INTERVAL_MS = 3000;
+const MAX_POLL_ATTEMPTS = 8;
+
 export default function PurchasesSection() {
-  const { user } = useAuth();
   const { t } = useLanguage();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [downloading, setDownloading] = useState<string | null>(null);
+  const pollAttemptsRef = useRef(0);
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    fetchPurchases();
+    fetchPurchases(true);
+    return () => {
+      if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+    };
   }, []);
 
-  const fetchPurchases = async () => {
+  const fetchPurchases = async (isInitialLoad = false) => {
+    let shouldStopLoading = true;
     try {
       const token = localStorage.getItem('ar-token');
       if (!token) {
         setError(t.settings.pleaseSignIn);
-        setLoading(false);
         return;
       }
 
@@ -44,7 +50,17 @@ export default function PurchasesSection() {
 
       if (response.ok) {
         const data = await response.json();
-        setPurchases(data.purchases || []);
+        const list: Purchase[] = data.purchases || [];
+
+        // If arriving straight from checkout and purchases are still empty, poll.
+        const justPurchased = typeof window !== 'undefined' && window.location.search.includes('justPurchased=1');
+        if (isInitialLoad && list.length === 0 && justPurchased && pollAttemptsRef.current < MAX_POLL_ATTEMPTS) {
+          pollAttemptsRef.current += 1;
+          shouldStopLoading = false;
+          pollTimerRef.current = setTimeout(() => fetchPurchases(true), POLL_INTERVAL_MS);
+        } else {
+          setPurchases(list);
+        }
       } else {
         const fallbackResponse = await fetch(`${API_URL}/auth/purchases`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -70,7 +86,7 @@ export default function PurchasesSection() {
     } catch (err) {
       setError(t.common.error);
     } finally {
-      setLoading(false);
+      if (shouldStopLoading) setLoading(false);
     }
   };
 
@@ -127,7 +143,7 @@ export default function PurchasesSection() {
           <p className="text-ink-500">{t.settings.purchaseSubtitle}</p>
         </div>
         <button
-          onClick={() => { setLoading(true); setError(''); fetchPurchases(); }}
+          onClick={() => { setLoading(true); setError(''); pollAttemptsRef.current = 0; fetchPurchases(); }}
           disabled={loading}
           className="flex-shrink-0 text-sm text-terra-600 hover:text-terra-700 disabled:opacity-40 mt-1"
           title="Refresh purchases"

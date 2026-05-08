@@ -112,7 +112,7 @@ export default function Success() {
               <h1 className="heading-serif text-2xl text-ink-900 mb-2">Payment Successful!</h1>
               <p className="text-ink-500 mb-6">{error}</p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/settings?tab=purchases" className="btn-primary">
+                <Link href="/settings?tab=purchases&justPurchased=1" className="btn-primary">
                   View My Purchases
                 </Link>
                 <Link href="/listings" className="text-terra-600 hover:text-terra-700 font-medium">
@@ -177,7 +177,7 @@ export default function Success() {
                   </>
                 ) : (
                   <>
-                    <Link href="/settings?tab=purchases" className="btn-primary">
+                    <Link href="/settings?tab=purchases&justPurchased=1" className="btn-primary">
                       View My Purchases
                     </Link>
                     <Link href="/listings" className="btn-secondary">
