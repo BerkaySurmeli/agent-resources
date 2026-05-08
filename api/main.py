@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import Response
 from core.config import settings
 from models import SQLModel
-from routes import waitlist, payments, auth, admin, listings, products, developers, search, contact, admin_metrics, downloads, onboarding, analytics, collections, oauth, wellknown, mcp_server, catalog, wallet
+from routes import waitlist, payments, auth, admin, listings, products, developers, search, contact, admin_metrics, downloads, onboarding, analytics, collections, oauth, wellknown, mcp_server, catalog, wallet, manifests
 from routes.catalog import scan_router as catalog_scan_router
 import re
 
@@ -123,6 +123,7 @@ app.include_router(mcp_server.router)
 app.include_router(catalog_scan_router)
 app.include_router(catalog.router)
 app.include_router(wallet.router)
+app.include_router(manifests.router)
 
 @app.get("/health")
 async def health():

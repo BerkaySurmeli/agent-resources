@@ -21,9 +21,10 @@ from sqlmodel import select
 
 from core.config import settings
 from core.database import get_session
-from models import OAuthClient, Product, Transaction, User
+from models import MCPDetail, OAuthClient, Product, Transaction, User
 from routes.oauth import get_current_agent, require_scope
 from routes.wallet import wallet_deduct
+from services.manifest import build_manifest
 from services.security import scan_manifest, sign_manifest
 
 router = APIRouter(tags=["MCP"])
@@ -335,38 +336,43 @@ def _tool_get_install_manifest(args: Dict, session, owner: User) -> Dict:
             f"You do not own '{slug}'. Purchase it first with the purchase_listing tool."
         )
 
-    manifest = product.one_click_json or {}
+    # Prefer MCPDetail row (richer, version-linked) over one_click_json for mcp_server category
+    mcp_detail = None
+    if product.category == "mcp_server":
+        mcp_detail = session.execute(
+            select(MCPDetail)
+            .where(MCPDetail.product_id == product.id)
+            .order_by(MCPDetail.id.desc())
+        ).scalars().first()
 
-    manifest_body = {
-        "type":              product.category,
-        "command":           manifest.get("command"),
-        "args":              manifest.get("args", []),
-        "env_vars_required": manifest.get("env_vars_required", []),
-        "env_vars_optional": manifest.get("env_vars_optional", []),
-        "config_schema":     manifest.get("config_schema", {}),
-        "homepage":          f"https://shopagentresources.com/listing/{product.slug}",
-        "description":       product.description or "",
-    }
+    manifest_body = build_manifest(
+        category=product.category,
+        slug=product.slug,
+        name=product.name,
+        description=product.description or "",
+        one_click_json=product.one_click_json or {},
+        version=getattr(product, "version", "1.0.0") or "1.0.0",
+        mcp_detail=mcp_detail,
+    )
 
-    scan = scan_manifest(manifest_body)
+    scan = scan_manifest({
+        "description": product.description or "",
+        "command": manifest_body.get("command", ""),
+        "args": manifest_body.get("args", []),
+        "system_prompt": manifest_body.get("system_prompt", ""),
+    })
     signed = sign_manifest(manifest_body, settings.OAUTH_PRIVATE_KEY) if settings.OAUTH_PRIVATE_KEY else manifest_body
 
     return {
         "slug":     product.slug,
         "name":     product.name,
         "category": product.category,
-        "version":  "1.0.0",
         "manifest": signed,
         "security": {
             "safe":       scan["safe"],
             "risk_level": scan["risk_level"],
             "findings":   scan["findings"],
         },
-        "install_instructions": (
-            f"1. Set required env vars: {', '.join(manifest.get('env_vars_required', [])) or 'none'}\n"
-            f"2. Run: {manifest.get('command', '')} {' '.join(manifest.get('args', []))}\n"
-            f"3. Add to your MCP client config under key: {product.slug}"
-        ),
     }
 
 
