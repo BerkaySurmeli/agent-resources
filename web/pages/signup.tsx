@@ -150,7 +150,7 @@ export default function Signup() {
             </div>
             <div className="space-y-3">
               <button
-                onClick={() => router.push('/login')}
+                onClick={() => router.push('/login?redirect=/dashboard/api-keys')}
                 className="btn-primary w-full justify-center"
               >
                 {t.signup.goToLogin}

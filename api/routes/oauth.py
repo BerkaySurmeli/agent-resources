@@ -203,6 +203,9 @@ async def register_client(
     session=Depends(get_session),
 ):
     """Register a new OAuth agent client. Returns the plaintext secret exactly once."""
+    if not current_user.is_verified:
+        raise HTTPException(status_code=403, detail="Email verification required before creating API keys")
+
     granted = list(set(body.scopes_requested) & GRANTABLE_SCOPES)
     if not granted:
         raise HTTPException(

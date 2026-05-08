@@ -97,9 +97,10 @@ export default function VerifyEmail() {
               </svg>
             </div>
             <h1 className="text-2xl font-semibold text-ink-900 mb-2">Email Verified!</h1>
-            <p className="text-ink-500 mb-6">{message}</p>
-            <Link href="/login" className="btn-primary inline-flex justify-center">
-              Sign In
+            <p className="text-ink-500 mb-2">Your account is confirmed.</p>
+            <p className="text-ink-500 mb-6">Sign in to create your first API key and start building with agents.</p>
+            <Link href="/login?redirect=/dashboard/api-keys" className="btn-primary inline-flex justify-center">
+              Sign in and get your API key →
             </Link>
           </>
         )}
