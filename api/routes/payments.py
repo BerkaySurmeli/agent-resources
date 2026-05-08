@@ -31,12 +31,12 @@ def _seller_commission_rate(seller: User, session) -> float:
     if seller.commission_free_until and seller.commission_free_until > datetime.utcnow():
         return 0.0
     # Check active Pro subscription
-    sub = session.exec(
+    sub = session.execute(
         select(Subscription).where(
             Subscription.user_id == seller.id,
             Subscription.status == "active",
         )
-    ).first()
+    ).scalars().first()
     return 0.0 if sub else PLATFORM_FEE_PERCENT
 
 # Payout schedule: weekly on Mondays
@@ -90,9 +90,9 @@ async def create_checkout_session(
     listing_ids = []
 
     for cart_item in request.items:
-        listing = session.exec(
+        listing = session.execute(
             select(Listing).where(Listing.id == cart_item.listing_id)
-        ).first()
+        ).scalars().first()
 
         if not listing:
             raise HTTPException(status_code=404, detail=f"Listing {cart_item.listing_id} not found")
@@ -179,12 +179,12 @@ async def create_pro_checkout(
         raise HTTPException(status_code=503, detail="Pro plan not configured")
 
     # Don't create a new subscription if one already exists
-    existing = session.exec(
+    existing = session.execute(
         select(Subscription).where(
             Subscription.user_id == current_user.id,
             Subscription.status == "active",
         )
-    ).first()
+    ).scalars().first()
     if existing:
         raise HTTPException(status_code=409, detail="Already subscribed to Pro")
 
@@ -210,9 +210,9 @@ async def customer_portal(
     session = Depends(get_session),
 ):
     """Return a Stripe Customer Portal URL so the user can manage/cancel their subscription."""
-    sub = session.exec(
+    sub = session.execute(
         select(Subscription).where(Subscription.user_id == current_user.id)
-    ).first()
+    ).scalars().first()
     if not sub or not sub.stripe_customer_id:
         raise HTTPException(status_code=404, detail="No active subscription found")
 
@@ -233,9 +233,9 @@ async def get_pro_status(
     session = Depends(get_session),
 ):
     """Return the current user's plan status."""
-    sub = session.exec(
+    sub = session.execute(
         select(Subscription).where(Subscription.user_id == current_user.id)
-    ).first()
+    ).scalars().first()
     commission_free = (
         current_user.commission_free_until is not None
         and current_user.commission_free_until > datetime.utcnow()
@@ -283,9 +283,9 @@ async def subscription_webhook(request: Request):
         period_end = datetime.utcfromtimestamp(stripe_sub["current_period_end"])
 
         with DBSession(engine) as db:
-            existing = db.exec(
+            existing = db.execute(
                 select(Subscription).where(Subscription.user_id == user_id)
-            ).first()
+            ).scalars().first()
             if existing:
                 existing.stripe_subscription_id = stripe_sub_id
                 existing.stripe_customer_id = stripe_customer_id
@@ -310,9 +310,9 @@ async def subscription_webhook(request: Request):
         period_end = datetime.utcfromtimestamp(stripe_sub["current_period_end"])
 
         with DBSession(engine) as db:
-            sub = db.exec(
+            sub = db.execute(
                 select(Subscription).where(Subscription.stripe_subscription_id == stripe_sub_id)
-            ).first()
+            ).scalars().first()
             if sub:
                 sub.status = "active"
                 sub.current_period_end = period_end
@@ -324,9 +324,9 @@ async def subscription_webhook(request: Request):
         new_status = obj.get("status", "canceled")  # active, past_due, canceled, etc.
 
         with DBSession(engine) as db:
-            sub = db.exec(
+            sub = db.execute(
                 select(Subscription).where(Subscription.stripe_subscription_id == stripe_sub_id)
-            ).first()
+            ).scalars().first()
             if sub:
                 sub.status = "canceled" if event_type == "customer.subscription.deleted" else new_status
                 sub.updated_at = datetime.utcnow()
@@ -399,7 +399,9 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
             buyer = None
             if buyer_user_id:
                 try:
-                    buyer = db_session.exec(select(User).where(User.id == _UUID(buyer_user_id))).first()
+                    buyer = db_session.execute(
+                        select(User).where(User.id == _UUID(buyer_user_id))
+                    ).scalars().first()
                     if buyer and buyer.is_guest:
                         # Metadata contained a UUID but it resolved to a guest row — treat as guest.
                         buyer = None
@@ -408,7 +410,9 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
             # For guests (no user_id in metadata), look up by email.
             # Also use email lookup as fallback when ID lookup failed.
             if not buyer and customer_email:
-                email_user = db_session.exec(select(User).where(User.email == customer_email)).first()
+                email_user = db_session.execute(
+                    select(User).where(User.email == customer_email)
+                ).scalars().first()
                 if email_user and not email_user.is_guest:
                     # Registered user found by email — use them (covers the ID-lookup fallback case)
                     buyer = email_user
@@ -443,9 +447,9 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
                 except (ValueError, AttributeError):
                     print(f"[WEBHOOK] Invalid listing_id format: {listing_id!r} — skipping")
                     continue
-                listing = db_session.exec(
+                listing = db_session.execute(
                     select(Listing).where(Listing.id == listing_uuid)
-                ).first()
+                ).scalars().first()
 
                 if not listing:
                     continue
@@ -456,21 +460,21 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
                     continue
 
                 # Idempotency: skip duplicate webhook deliveries (check before any writes)
-                existing_txn = db_session.exec(
+                existing_txn = db_session.execute(
                     select(Transaction).where(
                         Transaction.stripe_payment_intent_id == stripe_payment_intent_id,
                         Transaction.product_id == listing.product_id
                     )
-                ).first()
+                ).scalars().first()
                 if existing_txn:
                     print(f"[WEBHOOK] Duplicate webhook for payment_intent={stripe_payment_intent_id}, listing={listing_id} — skipping")
                     continue
 
                 user = buyer
 
-                seller = db_session.exec(
+                seller = db_session.execute(
                     select(User).where(User.id == listing.owner_id)
-                ).first()
+                ).scalars().first()
 
                 total_amount_cents = listing.price_cents
                 rate = _seller_commission_rate(seller, db_session) if seller else PLATFORM_FEE_PERCENT
@@ -490,7 +494,7 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
                 db_session.add(transaction)
 
                 # Atomic download count increment — avoids lost update under concurrent webhooks
-                db_session.exec(
+                db_session.execute(
                     text("UPDATE products SET download_count = download_count + 1 WHERE id = :pid"),
                     {"pid": listing.product_id}
                 )
@@ -499,7 +503,7 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
                 bonus_task = None
                 if listing.developer_code:
                     from sqlalchemy import text as _text
-                    claimed = db_session.exec(
+                    claimed = db_session.execute(
                         _text("UPDATE listings SET bonus_paid = TRUE WHERE id = :lid AND bonus_paid = FALSE RETURNING id"),
                         {"lid": str(listing.id)},
                     ).first()
@@ -543,6 +547,7 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
                     customer_email,
                     seller.email if seller else None,
                     listing.name,
+                    listing.slug,
                     total_amount_cents,
                     seller_amount_cents,
                     bonus_task,
@@ -555,10 +560,12 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
             print(f"[WEBHOOK] Processed payment for {len(listing_ids)} items")
 
             # Schedule emails only after successful commit
-            for buyer_email, seller_email, listing_name, total_cents, seller_cents, bonus_task, guest_token in email_tasks:
+            for buyer_email, seller_email, listing_name, listing_slug, total_cents, seller_cents, bonus_task, guest_token in email_tasks:
                 if not guest_token:
-                    # Registered user: standard confirmation email
-                    background_tasks.add_task(send_purchase_confirmation, buyer_email, listing_name, total_cents / 100)
+                    # Registered user: confirmation with manifest install instructions
+                    background_tasks.add_task(
+                        send_purchase_confirmation, buyer_email, listing_name, total_cents / 100, listing_slug
+                    )
                 if seller_email:
                     background_tasks.add_task(send_sale_notification, seller_email, listing_name, seller_cents / 100)
                 if bonus_task:
@@ -595,11 +602,11 @@ async def get_checkout_session(
         transactions = []
 
         if payment_intent:
-            txns = session.exec(
+            txns = session.execute(
                 select(Transaction).where(
                     Transaction.stripe_payment_intent_id == payment_intent
                 )
-            ).all()
+            ).scalars().all()
             transactions = [
                 {
                     "id": str(t.id),
@@ -618,7 +625,9 @@ async def get_checkout_session(
         )
         user_id = None
         if customer_email:
-            buyer = session.exec(select(User).where(User.email == customer_email)).first()
+            buyer = session.execute(
+                select(User).where(User.email == customer_email)
+            ).scalars().first()
             user_id = str(buyer.id) if (buyer and not buyer.is_guest) else None
 
         return {
@@ -639,7 +648,7 @@ async def get_my_purchases(
 ):
     """Get all purchases for current user"""
 
-    transactions = session.exec(
+    transactions = session.execute(
         select(Transaction, Product, User)
         .join(Product, Transaction.product_id == Product.id)
         .join(User, Transaction.seller_id == User.id, isouter=True)
@@ -679,7 +688,7 @@ async def get_my_sales(
     if not current_user.is_developer:
         raise HTTPException(status_code=403, detail="Only developers can view sales")
 
-    transactions = session.exec(
+    transactions = session.execute(
         select(Transaction, Product, User)
         .join(Product, Transaction.product_id == Product.id)
         .join(User, Transaction.buyer_id == User.id, isouter=True)
@@ -730,13 +739,13 @@ async def get_earnings_summary(
         raise HTTPException(status_code=403, detail="Only developers can view earnings")
 
     # Get all completed sales
-    transactions = session.exec(
+    transactions = session.execute(
         select(Transaction)
         .where(
             Transaction.seller_id == current_user.id,
             Transaction.status == "completed"
         )
-    ).all()
+    ).scalars().all()
 
     total_sales = len(transactions)
     total_revenue_cents = sum(t.amount_cents for t in transactions)
@@ -902,9 +911,9 @@ async def connect_return(
     """Handle Stripe Connect onboarding return"""
 
     # Verify the account_id belongs to the authenticated user
-    user = session.exec(
+    user = session.execute(
         select(User).where(User.stripe_connect_id == account_id)
-    ).first()
+    ).scalars().first()
 
     if not user or str(user.id) != str(current_user.id):
         raise HTTPException(status_code=404, detail="Account not found")
@@ -927,27 +936,27 @@ async def connect_return(
         bonuses_paid = 0
         if user.stripe_status == 'active':
             from models import Listing
-            pending_bonus_listings = session.exec(
+            pending_bonus_listings = session.execute(
                 select(Listing).where(
                     Listing.owner_id == user.id,
                     Listing.developer_code != None,
                     Listing.bonus_paid == False,
                 )
-            ).all()
+            ).scalars().all()
 
             from sqlalchemy import text as _text
             for listing in pending_bonus_listings:
                 # Only pay if this listing actually had a sale
-                had_sale = session.exec(
+                had_sale = session.execute(
                     select(Transaction).where(
                         Transaction.product_id == listing.product_id,
                         Transaction.status == "completed"
                     )
-                ).first()
+                ).scalars().first()
                 if not had_sale:
                     continue
                 # Atomically claim the bonus to prevent double-payment on concurrent calls
-                claimed = session.exec(
+                claimed = session.execute(
                     _text("UPDATE listings SET bonus_paid = TRUE WHERE id = :lid AND bonus_paid = FALSE RETURNING id"),
                     {"lid": str(listing.id)},
                 ).first()

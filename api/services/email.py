@@ -31,56 +31,79 @@ class EmailService:
         name = escape(name)
         verification_url = f"https://shopagentresources.com/verify-email?token={token}"
 
+        dashboard_url = "https://shopagentresources.com/dashboard"
+
         html_content = f"""
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Your Email</title>
+    <title>Verify Your Email — Agent Resources</title>
 </head>
 <body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
     {EMAIL_LOGO_HTML}
 
     <div style="background: #f8fafc; border-radius: 12px; padding: 30px; margin-bottom: 20px;">
         <p style="margin-top: 0;">Hi {name},</p>
-        <p>Welcome to Agent Resources! Please verify your email address to start buying and selling AI agents.</p>
+        <p>Welcome to Agent Resources — the marketplace where AI agents discover, purchase, and install skills autonomously. First, verify your email to activate your account.</p>
 
-        <div style="text-align: center; margin: 30px 0;">
-            <a href="{verification_url}" style="display: inline-block; background: #2563eb; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 500;">
-                Verify Email Address
+        <div style="text-align: center; margin: 28px 0;">
+            <a href="{verification_url}" style="display: inline-block; background: #4B60EE; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
+                Verify email address →
             </a>
         </div>
 
-        <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">
-            This link will expire in 24 hours. If you didn't create an account, you can safely ignore this email.
+        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 0;">
+            Expires in 24 hours. If you didn't create an account, ignore this email.
         </p>
     </div>
 
-    <div style="text-align: center; font-size: 14px; color: #64748b;">
-        <p>Best regards,<br>The Agent Resources Team</p>
-        <p style="margin-top: 20px;">
-            <a href="https://shopagentresources.com" style="color: #2563eb;">shopagentresources.com</a>
+    <!-- What's next -->
+    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 24px; margin-bottom: 20px;">
+        <p style="margin: 0 0 12px; font-weight: 600; color: #1e3a8a; font-size: 15px;">After you verify — get your agent API key</p>
+        <p style="margin: 0 0 16px; font-size: 14px; color: #1d4ed8;">
+            Create an OAuth client in your dashboard. Your agents use it to discover and purchase skills
+            headlessly — one spending limit, no per-purchase approval.
         </p>
+        <ol style="margin: 0 0 16px; padding-left: 20px; font-size: 14px; color: #334155;">
+            <li style="margin-bottom: 6px;">Go to Dashboard → <strong>API Keys</strong></li>
+            <li style="margin-bottom: 6px;">Create a client — set a budget cap (e.g. $20/month)</li>
+            <li style="margin-bottom: 6px;">Give the credentials to your agent</li>
+            <li>Your agent calls <code style="background:#dbeafe;padding:1px 5px;border-radius:4px;font-size:12px;">POST /mcp</code> to search and buy</li>
+        </ol>
+        <a href="{dashboard_url}" style="display: inline-block; background: #2563eb; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 14px;">
+            Open dashboard
+        </a>
+    </div>
+
+    <div style="text-align: center; font-size: 13px; color: #94a3b8;">
+        <p>Questions? Reply to this email.<br>
+        <a href="https://shopagentresources.com" style="color: #94a3b8;">shopagentresources.com</a></p>
     </div>
 </body>
 </html>
 """
-        
-        text_content = f"""
-Hi {name},
 
-Welcome to Agent Resources! Please verify your email address to start buying and selling AI agents.
+        text_content = f"""Hi {name},
 
-Click the link below to verify your email:
+Welcome to Agent Resources — the marketplace where AI agents discover, purchase, and install skills autonomously.
+
+Verify your email:
 {verification_url}
 
-This link will expire in 24 hours.
+Expires in 24 hours.
 
-If you didn't create an account, you can safely ignore this email.
+---
+NEXT STEP: Get your agent API key
 
-Best regards,
-The Agent Resources Team
+After verifying, go to your dashboard and create an OAuth client:
+{dashboard_url}
+
+Set a spending limit, give the credentials to your agent, and it can call POST /mcp to search and buy skills — no per-purchase approval needed.
+
+Questions? Reply to this email.
+Agent Resources — shopagentresources.com
 """
         
         try:
@@ -356,86 +379,107 @@ def send_developer_welcome_email(to_email: str, name: str, developer_code: str) 
     return EmailService.send_developer_welcome_email(to_email, name, developer_code)
 
 
-def send_purchase_confirmation(to_email: str, product_name: str, amount: float) -> dict:
-    """Send purchase confirmation email to buyer"""
+def send_purchase_confirmation(to_email: str, product_name: str, amount: float, product_slug: str = "") -> dict:
+    """Send purchase confirmation email to buyer with agent install instructions."""
     if not settings.RESEND_API_KEY:
         print(f"[EMAIL] Purchase confirmation (dry run): {to_email} bought {product_name} for ${amount}")
         return {"id": "dry-run"}
 
-    product_name = escape(product_name)
+    safe_name = escape(product_name)
+    api_base = "https://api.shopagentresources.com"
+    manifest_url = f"{api_base}/v1/manifest/{product_slug}" if product_slug else ""
+    preview_url  = f"{api_base}/v1/manifest/{product_slug}/preview" if product_slug else ""
+    purchases_url = "https://shopagentresources.com/settings?tab=purchases"
 
-    html_content = f"""
-<!DOCTYPE html>
+    # Build the agent-install block only when we have a slug
+    agent_block_html = ""
+    agent_block_text = ""
+    if product_slug:
+        agent_block_html = f"""
+    <div style="background: #0f172a; border-radius: 10px; padding: 20px 24px; margin: 24px 0;">
+        <p style="margin: 0 0 10px; color: #94a3b8; font-size: 12px; font-family: monospace; text-transform: uppercase; letter-spacing: .05em;">Agent install — fetch the signed manifest</p>
+        <pre style="margin: 0; color: #4ade80; font-family: monospace; font-size: 12px; white-space: pre-wrap; line-height: 1.6;">GET {manifest_url}
+Authorization: Bearer &lt;your-oauth-token&gt;
+
+# Returns claude_desktop_config, system_prompt,
+# or tool_definition depending on the listing type.</pre>
+    </div>
+    <p style="font-size: 13px; color: #64748b; margin-bottom: 0;">
+        Need an OAuth token?
+        <a href="https://shopagentresources.com/dashboard" style="color: #4B60EE;">Create an API client in your dashboard →</a>
+    </p>"""
+        agent_block_text = f"""
+--- Agent install ---
+GET {manifest_url}
+Authorization: Bearer <your-oauth-token>
+
+Returns claude_desktop_config, system_prompt, or tool_definition.
+Need an OAuth token? https://shopagentresources.com/dashboard
+"""
+
+    html_content = f"""<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thank You for Your Purchase!</title>
+    <title>Purchase confirmed — {safe_name}</title>
 </head>
 <body style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; max-width: 600px; margin: 0 auto; padding: 20px;">
     {EMAIL_LOGO_HTML}
 
-    <div style="background: #f8fafc; border-radius: 12px; padding: 30px; margin-bottom: 20px;">
+    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 16px 20px; margin-bottom: 24px; text-align: center;">
+        <p style="margin: 0; font-weight: 600; color: #166534;">Purchase confirmed — {safe_name} is ready to use</p>
+    </div>
+
+    <div style="background: #f8fafc; border-radius: 12px; padding: 28px; margin-bottom: 20px;">
         <p style="margin-top: 0;">Hi there,</p>
-        <p>Thank you for purchasing <strong>{product_name}</strong>!</p>
-        
-        <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #e2e8f0;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span style="color: #64748b;">Item:</span>
-                <span style="font-weight: 500;">{product_name}</span>
+        <p>Thank you for purchasing <strong>{safe_name}</strong>.</p>
+
+        <div style="background: white; border-radius: 8px; padding: 18px; margin: 18px 0; border: 1px solid #e2e8f0;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: #64748b; font-size: 14px;">Item</span>
+                <span style="font-weight: 500; font-size: 14px;">{safe_name}</span>
             </div>
             <div style="display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 10px;">
-                <span style="color: #64748b;">Total:</span>
-                <span style="font-weight: bold; color: #2563eb;">${amount:.2f}</span>
+                <span style="color: #64748b; font-size: 14px;">Total</span>
+                <span style="font-weight: 700; color: #4B60EE;">${amount:.2f}</span>
             </div>
         </div>
 
-        <div style="text-align: center; margin: 30px 0;">
-            <a href="https://shopagentresources.com/settings?tab=purchases" style="display: inline-block; background: #2563eb; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 500;">
-                View Your Purchases
+        {agent_block_html}
+
+        <div style="text-align: center; margin-top: 24px;">
+            <a href="{purchases_url}" style="display: inline-block; background: #4B60EE; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 14px;">
+                View your purchases →
             </a>
         </div>
-
-        <p style="font-size: 14px; color: #64748b; margin-bottom: 0;">
-            You can download your purchase from your account dashboard. If you have any questions, reply to this email.
-        </p>
     </div>
 
-    <div style="text-align: center; font-size: 14px; color: #64748b;">
-        <p>Best regards,<br>The Agent Resources Team</p>
-        <p style="margin-top: 20px;">
-            <a href="https://shopagentresources.com" style="color: #2563eb;">shopagentresources.com</a>
-        </p>
+    <div style="text-align: center; font-size: 13px; color: #94a3b8;">
+        <p>Questions? Reply to this email.<br>
+        <a href="https://shopagentresources.com" style="color: #94a3b8;">shopagentresources.com</a></p>
     </div>
 </body>
-</html>
-"""
-    
-    text_content = f"""
-Thank You for Your Purchase!
+</html>"""
 
-Hi there,
+    text_content = f"""Purchase confirmed — {product_name}
 
 Thank you for purchasing {product_name}!
 
-Order Details:
-- Item: {product_name}
-- Total: ${amount:.2f}
+Item: {product_name}
+Total: ${amount:.2f}
+{agent_block_text}
+View your purchases: {purchases_url}
 
-You can download your purchase from your account dashboard at:
-https://shopagentresources.com/settings?tab=purchases
-
-If you have any questions, reply to this email.
-
-Best regards,
-The Agent Resources Team
+Questions? Reply to this email.
+shopagentresources.com
 """
-    
+
     try:
         response = resend.Emails.send({
             "from": settings.FROM_EMAIL_INFO,
             "to": [to_email],
-            "subject": f"Your Purchase: {product_name}",
+            "subject": f"Purchase confirmed: {product_name}",
             "html": html_content,
             "text": text_content,
             "reply_to": settings.FROM_EMAIL_SUPPORT
