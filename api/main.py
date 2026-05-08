@@ -4,6 +4,7 @@ from fastapi.responses import Response
 from core.config import settings
 from models import SQLModel
 from routes import waitlist, payments, auth, admin, listings, products, developers, search, contact, admin_metrics, downloads, onboarding, analytics, collections, oauth, wellknown, mcp_server, catalog
+from routes.catalog import scan_router as catalog_scan_router
 import re
 
 @asynccontextmanager
@@ -119,6 +120,7 @@ app.include_router(collections.router)
 app.include_router(oauth.router)
 app.include_router(wellknown.router)
 app.include_router(mcp_server.router)
+app.include_router(catalog_scan_router)
 app.include_router(catalog.router)
 
 @app.get("/health")

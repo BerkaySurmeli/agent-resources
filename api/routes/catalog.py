@@ -26,6 +26,7 @@ from models import OAuthClient, Product, Transaction, User
 from routes.oauth import get_current_agent
 
 router = APIRouter(prefix="/v1/catalog", tags=["Catalog"])
+scan_router = APIRouter(prefix="/v1/catalog/scan", tags=["Catalog"])
 
 # ---------------------------------------------------------------------------
 # Rate limiter — 120 req / 60 s per client_id (or IP for anonymous)
@@ -295,7 +296,7 @@ async def list_catalog(
     return _add_rl_headers(resp, remaining, reset_ts)
 
 
-@router.get("/scan/{slug}")
+@scan_router.get("/{slug}")
 async def scan_listing(
     slug: str,
     request: Request,
