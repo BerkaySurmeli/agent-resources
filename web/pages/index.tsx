@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
+import BridgeSection from '../components/BridgeSection';
 import { API_URL } from '../lib/api';
 
 const CODE_STEPS = [
@@ -285,6 +286,9 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ── Bridge Section: For non-technical users ── */}
+        <BridgeSection />
+
         {/* ── What's in the catalog ── */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center mb-12">
@@ -355,8 +359,8 @@ export default function LandingPage() {
             </p>
             <div className="grid sm:grid-cols-3 gap-5 mb-10">
               {[
-                { stat: '90%', label: 'payout to developers' },
-                { stat: 'Free', label: 'first listing' },
+                { stat: '100%', label: 'payout for first 6 months' },
+                { stat: 'Free', label: 'listings' },
                 { stat: '$20', label: 'first-sale bonus for early devs' },
               ].map(({ stat, label }) => (
                 <div key={label} className="card p-6 text-center">
