@@ -263,7 +263,7 @@ async def download_guest_file(
     token: str,
     session = Depends(get_session)
 ):
-    """Serve a file via permanent guest download token (no auth required)."""
+    """Serve a file via guest download token (no auth required). Tokens expire after 90 days."""
     if len(token) > 128:
         raise HTTPException(status_code=400, detail="Invalid token")
 
@@ -272,7 +272,14 @@ async def download_guest_file(
     ).first()
 
     if not dl_token:
-        raise HTTPException(status_code=404, detail="Download link not found")
+        raise HTTPException(status_code=404, detail="Download link not found or expired")
+
+    # Check if token has expired
+    if dl_token.expires_at and dl_token.expires_at < datetime.utcnow():
+        raise HTTPException(
+            status_code=410,
+            detail="Download link has expired. Please create an account to access your purchases."
+        )
 
     product = session.exec(select(Product).where(Product.id == dl_token.product_id)).first()
     if not product:

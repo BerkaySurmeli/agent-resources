@@ -532,15 +532,18 @@ async def handle_successful_payment(session_data: dict, background_tasks: Backgr
                         else:
                             print(f"[BONUS] Seller {listing.owner_id} has no active Stripe Connect — bonus will retry when they onboard")
 
-                # Mint a permanent guest download token for non-registered buyers
+                # Mint a guest download token with 90-day expiry for non-registered buyers
                 guest_token = None
                 if is_guest and customer_email:
                     import secrets as _secrets
+                    from datetime import timedelta
                     raw_token = _secrets.token_urlsafe(48)
+                    token_expiry = datetime.utcnow() + timedelta(days=90)
                     db_session.add(GuestDownloadToken(
                         token=raw_token,
                         buyer_email=customer_email,
                         product_id=listing.product_id,
+                        expires_at=token_expiry,
                     ))
                     guest_token = raw_token
 

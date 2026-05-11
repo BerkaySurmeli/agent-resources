@@ -193,6 +193,7 @@ class GuestDownloadToken(SQLModel, table=True):
     buyer_email: str = Field(index=True)
     product_id: UUID = Field(foreign_key="products.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: Optional[datetime] = Field(default=None)
     last_used_at: Optional[datetime] = Field(default=None)
 
 
